@@ -1,0 +1,26 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="ptrace_arm64_utils.cpp" />
+    <ClCompile Include="adb_inject.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="jni">
+      <UniqueIdentifier>{4f0b16e1-e05c-44ce-8377-35b973d209f5}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="jni\Android.mk">
+      <Filter>jni</Filter>
+    </None>
+    <None Include="jni\Application.mk">
+      <Filter>jni</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="super_root.h" />
+    <ClInclude Include="ptrace_arm64_utils.h" />
+    <ClInclude Include="adb_inject.h" />
+  </ItemGroup>
+</Project>
