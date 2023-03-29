@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="base64.cpp" />
+    <ClCompile Include="su.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="jni">
+      <UniqueIdentifier>{457d7200-d49a-432e-817b-81eb3f5f2924}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="jni\Android.mk">
+      <Filter>jni</Filter>
+    </None>
+    <None Include="jni\Application.mk">
+      <Filter>jni</Filter>
+    </None>
+    <None Include="su.vcxproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="su_hide_path_utils.h" />
+    <ClInclude Include="base64.h" />
+    <ClInclude Include="su.h" />
+    <ClInclude Include="log.h" />
+  </ItemGroup>
+</Project>

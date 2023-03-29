@@ -1,0 +1,4 @@
+﻿#ifndef KERNEL_ROOT_KEY_H_
+#define KERNEL_ROOT_KEY_H_
+#define ROOT_KEY "OM4kKoPVGFG2tnVFcs1PJ1qp6HtVymjV0CoTgFDmMdSDALve"
+#endif /* KERNEL_ROOT_KEY_H_ */

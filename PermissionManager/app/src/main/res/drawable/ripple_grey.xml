@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ripple
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="@color/colorGreyWhiteEx">//点击时波纹的颜色
+    <item android:drawable="@color/colorWndGrey"/>//未点击时控件的背景（可以是图片，可以是颜色，也可以是drawable里的xml背景（比如圆角））
+</ripple>

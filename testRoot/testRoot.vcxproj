@@ -35,7 +35,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{2a287d40-5742-4389-a623-50f6bcea2a0f}</ProjectGuid>
+    <ProjectGuid>{4d0c36bc-004f-4c20-8a90-98aecd5e1a33}</ProjectGuid>
     <Keyword>Linux</Keyword>
     <RootNamespace>testRoot</RootNamespace>
     <MinimumVisualStudioVersion>15.0</MinimumVisualStudioVersion>
@@ -75,18 +75,28 @@
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
   <ItemGroup>
-    <ClCompile Include="adb_inject.cpp" />
-    <ClCompile Include="main.cpp" />
+    <ClCompile Include="base64.cpp" />
+    <ClCompile Include="process64_inject.cpp" />
     <ClCompile Include="ptrace_arm64_utils.cpp" />
+    <ClCompile Include="su_install_helper.cpp" />
+    <ClCompile Include="testRoot.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="base64.h" />
+    <ClInclude Include="init64_process_helper.h" />
+    <ClInclude Include="kernel_root_helper.h" />
+    <ClInclude Include="kernel_root_key.h" />
+    <ClInclude Include="maps_helper.h" />
+    <ClInclude Include="process64_inject.h" />
+    <ClInclude Include="ptrace_arm64_utils.h" />
+    <ClInclude Include="so_symbol_parser.h" />
+    <ClInclude Include="su_install_helper.h" />
+    <ClInclude Include="testRoot.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="jni\Android.mk" />
     <None Include="jni\Application.mk" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="adb_inject.h" />
-    <ClInclude Include="ptrace_arm64_utils.h" />
-    <ClInclude Include="super_root.h" />
+    <None Include="README.md" />
   </ItemGroup>
   <ItemDefinitionGroup />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

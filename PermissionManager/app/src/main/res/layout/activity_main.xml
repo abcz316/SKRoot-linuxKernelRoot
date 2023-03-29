@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".MainActivity">
+
+
+
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Super Kernel Root 完美隐藏内核ROOT演示"
+        android:textSize="20dp" />
+
+    <TextView
+        android:layout_marginTop="5dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="新一代SKRoot，挑战全网root检测手段，跟面具完全不同思路，摆脱面具被检测的弱点，完美隐藏root功能，全程不需要暂停SELinux，实现真正的SELinux  0%触碰，通用性强，通杀所有内核，不需要内核源码，直接patch内核，兼容安卓APP直接JNI调用，稳定、流畅、不闪退。"
+        />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="2dp"
+        android:background="#ff00ff"
+        />
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal"
+        >
+
+        <ScrollView
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:fadeScrollbars="false">
+
+            <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            >
+
+            <TextView
+                android:layout_marginTop="5dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="菜单功能列表："
+                />
+
+
+            <Button
+                android:id="@+id/show_myself_info_btn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+
+                android:text="1.显示自身权限信息"
+                />
+
+            <Button
+                android:layout_marginTop="5dp"
+                android:id="@+id/get_root_btn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="2.获取ROOT权限"
+                />
+
+            <Button
+                android:layout_marginTop="5dp"
+                android:id="@+id/run_root_cmd_btn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="3.执行ROOT命令"
+                />
+
+            <Button
+                android:layout_marginTop="5dp"
+                android:id="@+id/run_init_process_cmd_btn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="4.执行原生内核命令"
+                />
+
+
+            <Button
+                android:layout_marginTop="5dp"
+                android:id="@+id/su_env_install_btn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="5.安装部署su"
+                />
+
+            <Button
+                android:layout_marginTop="5dp"
+                android:id="@+id/su_env_inject_btn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="6.注入su到指定进程"
+                />
+
+                <Button
+                android:layout_marginTop="5dp"
+                android:layout_marginBottom="15dp"
+                android:id="@+id/clean_su_btn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="7.完全卸载清理su"
+                />
+
+        </LinearLayout>
+
+        </ScrollView>
+        <View
+            android:layout_width="2dp"
+            android:layout_height="match_parent"
+            android:layout_marginLeft="5dp"
+            android:layout_marginRight="5dp"
+            android:background="#ff00ff"
+            />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            >
+
+            <TextView
+                android:layout_marginTop="5dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="输出信息:"
+                />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+
+                >
+                <Button
+                    android:id="@+id/copy_info_btn"
+                    android:layout_width="70dp"
+                    android:layout_height="wrap_content"
+                    android:text="复制"
+                    />
+                <Button
+                    android:id="@+id/clean_info_btn"
+                    android:layout_width="70dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="5dp"
+                    android:text="清空"
+                    />
+            </LinearLayout>
+
+
+            <EditText
+                android:id="@+id/console_edit"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:text=""
+                android:inputType="textMultiLine"
+                android:gravity="start|top"
+                android:textIsSelectable="true"
+                android:scrollbars="vertical"
+                android:textSize="13dp"
+                />
+
+        </LinearLayout>
+    </LinearLayout>
+
+
+
+</LinearLayout>
