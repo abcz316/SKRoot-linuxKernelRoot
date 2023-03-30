@@ -91,15 +91,18 @@ std::string install_su(const char* str_root_key, const char* base_path, const ch
 		return {};
 	}
 	std::string su_hide_full_path = _su_hide_folder_path + "/" + "su";
-	if (!copy_file(origin_su_full_path, su_hide_full_path.c_str())) {
-		TRACE("copy file error.\n");
-		err = -504;
-		return {};
-	}
-	if (!set_file_allow_access_mode(su_hide_full_path.c_str())) {
-		TRACE("set file allow access mode error.\n");
-		err = -505;
-		return {};
+	//如果存在了就不要理了
+	if(access(su_hide_full_path.c_str(), F_OK) == -1) {
+		if (!copy_file(origin_su_full_path, su_hide_full_path.c_str())) {
+			TRACE("copy file error.\n");
+			err = -504;
+			return {};
+		}
+		if (!set_file_allow_access_mode(su_hide_full_path.c_str())) {
+			TRACE("set file allow access mode error.\n");
+			err = -505;
+			return {};
+		}
 	}
 	err = 0;
 	return su_hide_full_path;

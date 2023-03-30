@@ -236,7 +236,7 @@ Java_com_linux_permissionmanager_MainActivity_autoSuEnvInject(
     }
     std::string kill_cmd;
     for (pid_t t : vOut) {
-        err =  kill_process(strRootKey.c_str(), t);
+        err =  safe_kill_process(strRootKey.c_str(), t);
         sstr << "kill_ret err:"<< err << std::endl;
         if (err != 0) {
             return env->NewStringUTF(sstr.str().c_str());
