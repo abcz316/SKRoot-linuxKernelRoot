@@ -20,6 +20,18 @@ namespace {
 		return val;
 	}
 
+	// Set effective uid back to root, otherwise setres[ug]id will fail if uid isn't root
+	void set_identity(unsigned uid) {
+		if (seteuid(0)) {
+			TRACE("seteuid (root)");
+		}
+		if (setresgid(uid, uid, uid)) {
+			TRACE("setresgid (%u)", uid);
+		}
+		if (setresuid(uid, uid, uid)) {
+			TRACE("setresuid (%u)", uid);
+		}
+	}
 }
 
 void usage(int status) {
@@ -155,6 +167,10 @@ int su_client_main(int argc, char* argv[]) {
 			new_argv[1] = "-c";
 			new_argv[2] = su_req.command.data();
 		}
+		
+		// If you need it, you can unblock this line of code yourself
+		//set_identity(su_req.uid);
+
 		execvp(su_req.shell.data(), (char**)new_argv);
 	} else {
 		wait(NULL);
