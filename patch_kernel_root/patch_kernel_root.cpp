@@ -60,6 +60,7 @@ string generate_random_root_key() {
 size_t path_do_execve(const char* file_buf, const string& str_root_key, size_t  hook_func_start_addr,
 	size_t do_execve_entry_addr,
 	size_t task_struct_offset_cred,
+	size_t task_struct_offset_seccomp,
 	vector<patch_bytes_data>& vec_out_patch_bytes_data) {
 
 	size_t do_execve_entry_hook_jump_back_addr = do_execve_entry_addr + 4;
@@ -79,38 +80,40 @@ size_t path_do_execve(const char* file_buf, const string& str_root_key, size_t  
 		<< "STP X11, X12, [sp, #-16]!" << endl
 		<< "MOV X7, 0xFFFFFFFFFFFFF001" << endl
 		<< "CMP X1, X7" << endl
-		<< "BCS #112" << endl
+		<< "BCS #120" << endl
 		<< "LDR X7, [X1]" << endl
-		<< "CBZ X7, #104" << endl
+		<< "CBZ X7, #112" << endl
 		<< "ADR X8, #-84" << endl
 		<< "MOV X9, #0" << endl
 		<< "LDRB W10, [X7, X9]" << endl
-		<< "CBZ W10, #88" << endl
+		<< "CBZ W10, #96" << endl
 		<< "LDRB W11, [X8, X9]" << endl
-		<< "CBZ W11, #80" << endl
+		<< "CBZ W11, #88" << endl
 		<< "CMP W10, W11" << endl
-		<< "B.NE #72" << endl
+		<< "B.NE #80" << endl
 		<< "ADD X9, X9, 1" << endl
 		<< "CMP X9, #" << str_root_key.length() << endl
 		<< "BLT #-32" << endl
 		<< "MRS X8, SP_EL0" << endl
-		<< "LDR X8, [X8, #" << task_struct_offset_cred << "]" << endl
+		<< "LDR X10, [X8, #" << task_struct_offset_cred << "]" << endl
 		<< "MOV X7, #4" << endl
 		<< "MOV W9, WZR" << endl
-		<< "STR W9, [X8, X7]" << endl
+		<< "STR W9, [X10, X7]" << endl
 		<< "ADD X7, X7, 4" << endl
-		<< "CMP X7, #36" << endl
+		<< "CMP X7, #40" << endl
 		<< "BLT #-12" << endl
-		<< "ADD X7, X7, 4" << endl
-		<< "MOV X9, 0xFFFFFFFFFFFFFFFF" << endl
-		<< "STR X9, [X8, X7]" << endl
-		<< "ADD X7, X7, 8" << endl
+		<< "MOV W9, 0xFFFFFFFF" << endl
 		<< "CMP X7, #80" << endl
-		<< "BLT #-12" << endl
+		<< "BLT #-24" << endl
+		<< "LDXR W10, [X8]" << endl
+		<< "BIC W10, W10,#0xFFF" << endl
+		<< "STXR W11, W10, [X8]" << endl
+		<< "STR WZR, [X8, #" << task_struct_offset_seccomp << "]" << endl
+		<< "STR XZR, [X8, #" << task_struct_offset_seccomp + 8 << "]" << endl
 		<< "LDP X11, X12, [sp], #16" << endl
 		<< "LDP X9, X10, [sp], #16" << endl
 		<< "LDP X7, X8, [sp], #16" << endl
-		<< "B #" << do_execve_entry_hook_jump_back_addr - (hook_func_start_addr + 0x94) << endl;
+		<< "B #" << do_execve_entry_hook_jump_back_addr - (hook_func_start_addr + 0x9C) << endl;
 	string strAsmCode = sstrAsm.str();
 	cout << endl << strAsmCode << endl;
 	string strBytes = AsmToBytes(strAsmCode);
@@ -234,10 +237,19 @@ int main(int argc, char* argv[]) {
 
 	size_t task_struct_offset_cred = -1;
 	while (task_struct_offset_cred % 8) {
-		cout << "请输入task_struct结构体里cred的十六进制偏移值（从setresuid的头部能看到）：" << endl;
+		cout << "请输入task_struct结构体里cred的十六进制偏移值（从proc_pid_status里能看到）：" << endl;
 		cin >> hex >> task_struct_offset_cred;
 		if (task_struct_offset_cred % 8) {
-			cout << "信息输入有误" << endl;
+			cout << "输入的信息有错误" << endl;
+		}
+	}
+
+	size_t task_struct_offset_seccomp = -1;
+	while (task_struct_offset_seccomp % 8) {
+		cout << "请输入task_struct结构体里seccomp的十六进制偏移值（从proc_pid_status里能看到）：" << endl;
+		cin >> hex >> task_struct_offset_seccomp;
+		if (task_struct_offset_seccomp % 8) {
+			cout << "输入的信息有错误" << endl;
 		}
 	}
 
@@ -252,7 +264,8 @@ int main(int argc, char* argv[]) {
 		cin >> str_root_key;
 	}
 	vector<patch_bytes_data> vec_patch_bytes_data;
-	hook_func_start_addr = path_do_execve(image, str_root_key, hook_func_start_addr, do_execve_entry_addr, task_struct_offset_cred, vec_patch_bytes_data);
+	hook_func_start_addr = path_do_execve(image, str_root_key, hook_func_start_addr, do_execve_entry_addr,
+		task_struct_offset_cred, task_struct_offset_seccomp, vec_patch_bytes_data);
 	path_avc_denied(image, hook_func_start_addr, avc_denied_entry_addr, task_struct_offset_cred, vec_patch_bytes_data);
 
 	cout << "#获取ROOT权限的密匙：" << str_root_key.c_str() << endl << endl;
