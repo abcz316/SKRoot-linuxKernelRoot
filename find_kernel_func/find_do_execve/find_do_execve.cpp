@@ -6,6 +6,14 @@
 #include "../3rdparty/find_xrefs.h"
 #pragma comment(lib, "../3rdparty/capstone-4.0.2-win64/capstone.lib")
 
+
+struct partInfo {
+	size_t pos = 0;
+	char partHex[160 * 4] = { 0 };
+	BOOL bIsTBZCmdUpMiddle = FALSE;
+	BOOL bIsMovFFFFFFF5CmdUpMiddle = FALSE;
+
+};
 char* GetFileBuf(const char* lpszFilePath, int& nSize) {
 	FILE* pFile = fopen(lpszFilePath, "rb");
 	if (!pFile) {
@@ -26,7 +34,7 @@ char* GetFileBuf(const char* lpszFilePath, int& nSize) {
 		return NULL;
 	}
 	fclose(pFile);
-	
+
 	return buffer;
 }
 
@@ -49,12 +57,49 @@ char* FindBytes(char* pWaitSearchAddress, size_t nLen, char* bForSearch, size_t 
 	return 0;
 }
 
-struct partInfo {
-	DWORD pos = 0;
-	char partHex[160 * 4] = { 0 }; 
-	BOOL bIsTBZCmdUpMiddle = FALSE; 
-	BOOL bIsMovFFFFFFF5CmdUpMiddle = FALSE; 
-};
+
+
+void RemoveDuplicatePartInfo(std::vector<partInfo>& vPartInfo) {
+	std::vector<partInfo> vResult;
+	for (const partInfo& part : vPartInfo) {
+		bool bShow = false;
+		for (const partInfo& item : vResult) {
+			if (item.pos == part.pos) {
+				bShow = true;
+				break;
+			}
+		}
+		if (!bShow) {
+			vResult.push_back(part);
+		}
+	}
+	vPartInfo.clear();
+	for (const partInfo& part : vResult) {
+		vPartInfo.push_back(part);
+	}
+}
+
+void RemoveDuplicateFuncStartResultMap(std::map<size_t, std::shared_ptr<size_t>>& resultMap) {
+	std::map<size_t, std::shared_ptr<size_t>> newResultMap;
+	for (auto iter1 = resultMap.begin(); iter1 != resultMap.end(); iter1++) {
+		bool exist = false;
+		if (iter1->second && *iter1->second) {
+			for (auto iter2 = newResultMap.begin(); iter2 != newResultMap.end(); iter2++) {
+				if (iter2->second && *iter2->second == *iter1->second) {
+					exist = true;
+					break;
+				}
+			}
+		}
+		if (exist) {
+			continue;
+		}
+		newResultMap[iter1->first] = iter1->second;
+	}
+	resultMap = newResultMap;
+}
+
+
 void SearchFeature1(char* image, int size) {
 
 	char feature1[1 * 4] = {
@@ -138,7 +183,7 @@ void SearchFeature1(char* image, int size) {
 			auto memCh = *(BYTE*)((size_t)info.partHex + s2 + 3);
 			if (memCh == ch1 || memCh == ch2) {
 				if (s2 < sizeof(info.partHex) / 2) {
-					
+
 					info.bIsTBZCmdUpMiddle = TRUE;
 				}
 				vSearch2.push_back(info);
@@ -146,37 +191,6 @@ void SearchFeature1(char* image, int size) {
 			}
 		}
 	}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 	char feature2[31 * 4] = {
@@ -213,50 +227,33 @@ void SearchFeature1(char* image, int size) {
 '\x5E','\x01','\x80','\x12',
 	};
 
-	std::vector<size_t> vShowFinished;
+	std::vector<partInfo> vSearch5;
 	for (int i = 0; i < vSearch2.size(); i++) {
 		partInfo info = vSearch2.at(i);
 		for (int y = 0; y < 31; y++) {
 			for (size_t s3 = 0; s3 < sizeof(info.partHex); s3 += 4) {
 				if (memcmp((void*)((size_t)info.partHex + (size_t)s3), (BYTE*)&feature2[y * 4], 4) == 0) {
 					if (s3 < sizeof(info.partHex) / 2) {
-						
+						//MOV W?, #0xFFFFFFF5命令在上面的
 						info.bIsMovFFFFFFF5CmdUpMiddle = TRUE;
 					}
-
-					
-					bool bShow = false;
-					for (size_t showFinishedAddr : vShowFinished) {
-						if (showFinishedAddr == info.pos) {
-							bShow = true;
-							break;
-						}
-					}
-
-					if (!bShow) {
-						
-						decltype(info.pos) funcStartAddr = 0;
-						for (SSIZE_T start = sizeof(info.partHex) / 2; start >= 0; start -= 4) {
-							
-							char featureRet[1 * 4] = {
-							'\xC0','\x03','\x5F','\xD6'
-							};
-							if (memcmp((void*)((size_t)info.partHex + (size_t)start), (BYTE*)&featureRet[0 * 4], 4) == 0) {
-								SSIZE_T offset = start - sizeof(info.partHex) / 2 + 4;
-								funcStartAddr = info.pos + offset;
-								break;
-							}
-						}
-						printf("0x%p\n",funcStartAddr);
-						
-						vShowFinished.push_back(info.pos);
-					}
-
-					break;
+#ifdef _DEBUG
+					printf("Debug:0x%p, MOV W%d, #0xFFFFFFF5, TBZorTBNZ up middle:【%d】, MOV W?, #0xFFFFFFF5 up middle:【%d】\n",
+						info.pos, y, info.bIsTBZCmdUpMiddle, info.bIsMovFFFFFFF5CmdUpMiddle);
+#endif
+					vSearch5.push_back(info);
 				}
 			}
 		}
 	}
+	RemoveDuplicatePartInfo(vSearch5);
+	std::map<size_t, std::shared_ptr<size_t>> result_map;
+	for (size_t i = 0; i < vSearch5.size(); i++) {
+		result_map[vSearch5[i].pos] = std::make_shared<size_t>();
+	}
+	find_func_haed_link(image, size, result_map);
+	RemoveDuplicateFuncStartResultMap(result_map);
+	printf_head_result_map(result_map);
 }
 
 void SearchFeature2(const char* image, size_t image_size) {
