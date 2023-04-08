@@ -177,7 +177,7 @@ void find_xrefs_link(const char* image, size_t image_size,
 			parse_code_block_with_xrefs(group_name, v_code_block, result_map);
 			v_code_block.clear();
 		}
-		if ((time(NULL) - start_time) > 3) {
+		if ((time(NULL) - start_time) > 1) {
 			start_time = time(NULL);
 			float progress = (double)((double)insn->address * 100.0f/ (double)image_size);
 			progress = progress > 100.0f ? 100.0f : progress;
@@ -220,7 +220,7 @@ void find_func_haed_link(const char* image, size_t image_size,
 			parse_code_block_with_func_haed(group_name, v_code_block, result_map);
 			v_code_block.clear();
 		}
-		if ((time(NULL) - start_time) > 3) {
+		if ((time(NULL) - start_time) > 1) {
 			start_time = time(NULL);
 			float progress = (double)((double)insn->address * 100.0f/ (double)image_size);
 			progress = progress > 100.0f ? 100.0f : progress;
