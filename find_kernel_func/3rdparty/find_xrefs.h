@@ -19,24 +19,21 @@ struct code_line {
 
 bool check_code_block_is_func_head(const std::vector<code_line>& v_code_block) {
 	int stp_cnt = 0;
+	bool exist_x29_x30_sp = false;
 	for (size_t x = 0; x < v_code_block.size(); x++) {
-		if (v_code_block[x].mnemonic == "sub" && v_code_block[x].op_str.find("sp, sp, #0x") != -1) {
-			for (size_t y = x + 1; y < v_code_block.size(); y++) {
-				if (v_code_block[y].mnemonic == "stp") {
-					stp_cnt++;
-				}
+		if (v_code_block[x].mnemonic == "stp") {
+			if (v_code_block[x].op_str.find("x29, x30, [sp, #") != -1) {
+				exist_x29_x30_sp = true;
 			}
-			break;
-		} else {
-			stp_cnt = 0;
+			stp_cnt++;
 		}
 	}
-	return stp_cnt >= 2 ? true : false;
+	return stp_cnt >= 3 ? true : false;
 }
 
 uint64_t get_code_block_func_start_sub_location(const std::vector<code_line>& v_code_block) {
 	for (size_t x = 0; x < v_code_block.size(); x++) {
-		if (v_code_block[x].mnemonic == "sub" && v_code_block[x].op_str.find("sp, sp, #0x") != -1) {
+		if (v_code_block[x].mnemonic == "stp" && v_code_block[x].op_str.find("x29, x30, [sp, #") != -1) {
 			return v_code_block[x].addr;
 		}
 	}
@@ -73,7 +70,7 @@ void parse_code_block_adrp(uint64_t last_function_start_addr,
 		jump_addr += jump_op_offset;
 
 		for (auto iter = result_map.begin(); iter != result_map.end(); iter++) {
-			if (std::get<1>(iter->first) != jump_addr) {
+			if (std::get<1>(iter->first) == 0 || std::get<1>(iter->first) != jump_addr) {
 				continue;
 			}
 			if (iter->second) {
@@ -126,6 +123,10 @@ void parse_code_block_with_func_haed(const std::string& group_name,
 }
 
 void printf_xrefs_result_map(const std::map<std::tuple<std::string, size_t>, std::shared_ptr<std::vector<xrefs_info>>>& result_map) {
+	if (result_map.size() == 0) {
+		printf("Search result is empty.\n");
+		return;
+	}
 	for (auto iter = result_map.begin(); iter != result_map.end(); iter++) {
 		if (!iter->second) {
 			continue;
@@ -138,6 +139,10 @@ void printf_xrefs_result_map(const std::map<std::tuple<std::string, size_t>, std
 }
 
 void printf_head_result_map(const std::map<size_t, std::shared_ptr<size_t>>& result_map) {
+	if (result_map.size() == 0) {
+		printf("Search result is empty.\n");
+		return;
+	}
 	for (auto iter = result_map.begin(); iter != result_map.end(); iter++) {
 		if (!iter->second) {
 			continue;
@@ -148,7 +153,9 @@ void printf_head_result_map(const std::map<size_t, std::shared_ptr<size_t>>& res
 
 void find_xrefs_link(const char* image, size_t image_size,
 	std::map<std::tuple<std::string, size_t>, std::shared_ptr<std::vector<xrefs_info>>>& result_map) {
-
+	if (result_map.size() == 0) {
+		return;
+	}
 	csh handle;
 	cs_err err = cs_open(CS_ARCH_ARM64, CS_MODE_LITTLE_ENDIAN, &handle);
 	if (err) {
@@ -179,7 +186,7 @@ void find_xrefs_link(const char* image, size_t image_size,
 		}
 		if ((time(NULL) - start_time) > 1) {
 			start_time = time(NULL);
-			float progress = (double)((double)insn->address * 100.0f/ (double)image_size);
+			float progress = (double)((double)insn->address * 100.0f / (double)image_size);
 			progress = progress > 100.0f ? 100.0f : progress;
 			printf("Current search location:%p, percentage progress: %.2f%%\r", insn->address, progress);
 		}
@@ -191,7 +198,9 @@ void find_xrefs_link(const char* image, size_t image_size,
 
 void find_func_haed_link(const char* image, size_t image_size,
 	std::map<size_t, std::shared_ptr<size_t>>& result_map) {
-
+	if (result_map.size() == 0) {
+		return;
+	}
 	csh handle;
 	cs_err err = cs_open(CS_ARCH_ARM64, CS_MODE_LITTLE_ENDIAN, &handle);
 	if (err) {
@@ -222,7 +231,7 @@ void find_func_haed_link(const char* image, size_t image_size,
 		}
 		if ((time(NULL) - start_time) > 1) {
 			start_time = time(NULL);
-			float progress = (double)((double)insn->address * 100.0f/ (double)image_size);
+			float progress = (double)((double)insn->address * 100.0f / (double)image_size);
 			progress = progress > 100.0f ? 100.0f : progress;
 			printf("Current search location:%p, percentage progress: %.2f%%\r", insn->address, progress);
 		}
