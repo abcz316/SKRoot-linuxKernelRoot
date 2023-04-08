@@ -35,10 +35,10 @@ char* GetFileBuf(const char* lpszFilePath, int& nSize) {
 	return buffer;
 }
 
-char* FindBytes(char* pWaitSearchAddress, size_t nLen, char* bForSearch, size_t ifLen) {
+const char* FindBytes(const char* pWaitSearchAddress, size_t nLen, const char* bForSearch, size_t ifLen) {
 	for (size_t i = 0; i < nLen; i++) {
 		char* pData = (char*)(pWaitSearchAddress + i);
-		char* bTemForSearch = bForSearch;
+		char* bTemForSearch = (char*)bForSearch;
 		bool bContinue = false;
 		for (size_t y = 0; y < ifLen; y++, ++pData, ++bTemForSearch) {
 			if (*pData != *bTemForSearch) {
@@ -53,7 +53,6 @@ char* FindBytes(char* pWaitSearchAddress, size_t nLen, char* bForSearch, size_t 
 	}
 	return 0;
 }
-
 
 void RemoveDuplicatePartInfo(std::vector<partInfo>& vPartInfo) {
 	std::vector<partInfo> vResult;
@@ -110,7 +109,7 @@ void SearchFeature1(char* image, size_t size) {
 	};
 	std::vector<partInfo> vSearch;
 	for (int y = 0; y < 8; y++) {
-		char* pAddress = FindBytes(image, size, &feature4[y * 4], 4);
+		char* pAddress = (char*)FindBytes(image, size, &feature4[y * 4], 4);
 		while (pAddress) {
 			partInfo info;
 			if ((size - (size_t)pAddress - (size_t)image) < sizeof(info.partHex) / 2) {
@@ -124,7 +123,7 @@ void SearchFeature1(char* image, size_t size) {
 			vSearch.push_back(info);
 
 			pAddress += 4;
-			pAddress = FindBytes(pAddress, size - ((size_t)pAddress - (size_t)image), &feature4[y * 4], 4);
+			pAddress = (char*)FindBytes(pAddress, size - ((size_t)pAddress - (size_t)image), &feature4[y * 4], 4);
 		}
 
 	}
