@@ -220,13 +220,14 @@ void find_func_haed_link(const char* image, size_t image_size,
 			parse_code_block_with_func_haed(group_name, v_code_block, result_map);
 			v_code_block.clear();
 		}
-		if ((time(NULL) - start_time) > 5) {
+		if ((time(NULL) - start_time) > 3) {
 			start_time = time(NULL);
-			float progress = (float)((float)insn->address * 100 / (float)image_size);
+			float progress = (double)((double)insn->address * 100.0f/ (double)image_size);
 			progress = progress > 100.0f ? 100.0f : progress;
-			printf("progress: %.2f%%\n", progress);
+			printf("Current search location:%p, percentage progress: %.2f%%\r", insn->address, progress);
 		}
 	}
+	printf("\n");
 	cs_free(insn, 1);
 	cs_close(&handle);
 }
