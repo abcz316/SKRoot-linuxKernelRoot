@@ -243,38 +243,38 @@ int main(int argc, char* argv[]) {
 	//hook_func_start_addr = get_input_hex_number();
 
 	size_t do_execve_entry_addr = -1;
-	while (do_execve_entry_addr <= 0 || do_execve_entry_addr % 8) {
+	while (do_execve_entry_addr <= 0 || do_execve_entry_addr % 4) {
 		cout << "请输入do_execve函数的入口位置：" << endl;
 		do_execve_entry_addr = get_input_hex_number();
-		if (do_execve_entry_addr<=0 || do_execve_entry_addr % 8) {
+		if (do_execve_entry_addr<=0 || do_execve_entry_addr % 4) {
 			cout << "输入的信息有错误" << endl;
 		}
 	}
 
 	size_t avc_denied_entry_addr = -1;
-	while (avc_denied_entry_addr <= 0 || avc_denied_entry_addr % 8) {
+	while (avc_denied_entry_addr <= 0 || avc_denied_entry_addr % 4) {
 		cout << "请输入avc_denied函数的入口位置：" << endl;
 		avc_denied_entry_addr = get_input_hex_number();
-		if (avc_denied_entry_addr <= 0 || avc_denied_entry_addr % 8) {
+		if (avc_denied_entry_addr <= 0 || avc_denied_entry_addr % 4) {
 			cout << "输入的信息有错误" << endl;
 		}
 
 	}
 
 	size_t task_struct_offset_cred = -1;
-	while (task_struct_offset_cred <= 0 || task_struct_offset_cred % 8) {
+	while (task_struct_offset_cred <= 0 || task_struct_offset_cred % 4) {
 		cout << "请输入task_struct结构体里cred的十六进制偏移值（从proc_pid_status里能看到）：" << endl;
 		task_struct_offset_cred = get_input_hex_number();
-		if (task_struct_offset_cred <= 0 || task_struct_offset_cred % 8) {
+		if (task_struct_offset_cred <= 0 || task_struct_offset_cred % 4) {
 			cout << "输入的信息有错误" << endl;
 		}
 	}
 
 	size_t task_struct_offset_seccomp = -1;
-	while (task_struct_offset_seccomp <= 0 || task_struct_offset_seccomp % 8) {
+	while (task_struct_offset_seccomp <= 0 || task_struct_offset_seccomp % 4) {
 		cout << "请输入task_struct结构体里seccomp的十六进制偏移值（从proc_pid_status里能看到）：" << endl;
 		task_struct_offset_seccomp = get_input_hex_number();
-		if (task_struct_offset_seccomp <= 0 || task_struct_offset_seccomp % 8) {
+		if (task_struct_offset_seccomp <= 0 || task_struct_offset_seccomp % 4) {
 			cout << "输入的信息有错误" << endl;
 		}
 	}
