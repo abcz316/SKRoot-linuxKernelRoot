@@ -9,7 +9,12 @@
 #### 6.注入su到指定进程
 #### 7.完全卸载清理su
 
-## 流程：
+## 功能备注：
+APP应用程序拿到ROOT权限的唯一方法就是得到ROOT密匙，此密匙为48位的随机字符串，安全可靠，如若感觉长度不够，可自行修改源码拓展长度。
+
+其中【注入su到指定进程】只支持授权su到64位的APP，老式32位APP不再进行支持且没有计划进行支持，因现在市面上几乎所有APP都是64位了，比如MT文件管理器、Root Explorer文件管理器等等。
+
+## 使用流程：
 #### 1.通过拖拽内核文件置find_proc_pid_status可直接得到函数proc_pid_status的入口地址，IDA跳至该地址后按F5，肉眼可得task_struct结构体里cred与seccomp的偏移值。
 #### 2.通过拖拽内核文件置find_cred_has_capability可得函数cred_has_capability的入口地址，IDA跳至该地址后按F5，肉眼跳转可得avc_denied的入口位置。
 #### 3.通过拖拽内核文件置find_do_execve可直接得到函数do_execve的入口位置。
