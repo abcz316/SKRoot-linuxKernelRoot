@@ -5,6 +5,7 @@
 #include <string>
 #include <sstream>
 #include <vector>
+#include <algorithm>
 #include "ArmAsmHelper.h"
 
 
@@ -128,7 +129,6 @@ size_t path_do_execve(const char* file_buf, const string& str_root_key, size_t  
 	string strBytes2 = AsmToBytes(sstrAsm2.str());
 	vec_out_patch_bytes_data.push_back({ strBytes2, do_execve_entry_addr });
 	hook_func_start_addr += nHookFuncSize;
-	cout << "#下一段HOOK函数起始可写位置：" << hex << hook_func_start_addr << endl << endl;
 	return hook_func_start_addr;
 }
 
@@ -202,6 +202,20 @@ bool write_file_bytes(const char* file_path, long offset, const char* bytes, int
 	return true;
 }
 
+size_t get_input_hex_number() {
+	std::string input;
+	cin >> input;
+	transform(input.begin(), input.end(), input.begin(), ::tolower);
+	if (input.length() > 2 && input.substr(0, 1) == "0x") {
+		input = input.substr(2);
+	}
+	std::stringstream convert;
+	convert << hex << input;
+	size_t val;
+	convert >> val;
+	return val;
+}
+
 int main(int argc, char* argv[]) {
 	++argv;
 	--argc;
@@ -223,35 +237,48 @@ int main(int argc, char* argv[]) {
 		return 0;
 	}
 
+
 	//cout << "请输入空闲代码的位置：（即存放执行HOOK代码的位置）：" << endl;
 	size_t hook_func_start_addr = 0x300;
-	//cin >> hex >> hook_func_start_addr;
+	//hook_func_start_addr = get_input_hex_number();
 
-	size_t do_execve_entry_addr = 0;
-	cout << "请输入do_execve函数的入口位置：" << endl;
-	cin >> hex >> do_execve_entry_addr;
+	size_t do_execve_entry_addr = -1;
+	while (do_execve_entry_addr <= 0 || do_execve_entry_addr % 8) {
+		cout << "请输入do_execve函数的入口位置：" << endl;
+		do_execve_entry_addr = get_input_hex_number();
+		if (do_execve_entry_addr<=0 || do_execve_entry_addr % 8) {
+			cout << "输入的信息有错误" << endl;
+		}
+	}
 
-	size_t avc_denied_entry_addr = 0;
-	cout << "请输入avc_denied函数的入口位置：" << endl;
-	cin >> hex >> avc_denied_entry_addr;
+	size_t avc_denied_entry_addr = -1;
+	while (avc_denied_entry_addr <= 0 || avc_denied_entry_addr % 8) {
+		cout << "请输入avc_denied函数的入口位置：" << endl;
+		avc_denied_entry_addr = get_input_hex_number();
+		if (avc_denied_entry_addr <= 0 || avc_denied_entry_addr % 8) {
+			cout << "输入的信息有错误" << endl;
+		}
+
+	}
 
 	size_t task_struct_offset_cred = -1;
-	while (task_struct_offset_cred % 8) {
+	while (task_struct_offset_cred <= 0 || task_struct_offset_cred % 8) {
 		cout << "请输入task_struct结构体里cred的十六进制偏移值（从proc_pid_status里能看到）：" << endl;
-		cin >> hex >> task_struct_offset_cred;
-		if (task_struct_offset_cred % 8) {
+		task_struct_offset_cred = get_input_hex_number();
+		if (task_struct_offset_cred <= 0 || task_struct_offset_cred % 8) {
 			cout << "输入的信息有错误" << endl;
 		}
 	}
 
 	size_t task_struct_offset_seccomp = -1;
-	while (task_struct_offset_seccomp % 8) {
+	while (task_struct_offset_seccomp <= 0 || task_struct_offset_seccomp % 8) {
 		cout << "请输入task_struct结构体里seccomp的十六进制偏移值（从proc_pid_status里能看到）：" << endl;
-		cin >> hex >> task_struct_offset_seccomp;
-		if (task_struct_offset_seccomp % 8) {
+		task_struct_offset_seccomp = get_input_hex_number();
+		if (task_struct_offset_seccomp <= 0 || task_struct_offset_seccomp % 8) {
 			cout << "输入的信息有错误" << endl;
 		}
 	}
+
 
 	string str_root_key;
 	size_t create_new_root_key = 0;
