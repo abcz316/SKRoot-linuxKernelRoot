@@ -12,7 +12,7 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Super Kernel Root 完美隐藏内核ROOT演示"
+        android:text="Super Kernel Root内核级完美隐藏ROOT演示"
         android:textSize="20dp" />
 
     <TextView
