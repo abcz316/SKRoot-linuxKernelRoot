@@ -13,7 +13,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Super Kernel Root内核级完美隐藏ROOT演示"
-        android:textSize="20dp" />
+        android:textSize="18dp" />
 
     <TextView
         android:layout_marginTop="5dp"
