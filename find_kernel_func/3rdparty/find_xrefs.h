@@ -31,15 +31,6 @@ bool check_code_block_is_func_head(const std::vector<code_line>& v_code_block) {
 	return stp_cnt >= 3 ? true : false;
 }
 
-uint64_t get_code_block_func_start_sub_location(const std::vector<code_line>& v_code_block) {
-	for (size_t x = 0; x < v_code_block.size(); x++) {
-		if (v_code_block[x].mnemonic == "stp" && v_code_block[x].op_str.find("x29, x30, [sp, #") != -1) {
-			return v_code_block[x].addr;
-		}
-	}
-	return 0;
-}
-
 void parse_code_block_adrp(uint64_t last_function_start_addr,
 	const std::vector<code_line>& v_code_block,
 	std::map<std::tuple<std::string, size_t>, std::shared_ptr<std::vector<xrefs_info>>>& result_map) {
@@ -89,7 +80,7 @@ void parse_code_block_with_xrefs(const std::string& group_name,
 		return;
 	}
 	if (check_code_block_is_func_head(v_code_block)) {
-		last_function_start_addr = get_code_block_func_start_sub_location(v_code_block);
+		last_function_start_addr = v_code_block[0].addr;
 	}
 	parse_code_block_adrp(last_function_start_addr, v_code_block, result_map);
 }
@@ -102,7 +93,7 @@ void parse_code_block_with_func_haed(const std::string& group_name,
 		return;
 	}
 	if (check_code_block_is_func_head(v_code_block)) {
-		last_function_start_addr = get_code_block_func_start_sub_location(v_code_block);
+		last_function_start_addr = v_code_block[0].addr;
 	}
 
 	for (auto iter = result_map.begin(); iter != result_map.end(); iter++) {
