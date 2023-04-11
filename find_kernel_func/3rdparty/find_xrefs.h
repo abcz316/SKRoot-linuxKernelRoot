@@ -31,6 +31,20 @@ bool check_code_block_is_func_head(const std::vector<code_line>& v_code_block) {
 	return stp_cnt >= 3 ? true : false;
 }
 
+uint64_t get_code_block_func_entry_addr(const std::vector<code_line>& v_code_block) {
+	if (v_code_block.size() == 0) {
+		return 0;
+	}
+	for (size_t x = 0; x < v_code_block.size(); x++) {
+		if (v_code_block[x].mnemonic == "hint" && v_code_block[x].op_str == "#0x19") {
+			return v_code_block[x].addr;
+		} else if (v_code_block[x].mnemonic == "sub" && v_code_block[x].op_str.find("sp, sp, #") != -1) {
+			return v_code_block[x].addr;
+		}
+	}
+	return v_code_block[0].addr;
+}
+
 void parse_code_block_adrp(uint64_t last_function_start_addr,
 	const std::vector<code_line>& v_code_block,
 	std::map<std::tuple<std::string, size_t>, std::shared_ptr<std::vector<xrefs_info>>>& result_map) {
@@ -80,7 +94,7 @@ void parse_code_block_with_xrefs(const std::string& group_name,
 		return;
 	}
 	if (check_code_block_is_func_head(v_code_block)) {
-		last_function_start_addr = v_code_block[0].addr;
+		last_function_start_addr = get_code_block_func_entry_addr(v_code_block);
 	}
 	parse_code_block_adrp(last_function_start_addr, v_code_block, result_map);
 }
@@ -93,7 +107,7 @@ void parse_code_block_with_func_haed(const std::string& group_name,
 		return;
 	}
 	if (check_code_block_is_func_head(v_code_block)) {
-		last_function_start_addr = v_code_block[0].addr;
+		last_function_start_addr = get_code_block_func_entry_addr(v_code_block);
 	}
 
 	for (auto iter = result_map.begin(); iter != result_map.end(); iter++) {
