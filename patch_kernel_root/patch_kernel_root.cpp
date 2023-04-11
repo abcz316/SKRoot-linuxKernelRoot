@@ -6,8 +6,13 @@
 #include <sstream>
 #include <vector>
 #include <algorithm>
-#include "ArmAsmHelper.h"
-
+#if defined(_WIN16) || defined(_WIN32) || defined(_WIN64)
+#include "ArmAsmHelper_Windows.h"
+#elif defined(__linux__) || defined(__gnu_linux__)
+#include "ArmAsmHelper_Linux.h"
+#elif defined(__APPLE__)
+#include "ArmAsmHelper_Linux.h"
+#endif
 
 using namespace std;
 

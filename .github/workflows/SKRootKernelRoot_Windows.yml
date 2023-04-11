@@ -1,0 +1,37 @@
+name: SKRootKernelRoot_Windows_CIBuild
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Compile SKRoot Kernel Root on Windows
+    runs-on: windows-latest
+    env:
+      ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+    steps:
+      - uses: actions/checkout@v2
+      - name: Add MSBuild to PATH
+        uses: microsoft/setup-msbuild@v1.1
+      - name: List files in current directory
+        run: |
+          Get-ChildItem -Path "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\" -Filter vcvarsall.bat -File -Recurse
+          Get-ChildItem -Path "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\" -Filter vcvars64.bat -File -Recurse
+      - name: Compile patch_kernel_root
+        shell: cmd
+        run: |
+          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+          cl patch_kernel_root\patch_kernel_root.cpp /EHsc /Fe:patch_kernel_root /Ipatch_kernel_root /I "C:\Program Files (x86)\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.35.32215\include"
+      - name: List files in current directory
+        run: |
+          ls patch_kernel_root
+          Get-ChildItem -Path . -Filter 'patch_kernel_root.*' -File -Recurse
+          Get-ChildItem -Path . -Filter '*.exe' -File -Recurse
+      - name: Upload artifacts
+        uses: Actions/upload-artifact@main
+        with:
+          name: patch_kernel_root
+          path: patch_kernel_root.exe
