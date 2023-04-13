@@ -89,7 +89,7 @@ void SearchFeature(const char* image, size_t image_size) {
 				const auto& item = v_feature_text_tracerpid[i];
 				if ((image_size - offset) >= item.data_len) {
 					if (memcmp(paddr, item.sp_data.get(), item.data_len) == 0) {
-						printf("TracerPid[%zd] text->0x%p\n", i, (void*)offset);
+						printf("TracerPid[%zd] text->0x%llx\n", i, (void*)offset);
 						tracerpid_text_offset = offset;
 						break;
 					}
@@ -102,7 +102,7 @@ void SearchFeature(const char* image, size_t image_size) {
 				const auto& item = v_feature_text_seccomp[i];
 				if ((image_size - offset) >= item.data_len) {
 					if (memcmp(paddr, item.sp_data.get(), item.data_len) == 0) {
-						printf("Seccomp[%zd] text->0x%p\n", i,  (void*)offset);
+						printf("Seccomp[%zd] text->0x%llx\n", i,  (void*)offset);
 						seccomp_text_offset = offset;
 						break;
 					}
