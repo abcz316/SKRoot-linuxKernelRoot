@@ -16,7 +16,7 @@ APP应用程序拿到ROOT权限的唯一方法就是得到ROOT密匙，此密匙
 
 ## 使用流程：
 #### 1.通过拖拽内核文件置find_proc_pid_status可直接得到函数proc_pid_status的入口地址，IDA跳至该地址后按F5，肉眼可得task_struct结构体里cred与seccomp的偏移值。
-#### 2.通过拖拽内核文件置find_cred_has_capability可得函数cred_has_capability的入口地址，IDA跳至该地址后按F5，肉眼跳转可得avc_denied的入口位置。
+#### 2.通过拖拽内核文件置find_avc_denied可得相关函数的入口地址，IDA跳至该地址后按F5，肉眼跳转可得avc_denied的入口位置。
 #### 3.通过拖拽内核文件置find_do_execve可直接得到函数do_execve的入口位置。
 #### 4.通过拖拽内核文件置patch_kernel_root，输入以上得到的信息值，开始补丁内核，同时会自动生成ROOT密匙，直至补丁完成。
 #### 5.启动PermissionManager，输入ROOT密匙值，开始享受舒爽的ROOT环境。

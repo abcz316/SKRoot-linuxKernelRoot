@@ -57,6 +57,12 @@ const char* FindBytes(const char* pWaitSearchAddress, size_t nLen, const char* b
 	return 0;
 }
 
+static inline size_t abs_sub(size_t a1, size_t a2) {
+	size_t b1 = a1 > a2 ? a1 : a2;
+	size_t b2 = a1 > a2 ? a2 : a1;
+	return b1 - b2;
+}
+
 void RemoveDuplicatePartInfo(std::vector<partInfo>& vPartInfo) {
 	std::vector<partInfo> vResult;
 	for (const partInfo& part : vPartInfo) {
@@ -236,7 +242,7 @@ void SearchFeature1(char* image, int size) {
 						info.bIsMovFFFFFFF5CmdUpMiddle = TRUE;
 					}
 #ifdef _DEBUG
-					printf("Debug:0x%p, MOV W%d, #0xFFFFFFF5, TBZorTBNZ up middle:【%d】, MOV W?, #0xFFFFFFF5 up middle:【%d】\n",
+					printf("Debug:0x%llx, MOV W%d, #0xFFFFFFF5, TBZorTBNZ up middle:【%d】, MOV W?, #0xFFFFFFF5 up middle:【%d】\n",
 						info.pos, y, info.bIsTBZCmdUpMiddle, info.bIsMovFFFFFFF5CmdUpMiddle);
 #endif
 					vSearch5.push_back(info);
@@ -258,26 +264,67 @@ void SearchFeature2(const char* image, size_t image_size) {
 	char feature_text_dev[13] = {
 	0x2F, 0x64, 0x65, 0x76, 0x2F, 0x66, 0x64, 0x2F, 0x25, 0x64, 0x2F, 0x25, 0x73
 	};
+	char feature_text_runasinitprocess[26] = {
+	0x01, 0x36, 0x52, 0x75, 0x6E, 0x20, 0x25, 0x73, 0x20, 0x61, 0x73, 0x20, 0x69, 0x6E, 0x69, 0x74,
+	0x20, 0x70, 0x72, 0x6F, 0x63, 0x65, 0x73, 0x73, 0x0A, 0x00
+	};
+	char feature_text_sbininit[] = {
+	"/sbin/init"
+	};
 	size_t dev_text_offset = 0;
+	size_t runasinitprocess_text_offset = 0;
+	size_t sbininit_text_offset = 0;
 
 	for (size_t offset = 0; offset < image_size; offset++) {
 		const char* paddr = image + offset;
-		if ((image_size - offset) >= sizeof(feature_text_dev)) {
-			if (dev_text_offset == 0 && memcmp(paddr, &feature_text_dev, sizeof(feature_text_dev)) == 0) {
-				printf("dev fd text->0x%p\n", (void*)offset);
+		if (dev_text_offset == 0 && (image_size - offset) >= sizeof(feature_text_dev)) {
+			if (memcmp(paddr, &feature_text_dev, sizeof(feature_text_dev)) == 0) {
+				printf("dev text->0x%llx\n", (void*)offset);
 				dev_text_offset = offset;
-				break;
+			}
+		}
+		if (runasinitprocess_text_offset == 0 && (image_size - offset) >= sizeof(feature_text_runasinitprocess)) {
+			if (memcmp(paddr, &feature_text_runasinitprocess, sizeof(feature_text_runasinitprocess)) == 0) {
+				printf("runasinitprocess text->0x%llx\n", (void*)offset);
+				runasinitprocess_text_offset = offset;
+			}
+		}
+		if (sbininit_text_offset == 0 && (image_size - offset) >= sizeof(feature_text_sbininit)) {
+			if (memcmp(paddr, &feature_text_sbininit, sizeof(feature_text_sbininit)) == 0) {
+				printf("sbininit text->0x%llx\n", (void*)offset);
+				sbininit_text_offset = offset;
 			}
 		}
 	}
-	if (!dev_text_offset) {
+
+	printf("\n");
+
+	std::map<std::tuple<std::string, size_t>, std::shared_ptr<std::vector<xrefs_info>>> result_map;
+	result_map[{"[do_execve]", dev_text_offset}] = std::make_shared<std::vector<xrefs_info>>();
+	result_map[{"[run_init_process]", runasinitprocess_text_offset}] = std::make_shared<std::vector<xrefs_info>>();
+	result_map[{"[kernel_init]", sbininit_text_offset}] = std::make_shared<std::vector<xrefs_info>>();
+	for (auto iter = result_map.begin(); iter != result_map.end();) {
+		if (std::get<1>(iter->first) == 0) {
+			iter = result_map.erase(iter);
+		} else {
+			iter++;
+		}
+	}
+	if (result_map.size() == 0) {
 		printf("[ERROR] text offset empty.\n");
 		return;
 	}
-	std::map<std::tuple<std::string, size_t>, std::shared_ptr<std::vector<xrefs_info>>> result_map;
-	result_map[{"do_execve function", dev_text_offset}] = std::make_shared<std::vector<xrefs_info>>();
 	find_xrefs_link((const char*)image, image_size, result_map);
 	printf_xrefs_result_map(result_map);
+	
+	auto sp_vec_rip = result_map[{"[run_init_process]", runasinitprocess_text_offset}];
+	auto sp_vec_ki = result_map[{"[kernel_init]", sbininit_text_offset}];
+	if (sp_vec_rip && sp_vec_ki && sp_vec_rip->size() && sp_vec_ki->size()) {
+		if (abs_sub(sp_vec_rip->at(0).xrefs_location, sp_vec_ki->at(0).xrefs_location) <= 4*8) {
+			std::cout << "请注意！当前[run_init_process]已被内联进[kernel_init]，即在[kernel_init]里能找到[do_execve]" << std::endl;
+			std::cout << "提示：当[run_init_process]与[kernel_init]的搜索结果表明是同一片的代码执行位置时，意味着[run_init_process]已被内联进[kernel_init]" << std::endl;
+		}
+	}
 }
 
 int main(int argc, char* argv[]) {

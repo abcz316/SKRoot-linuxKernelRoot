@@ -55,14 +55,14 @@ void parse_code_block_adrp(uint64_t last_function_start_addr,
 
 		int xD = 0;
 		size_t jump_addr = 0;
-		if (sscanf(v_code_block[x].op_str.c_str(), "x%d, #0x%p", &xD, &jump_addr) != 2) {
+		if (sscanf(v_code_block[x].op_str.c_str(), "x%d, #0x%llx", &xD, &jump_addr) != 2) {
 			continue;
 		}
 		size_t jump_op_offset = 0;
 		for (size_t y = x + 1; y < v_code_block.size(); y++) {
 			if (v_code_block[y].mnemonic == "add") { //TODO: if have sub?
 				int x1, x2;
-				if (sscanf(v_code_block[y].op_str.c_str(), "x%d, x%d, #0x%p", &x1, &x2, &jump_op_offset) != 3) {
+				if (sscanf(v_code_block[y].op_str.c_str(), "x%d, x%d, #0x%llx", &x1, &x2, &jump_op_offset) != 3) {
 					continue;
 				}
 				if (x1 != x2 || x1 != xD) {
@@ -137,8 +137,8 @@ void printf_xrefs_result_map(const std::map<std::tuple<std::string, size_t>, std
 			continue;
 		}
 		for (auto& xrefs_item : *iter->second) {
-			printf("%s: xrefs location->0x%p, belong to function entry->0x%p\n", std::get<0>(iter->first).c_str(),
-				xrefs_item.xrefs_location, xrefs_item.belong_function_entry);
+			printf("function %s xrefs location is->0x%llx,\nfunction %s entry range is->0x%llx\n\n", std::get<0>(iter->first).c_str(),
+				xrefs_item.xrefs_location, std::get<0>(iter->first).c_str(), xrefs_item.belong_function_entry);
 		}
 	}
 }
@@ -152,7 +152,7 @@ void printf_head_result_map(const std::map<size_t, std::shared_ptr<size_t>>& res
 		if (!iter->second) {
 			continue;
 		}
-		printf("key location->0x%p, belong to function entry->0x%p\n", iter->first, *iter->second);
+		printf("key location is->0x%llx, function entry range is->0x%llx\n", iter->first, *iter->second);
 	}
 }
 
@@ -193,9 +193,10 @@ void find_xrefs_link(const char* image, size_t image_size,
 			start_time = time(NULL);
 			float progress = (double)((double)insn->address * 100.0f / (double)image_size);
 			progress = progress > 100.0f ? 100.0f : progress;
-			printf("Current search location:%p, percentage progress: %.2f%%\r", insn->address, progress);
+			printf("Current search location:0x%llx, percentage progress: %.2f%%\r", insn->address, progress);
 		}
 	}
+	printf("\n");
 	printf("\n");
 	cs_free(insn, 1);
 	cs_close(&handle);
@@ -238,9 +239,10 @@ void find_func_haed_link(const char* image, size_t image_size,
 			start_time = time(NULL);
 			float progress = (double)((double)insn->address * 100.0f / (double)image_size);
 			progress = progress > 100.0f ? 100.0f : progress;
-			printf("Current search location:%p, percentage progress: %.2f%%\r", insn->address, progress);
+			printf("Current search location:0x%llx, percentage progress: %.2f%%\r", insn->address, progress);
 		}
 	}
+	printf("\n");
 	printf("\n");
 	cs_free(insn, 1);
 	cs_close(&handle);
