@@ -82,7 +82,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        setContentView(R.layout.activity_main);
 
         updateRootStatus();
         Button test_root_btn = findViewById(R.id.test_root_btn);
