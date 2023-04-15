@@ -47,7 +47,7 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
-    private String rootKey = "wxqI1MByBPNTLPwgzEsoVE9RRvvZIZNJ4XKEZnnYaPjHUURy";
+    private String rootKey = "mUBcNll4mhenWlvYEWZF4yOHm5aOPklyq0LAUIAbV0L7R0Ub";
     private String suBasePath = "/data/local/tmp";
     private String lastInputCmd = "id";
 
@@ -86,26 +86,15 @@ public class MainActivity extends AppCompatActivity {
                         mEdit.putString("rootKey", rootKey);
                         mEdit.commit();
                     }
-
-                    ;
                 });
         builder.show();
 
 
-        Button show_myself_info_btn = findViewById(R.id.show_myself_info_btn);
-        show_myself_info_btn.setOnClickListener(new View.OnClickListener() {
+        Button test_root_btn = findViewById(R.id.test_root_btn);
+        test_root_btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                showConsoleMsg(getCapabilityInfo());
-            }
-        });
-
-        Button get_root_btn = findViewById(R.id.get_root_btn);
-        get_root_btn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                int ret = getRoot(rootKey);
-                showConsoleMsg("getRoot: " + ret);
+                showConsoleMsg(testRoot(rootKey));
             }
         });
 
@@ -168,10 +157,6 @@ public class MainActivity extends AppCompatActivity {
         su_env_install_btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(getUid() == 0) {
-                    showConsoleMsg("【错误】请重新打开APP，在普通权限下点击此按钮，不要将APP提升为ROOT");
-                    return;
-                }
                 //1.获取su工具文件路径
                 String suOriginalFilePath = WirteSuToolsFilePath("su", MainActivity.this);
                 showConsoleMsg("su origin path:"+ suOriginalFilePath);
@@ -196,10 +181,6 @@ public class MainActivity extends AppCompatActivity {
         su_env_inject_btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(getUid() == 0) {
-                    showConsoleMsg("【错误】请重新打开APP，在普通权限下点击此按钮，不要将APP提升为ROOT");
-                    return;
-                }
                 showSelectAppWindow();
             }
         });
@@ -437,11 +418,7 @@ public class MainActivity extends AppCompatActivity {
         return suFilePath;
     }
 
-    public native int getUid();
-
-    public native String getCapabilityInfo();
-
-    public native int getRoot(String rootKey);
+    public native String testRoot(String rootKey);
 
     public native String runRootCmd(String rootKey, String cmd);
 

@@ -51,21 +51,12 @@
                 android:text="菜单功能列表："
                 />
 
-
-            <Button
-                android:id="@+id/show_myself_info_btn"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-
-                android:text="1.显示自身权限信息"
-                />
-
             <Button
                 android:layout_marginTop="5dp"
-                android:id="@+id/get_root_btn"
+                android:id="@+id/test_root_btn"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="2.获取ROOT权限"
+                android:text="1.测试ROOT权限"
                 />
 
             <Button
@@ -73,7 +64,7 @@
                 android:id="@+id/run_root_cmd_btn"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="3.执行ROOT命令"
+                android:text="2.执行ROOT命令"
                 />
 
             <Button
@@ -81,7 +72,7 @@
                 android:id="@+id/run_init_process_cmd_btn"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="4.执行原生内核命令"
+                android:text="3.执行原生内核命令"
                 />
 
 
@@ -90,7 +81,7 @@
                 android:id="@+id/su_env_install_btn"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="5.安装部署su"
+                android:text="4.安装部署su"
                 />
 
             <Button
@@ -98,7 +89,7 @@
                 android:id="@+id/su_env_inject_btn"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="6.注入su到指定进程"
+                android:text="5.注入su到指定进程"
                 />
 
                 <Button
@@ -107,7 +98,7 @@
                 android:id="@+id/clean_su_btn"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="7.完全卸载清理su"
+                android:text="6.完全卸载清理su"
                 />
 
         </LinearLayout>

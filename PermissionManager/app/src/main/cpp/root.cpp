@@ -53,8 +53,6 @@ string getCapabilityInfo()
     sstrCapInfo << "cap effective:" << hex <<cap_data->effective << "," << std::endl
     <<"cap permitted:"<< hex << cap_data->permitted<< "," << std::endl
     <<"cap inheritable:"<< hex <<cap_data->inheritable<< std::endl;
-    sstrCapInfo << "native check SELinux status:"<< (kernel_root::is_disable_selinux_status() ? "0" : "1") <<"\n";
-
     FILE * fp = popen("getenforce", "r");
     if (fp)
     {
@@ -68,23 +66,8 @@ string getCapabilityInfo()
     return sstrCapInfo.str();
 }
 
-extern "C" JNIEXPORT jint JNICALL
-Java_com_linux_permissionmanager_MainActivity_getUid(
-        JNIEnv* env,
-        jobject /* this */) {
-    return getuid();
-}
-
 extern "C" JNIEXPORT jstring JNICALL
-Java_com_linux_permissionmanager_MainActivity_getCapabilityInfo(
-        JNIEnv* env,
-        jobject /* this */) {
-
-    return env->NewStringUTF(getCapabilityInfo().c_str());
-}
-
-extern "C" JNIEXPORT jint JNICALL
-Java_com_linux_permissionmanager_MainActivity_getRoot(
+Java_com_linux_permissionmanager_MainActivity_testRoot(
         JNIEnv* env,
         jobject /* this */,
         jstring rootKey) {
@@ -92,7 +75,34 @@ Java_com_linux_permissionmanager_MainActivity_getRoot(
     string strRootKey= str1;
     env->ReleaseStringUTFChars(rootKey, str1);
 
-    return kernel_root::get_root(strRootKey.c_str());
+    std::string result;
+    fork_pipe_info finfo;
+    ssize_t err = 0;
+    if(fork_pipe_child_process(finfo)) {
+        err = kernel_root::get_root(strRootKey.c_str());
+        result = "getRoot:";
+        result += std::to_string(err);
+        result += "\n\n";
+        if(err == 0) {
+            result += getCapabilityInfo();
+            result += "\n\n";
+        }
+        write_errcode_to_father(finfo, err);
+        write_string_to_father(finfo, result);
+        _exit(0);
+        return 0;
+    }
+    err = 0;
+    if(!wait_fork_child_process(finfo)) {
+        err = -1120001;
+    } else {
+        if(!read_errcode_from_child(finfo, err)) {
+            err = -1120002;
+        } else if(!read_string_from_child(finfo, result)) {
+            err = -1120003;
+        }
+    }
+    return env->NewStringUTF(result.c_str());
 }
 
 extern "C" JNIEXPORT jstring JNICALL
@@ -242,7 +252,6 @@ Java_com_linux_permissionmanager_MainActivity_autoSuEnvInject(
             return env->NewStringUTF(sstr.str().c_str());
         }
     }
-
     pid_t pid;
     err = safe_wait_and_find_cmdline_process(strRootKey.c_str(), strTargetProcessCmdline.c_str(), 60*1000, pid);
 
