@@ -74,47 +74,87 @@ size_t path_do_execve(const char* file_buf, const string& str_root_key, size_t  
 	hook_func_start_addr += nHookFuncSize;
 
 	stringstream sstrAsm;
-	sstrAsm
-		<< "MOV X0, X0" << endl
-		<< "STP X7, X8, [sp, #-16]!" << endl
-		<< "STP X9, X10, [sp, #-16]!" << endl
-		<< "STP X11, X12, [sp, #-16]!" << endl
-		<< "MOV X7, 0xFFFFFFFFFFFFF001" << endl
-		<< "CMP X1, X7" << endl
-		<< "BCS #120" << endl
-		<< "LDR X7, [X1]" << endl
-		<< "CBZ X7, #112" << endl
-		<< "ADR X8, #-84" << endl
-		<< "MOV X9, #0" << endl
-		<< "LDRB W10, [X7, X9]" << endl
-		<< "CBZ W10, #96" << endl
-		<< "LDRB W11, [X8, X9]" << endl
-		<< "CBZ W11, #88" << endl
-		<< "CMP W10, W11" << endl
-		<< "B.NE #80" << endl
-		<< "ADD X9, X9, 1" << endl
-		<< "CMP X9, #" << str_root_key.length() << endl
-		<< "BLT #-32" << endl
-		<< "MRS X8, SP_EL0" << endl
-		<< "LDR X10, [X8, #" << task_struct_offset_cred << "]" << endl
-		<< "MOV X7, #4" << endl
-		<< "MOV W9, WZR" << endl
-		<< "STR W9, [X10, X7]" << endl
-		<< "ADD X7, X7, 4" << endl
-		<< "CMP X7, #40" << endl
-		<< "BLT #-12" << endl
-		<< "MOV W9, 0xFFFFFFFF" << endl
-		<< "CMP X7, #80" << endl
-		<< "BLT #-24" << endl
-		<< "LDXR W10, [X8]" << endl
-		<< "BIC W10, W10,#0xFFF" << endl
-		<< "STXR W11, W10, [X8]" << endl
-		<< "STR WZR, [X8, #" << task_struct_offset_seccomp << "]" << endl
-		<< "STR XZR, [X8, #" << task_struct_offset_seccomp + 8 << "]" << endl
-		<< "LDP X11, X12, [sp], #16" << endl
-		<< "LDP X9, X10, [sp], #16" << endl
-		<< "LDP X7, X8, [sp], #16" << endl
-		<< "B #" << do_execve_entry_hook_jump_back_addr - (hook_func_start_addr + 0x9C) << endl;
+	if (task_struct_offset_seccomp > 0) {
+		sstrAsm
+			<< "MOV X0, X0" << endl
+			<< "STP X7, X8, [sp, #-16]!" << endl
+			<< "STP X9, X10, [sp, #-16]!" << endl
+			<< "STP X11, X12, [sp, #-16]!" << endl
+			<< "MOV X7, 0xFFFFFFFFFFFFF001" << endl
+			<< "CMP X1, X7" << endl
+			<< "BCS #120" << endl
+			<< "LDR X7, [X1]" << endl
+			<< "CBZ X7, #112" << endl
+			<< "ADR X8, #-84" << endl
+			<< "MOV X9, #0" << endl
+			<< "LDRB W10, [X7, X9]" << endl
+			<< "CBZ W10, #96" << endl
+			<< "LDRB W11, [X8, X9]" << endl
+			<< "CBZ W11, #88" << endl
+			<< "CMP W10, W11" << endl
+			<< "B.NE #80" << endl
+			<< "ADD X9, X9, 1" << endl
+			<< "CMP X9, #" << str_root_key.length() << endl
+			<< "BLT #-32" << endl
+			<< "MRS X8, SP_EL0" << endl
+			<< "LDR X10, [X8, #" << task_struct_offset_cred << "]" << endl
+			<< "MOV X7, #4" << endl
+			<< "MOV W9, WZR" << endl
+			<< "STR W9, [X10, X7]" << endl
+			<< "ADD X7, X7, 4" << endl
+			<< "CMP X7, #40" << endl
+			<< "BLT #-12" << endl
+			<< "MOV W9, 0xFFFFFFFF" << endl
+			<< "CMP X7, #80" << endl
+			<< "BLT #-24" << endl
+			<< "LDXR W10, [X8]" << endl
+			<< "BIC W10, W10,#0xFFF" << endl
+			<< "STXR W11, W10, [X8]" << endl
+			<< "STR WZR, [X8, #" << task_struct_offset_seccomp << "]" << endl
+			<< "STR XZR, [X8, #" << task_struct_offset_seccomp + 8 << "]" << endl
+			<< "LDP X11, X12, [sp], #16" << endl
+			<< "LDP X9, X10, [sp], #16" << endl
+			<< "LDP X7, X8, [sp], #16" << endl
+			<< "B #" << do_execve_entry_hook_jump_back_addr - (hook_func_start_addr + 0x9C) << endl;
+	} else {
+		sstrAsm
+			<< "MOV X0, X0" << endl
+			<< "STP X7, X8, [sp, #-16]!" << endl
+			<< "STP X9, X10, [sp, #-16]!" << endl
+			<< "STP X11, X12, [sp, #-16]!" << endl
+			<< "MOV X7, 0xFFFFFFFFFFFFF001" << endl
+			<< "CMP X1, X7" << endl
+			<< "BCS #100" << endl
+			<< "LDR X7, [X1]" << endl
+			<< "CBZ X7, #112" << endl
+			<< "ADR X8, #-84" << endl
+			<< "MOV X9, #0" << endl
+			<< "LDRB W10, [X7, X9]" << endl
+			<< "CBZ W10, #76" << endl
+			<< "LDRB W11, [X8, X9]" << endl
+			<< "CBZ W11, #68" << endl
+			<< "CMP W10, W11" << endl
+			<< "B.NE #60" << endl
+			<< "ADD X9, X9, 1" << endl
+			<< "CMP X9, #" << str_root_key.length() << endl
+			<< "BLT #-32" << endl
+			<< "MRS X8, SP_EL0" << endl
+			<< "LDR X10, [X8, #" << task_struct_offset_cred << "]" << endl
+			<< "MOV X7, #4" << endl
+			<< "MOV W9, WZR" << endl
+			<< "STR W9, [X10, X7]" << endl
+			<< "ADD X7, X7, 4" << endl
+			<< "CMP X7, #40" << endl
+			<< "BLT #-12" << endl
+			<< "MOV W9, 0xFFFFFFFF" << endl
+			<< "CMP X7, #80" << endl
+			<< "BLT #-24" << endl
+			<< "LDP X11, X12, [sp], #16" << endl
+			<< "LDP X9, X10, [sp], #16" << endl
+			<< "LDP X7, X8, [sp], #16" << endl
+			<< "B #" << do_execve_entry_hook_jump_back_addr - (hook_func_start_addr + 0x88) << endl;
+	}
+	
 	string strAsmCode = sstrAsm.str();
 	cout << endl << strAsmCode << endl;
 	string strBytes = AsmToBytes(strAsmCode);
@@ -270,20 +310,26 @@ int main(int argc, char* argv[]) {
 		}
 	}
 
-	size_t task_struct_offset_seccomp = -1;
-	while (task_struct_offset_seccomp <= 0 || task_struct_offset_seccomp % 4) {
-		cout << "请输入task_struct结构体里seccomp的十六进制偏移值（从proc_pid_status里能看到）：" << endl;
-		task_struct_offset_seccomp = get_input_hex_number();
-		if (task_struct_offset_seccomp <= 0 || task_struct_offset_seccomp % 4) {
-			cout << "输入的信息有错误" << endl;
+	cout << "请选择应用进程在获取ROOT权限的时候，是否需要提升进程的seccomp，此项为非必需项（1需要；2不需要）：" << endl;
+	cout << "说明：提升进程的seccomp可以使进程直接获得完整的API能力，如不提升则应用进程也能间接通过注入init来获得完整的API能力。" << endl;
+	size_t task_struct_offset_seccomp = 0;
+
+	size_t is_patch_seccomp = 0;
+	cin >> dec >> is_patch_seccomp;
+	if (is_patch_seccomp == 1) {
+		while (task_struct_offset_seccomp <= 0 || task_struct_offset_seccomp % 4) {
+			cout << "请输入task_struct结构体里seccomp的十六进制偏移值（从proc_pid_status里能看到）：" << endl;
+			task_struct_offset_seccomp = get_input_hex_number();
+			if (task_struct_offset_seccomp <= 0 || task_struct_offset_seccomp % 4) {
+				cout << "输入的信息有错误" << endl;
+			}
 		}
 	}
-
 
 	string str_root_key;
 	size_t create_new_root_key = 0;
 	cout << "是否需要自动随机生成ROOT密匙（1需要；2不需要）：" << endl;
-	cin >> hex >> create_new_root_key;
+	cin >> dec >> create_new_root_key;
 	if (create_new_root_key == 1) {
 		str_root_key = generate_random_root_key();
 	} else {
