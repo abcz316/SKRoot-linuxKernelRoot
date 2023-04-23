@@ -171,6 +171,8 @@ public class MainActivity extends AppCompatActivity {
                 //3.复制su的路径到剪贴板
                 String suFullPath = getLastInstallSuFullPath();
                 showConsoleMsg("lastInstallSuFullPath:" + suFullPath);
+				showConsoleMsg("安装部署su成功");
+				showConsoleMsg("【请注意】su的有效期仅为当天，过期后则需卸载并重新安装部署su。（如需移除此过期限制，请自行更改源代码）");
                 copyEditText(suFullPath);
                 Toast.makeText(v.getContext(), "su路径已复制到剪贴板", Toast.LENGTH_SHORT).show();
 
