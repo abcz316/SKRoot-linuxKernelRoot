@@ -15,7 +15,7 @@ APP应用程序拿到ROOT权限的唯一方法就是得到ROOT密匙，此密匙
 其中【注入su到指定进程】只支持授权su到64位的APP，老式32位APP不再进行支持，因市面上几乎所有APP都是64位，例如MT文件管理器、Root Explorer文件管理器等等。
 
 ## 使用流程：
-#### 1.通过拖拽内核文件置find_proc_pid_status可直接得到函数proc_pid_status的入口地址，IDA跳至该地址后按F5，肉眼可得task_struct结构体里cred与seccomp的偏移值。
+#### 1.通过拖拽内核文件置find_proc_pid_status可直接得到函数proc_pid_status的入口地址，IDA跳至该地址后按F5，肉眼可得task_struct结构体里cred或seccomp的偏移值（seccomp为非必需项）。
 #### 2.通过拖拽内核文件置find_avc_denied可得相关函数的入口地址，IDA跳至该地址后按F5，肉眼跳转可得avc_denied的入口位置。
 #### 3.通过拖拽内核文件置find_do_execve可直接得到函数do_execve的入口位置。
 #### 4.通过拖拽内核文件置patch_kernel_root，输入以上得到的信息值，开始补丁内核，同时会自动生成ROOT密匙，直至补丁完成。

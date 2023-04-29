@@ -1,18 +1,10 @@
 package com.linux.sutest;
 
+import androidx.appcompat.app.AppCompatActivity;
+
 import android.graphics.Color;
 import android.os.Bundle;
-
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.android.material.snackbar.Snackbar;
-
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
-
 import android.view.View;
-
-import android.view.Menu;
-import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.TextView;
 
@@ -22,6 +14,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 
 public class MainActivity extends AppCompatActivity {
+
+
 
     //执行root命令
     public static final String runRootCmd(String cmd, boolean bWait) {
@@ -85,7 +79,6 @@ public class MainActivity extends AppCompatActivity {
         }
         return false;
     }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -101,7 +94,6 @@ public class MainActivity extends AppCompatActivity {
         });
 
     }
-
     private void updateRootStatus(){
         //获取ROOT权限检查
         TextView root_status_txt = findViewById(R.id.root_status_txt);
@@ -113,5 +105,4 @@ public class MainActivity extends AppCompatActivity {
             root_status_txt.setTextColor(Color.rgb(255,0,0));
         }
     }
-
 }
