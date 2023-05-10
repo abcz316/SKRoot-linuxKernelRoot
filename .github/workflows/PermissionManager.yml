@@ -1,0 +1,30 @@
+name: PermissionManager_CIBuild
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup JDK
+        uses: actions/setup-java@v2
+        with:
+          distribution: "adopt"
+          java-version: 11
+      - name: Build with Gradle
+        run: |
+          cd PermissionManager
+          chmod +x ./gradlew
+          ./gradlew assembleRelease
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v2
+        if: ${{ !github.event.pull_request }}
+        with:
+          path: "PermissionManager/app/build/outputs/apk/release/app-release-unsigned.apk"
+          name: app-release-unsigned.apk
