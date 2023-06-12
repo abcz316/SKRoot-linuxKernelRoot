@@ -4,6 +4,7 @@
 #include <windows.h>
 #include <fstream>
 #include <sstream>
+#include <filesystem>
 
 std::string AsmToBytes(const std::string& strArm64Asm) {
 	//获取汇编文本
@@ -13,6 +14,12 @@ std::string AsmToBytes(const std::string& strArm64Asm) {
 	::GetModuleFileNameA(NULL, szFileName, MAX_PATH);
 	std::string strMyPath = szFileName;
 	strMyPath = strMyPath.substr(0, strMyPath.find_last_of('\\') + 1);
+
+	std::string asmFilePath = strMyPath + "aarch64-linux-android-as.exe";
+	if (!std::filesystem::exists(asmFilePath)) {
+		std::cerr << "Error: aarch64-linux-android-as.exe not found. Please extract this file from the Android NDK." << std::endl;
+		exit(EXIT_FAILURE);
+	}
 
 	//写出input.txt
 	std::ofstream inputFile;
@@ -76,7 +83,7 @@ const char HEX[16] = {
 };
 
 /* Convert byte array to hex string. */
-std::string bytesToHexString(const byte* input, size_t length) {
+std::string bytesToHexString(const unsigned char* input, size_t length) {
 
 	std::string str;
 	str.reserve(length << 1);

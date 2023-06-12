@@ -66,7 +66,7 @@ size_t path_do_execve(const char* file_buf, const string& str_root_key, size_t  
 
 	size_t do_execve_entry_hook_jump_back_addr = do_execve_entry_addr + 4;
 
-	string str_show_root_key_mem_byte = bytesToHexString((const byte*)str_root_key.c_str(), str_root_key.length());
+	string str_show_root_key_mem_byte = bytesToHexString((const unsigned char*)str_root_key.c_str(), str_root_key.length());
 	cout << "#生成的ROOT密匙字节集：" << str_show_root_key_mem_byte.c_str() << endl << endl;
 	vec_out_patch_bytes_data.push_back({ str_show_root_key_mem_byte, hook_func_start_addr });
 
@@ -161,7 +161,7 @@ size_t path_do_execve(const char* file_buf, const string& str_root_key, size_t  
 	nHookFuncSize = strBytes.length() / 2;
 	char hookOrigCmd[4] = { 0 };
 	memcpy(&hookOrigCmd, (void*)((size_t)file_buf + do_execve_entry_addr), sizeof(hookOrigCmd));
-	string strHookOrigCmd = bytesToHexString((const byte*)hookOrigCmd, sizeof(hookOrigCmd));
+	string strHookOrigCmd = bytesToHexString((const unsigned char*)hookOrigCmd, sizeof(hookOrigCmd));
 	strBytes = strHookOrigCmd + strBytes.substr(0x4 * 2);
 	vec_out_patch_bytes_data.push_back({ strBytes, hook_func_start_addr });
 	stringstream sstrAsm2;
@@ -212,7 +212,7 @@ size_t path_avc_denied(const char* file_buf, size_t hook_func_start_addr, size_t
 	size_t nHookFuncSize = strBytes.length() / 2;
 	char hookOrigCmd[4] = { 0 };
 	memcpy(&hookOrigCmd, (void*)((size_t)file_buf + avc_denied_entry_addr), sizeof(hookOrigCmd));
-	string strHookOrigCmd = bytesToHexString((const byte*)hookOrigCmd, sizeof(hookOrigCmd));
+	string strHookOrigCmd = bytesToHexString((const unsigned char*)hookOrigCmd, sizeof(hookOrigCmd));
 	strBytes = strBytes.substr(0, (0x6C) * 2) + strHookOrigCmd + strBytes.substr((0x6C + 4) * 2);
 	vec_out_patch_bytes_data.push_back({ strBytes, hook_func_start_addr });
 	stringstream sstrAsm2;
