@@ -45,7 +45,7 @@ void show_capability_info() {
 	}
 
 	printf("cap effective:0x%x, cap permitted:0x%x, cap inheritable:0x%x\n", cap_data->effective, cap_data->permitted, cap_data->inheritable);
-	printf("native check SELinux status: %d\n", kernel_root::is_disable_selinux_status() ? 0 : 1);
+	printf("native check SELinux status: %d\n", kernel_root::is_enable_selinux() ? 1 : 0);
 
 	FILE* fp = popen("getenforce", "r");
 	if (fp) {

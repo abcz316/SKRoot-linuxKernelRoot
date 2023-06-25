@@ -27,8 +27,8 @@ namespace kernel_root {
 		return 0;
 	}
 
-	//检查系统SELinux的是否为禁用状态
-	static bool is_disable_selinux_status() {
+	//是否启用SELinux
+	static bool is_enable_selinux() {
 		int cnt = 0;
 		DIR* dir = opendir("/");
 		if (NULL != dir) {
