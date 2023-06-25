@@ -41,7 +41,7 @@ namespace kernel_root {
 			}
 			closedir(dir);
 		}
-		return cnt > 3 ? true : false;
+		return cnt > 5 ? false : true;
 	}
 
 	//执行root命令，返回值为0则代表成功
