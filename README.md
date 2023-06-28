@@ -9,6 +9,17 @@
 #### 6.注入su到指定进程
 #### 7.完全卸载清理su
 
+## 效果：
+#### 实验数百台机器，全部稳定运行（如红米K20\K30\K40\K50\K60、小米8\9\10\11\12\13、小米平板5、红魔5\6\7、联想、三星、一加、ROG2\3等等）
+#### 过市面上所有主流APP的ROOT检测，如农业XX、交X12XX3等...
+#### 无需理会谷歌GKI
+#### 让所有的ROOT检测手段都回归尘土吧，愿世界迎来一个美好的ROOT时代！
+
+![image](https://github.com/abcz316/linuxKernelRoot/blob/master/ScreenCap/1.png)
+![image](https://github.com/abcz316/linuxKernelRoot/blob/master/ScreenCap/2.png)
+![image](https://github.com/abcz316/linuxKernelRoot/blob/master/ScreenCap/3.png)
+![image](https://github.com/abcz316/linuxKernelRoot/blob/master/ScreenCap/4.png)
+
 ## 功能备注：
 APP应用程序拿到ROOT权限的唯一方法就是得到ROOT密匙，此密匙为48位的随机字符串，安全可靠，如若感觉长度不够，可自行修改源码拓展长度。
 
@@ -23,14 +34,13 @@ APP应用程序拿到ROOT权限的唯一方法就是得到ROOT密匙，此密匙
 
 想要从没有源码的内核文件中得到这4个值的方法其实有很多，至少有4种以上，其实直接用IDA搜一下就有了~，这里为了大家方便，简易制作了三个“脚本工具”并附其源码。
 
- 
-## 效果：
-#### 实验数百台机器，全部稳定运行（如红米K20\K30\K40\K50\K60、小米8\9\10\11\12\13、小米平板5、红魔5\6\7、联想、三星、一加、ROG2\3等等）
-#### 过市面上所有主流APP的ROOT检测，如农业XX、交X12XX3等...
-#### 无需理会谷歌GKI
-#### 让所有的ROOT检测手段都回归尘土吧，愿世界迎来一个美好的ROOT时代！
-
-![image](https://github.com/abcz316/linuxKernelRoot/blob/master/ScreenCap/1.png)
-![image](https://github.com/abcz316/linuxKernelRoot/blob/master/ScreenCap/2.png)
-![image](https://github.com/abcz316/linuxKernelRoot/blob/master/ScreenCap/3.png)
-![image](https://github.com/abcz316/linuxKernelRoot/blob/master/ScreenCap/4.png)
+## 问题排查：
+如发现第三方应用程序依然有侦测行为，请按照以下步骤进行排查：
+#### 1.内核必须保证是基于官方原版进行修改，而非自行编译或使用第三方源码编译。
+#### 2.如果你曾经使用过Magisk，你应该先将手机完全刷机，因为Magisk可能会残留日志文件等信息。
+#### 3.补丁后的内核不能同时刷入ab分区，只能在系统当前启动分区中刷入，而另一个分区应刷入官方原版内核。例如，只对boot_a分区进行刷入。
+#### 3.Android APP很可能会被特征检测。虽然这里仅提供APP调用教程，但在实际使用中，请你自行隐藏APP，或者尝试卸载APP，并改为使用纯命令行方式调用的testRoot.cpp。
+#### 4.在老旧版本的Android系统中，应用程序无需任何权限即可访问/data/local/tmp目录。在这种情况下，你应该升级Android系统版本，或者卸载SU。
+#### 5.如果你的手机在解锁后会发出警报，你需要自行解决这个问题，因为它与SKRoot无关。
+#### 6.检查应用程序是否在检测Bootloader锁，而不是ROOT权限。如果是这样，你应该安装SKRoot的隐藏Bootloader锁模块。
+#### 7.请检查SELinux状态是否被恶意软件禁用。
