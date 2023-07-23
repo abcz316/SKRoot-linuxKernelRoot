@@ -10,10 +10,10 @@
 #### 7.完全卸载清理su
 
 ## 效果：
-#### 实验设备包括：红米K20\K30\K40\K50\K60、小米8\9\10\11\12\13、小米平板5\6、红魔5\6\7、联想、三星、一加、ROG2\3等，支持型号非常多。测试结果显示，SKRoot能够在所支持设备上非常稳定的运行。
-#### 过市面上所有主流APP的ROOT检测，如农业XX、交X12XX3等...
-#### 无需理会谷歌GKI
-#### 让所有的ROOT检测手段都回归尘土吧，愿世界迎来一个美好的ROOT时代！
+* **实验设备包括：红米K20\K30\K40\K50\K60、小米8\9\10\11\12\13、小米平板5\6、红魔5\6\7、联想、三星、一加、ROG2\3等，支持型号非常多。测试结果显示，SKRoot能够在所支持设备上非常稳定的运行。**
+* **过市面上所有主流APP的ROOT检测，如农业XX、交X12XX3等...**
+* **无需理会谷歌GKI**
+* **让所有的ROOT检测手段都回归尘土吧，愿世界迎来一个美好的ROOT时代！**
 
 ![image](https://github.com/abcz316/linuxKernelRoot/blob/master/ScreenCap/1.png)
 ![image](https://github.com/abcz316/linuxKernelRoot/blob/master/ScreenCap/2.png)
