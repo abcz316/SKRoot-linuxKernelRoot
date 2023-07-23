@@ -9,6 +9,17 @@
 #### 6.注入su到指定进程
 #### 7.完全卸载清理su
 
+## 效果：
+#### 实验数百台机器，全部稳定运行（如红米K20\K30\K40\K50\K60、小米8\9\10\11\12\13、小米平板5\6、红魔5\6\7、联想、三星、一加、ROG2\3等等）
+#### 过市面上所有主流APP的ROOT检测，如农业XX、交X12XX3等...
+#### 无需理会谷歌GKI
+#### 让所有的ROOT检测手段都回归尘土吧，愿世界迎来一个美好的ROOT时代！
+
+![image](https://github.com/abcz316/linuxKernelRoot/blob/master/ScreenCap/1.png)
+![image](https://github.com/abcz316/linuxKernelRoot/blob/master/ScreenCap/2.png)
+![image](https://github.com/abcz316/linuxKernelRoot/blob/master/ScreenCap/3.png)
+![image](https://github.com/abcz316/linuxKernelRoot/blob/master/ScreenCap/4.png)
+
 ## 功能备注：
 APP应用程序拿到ROOT权限的唯一方法就是得到ROOT密匙，此密匙为48位的随机字符串，安全可靠，如若感觉长度不够，可自行修改源码拓展长度。
 
@@ -23,14 +34,13 @@ APP应用程序拿到ROOT权限的唯一方法就是得到ROOT密匙，此密匙
 
 想要从没有源码的内核文件中得到这4个值的方法其实有很多，至少有4种以上，其实直接用IDA搜一下就有了~，这里为了大家方便，简易制作了三个“脚本工具”并附其源码。
 
- 
-## 效果：
-#### 实验数百台机器，全部稳定运行（如红米K20\K30\K40\K50\K60、小米8\9\10\11\12\13、小米平板5、红魔5\6\7、联想、三星、一加、ROG2\3等等）
-#### 过市面上所有主流APP的ROOT检测，如农业XX、交X12XX3等...
-#### 无需理会谷歌GKI
-#### 让所有的ROOT检测手段都回归尘土吧，愿世界迎来一个美好的ROOT时代！
-
-![image](https://github.com/abcz316/linuxKernelRoot/blob/master/ScreenCap/1.png)
-![image](https://github.com/abcz316/linuxKernelRoot/blob/master/ScreenCap/2.png)
-![image](https://github.com/abcz316/linuxKernelRoot/blob/master/ScreenCap/3.png)
-![image](https://github.com/abcz316/linuxKernelRoot/blob/master/ScreenCap/4.png)
+## 问题排查：
+如发现第三方应用程序依然有侦测行为，请按照以下步骤进行排查：
+#### 1.内核必须保证是基于官方原版进行修改，而非自行编译或使用第三方源码编译。
+#### 2.如果你曾经使用过Magisk，你应该先将手机完全刷机，因为Magisk可能会残留日志文件等信息。
+#### 3.不要安装需要ROOT权限的工具，或涉及系统环境检测的应用，如冰箱、黑洞、momo和密匙认证等。这些应用的存在可能会被用作证据，推断你的设备已获取ROOT权限。以冰箱为例，这款应用需要ROOT权限才能运行，如果你的设备上安装了冰箱，那就可能被用来佐证你的设备处于ROOT环境。实际测试中我们发现，"X租号"APP就会进行此类环境检测。因此，我们强烈建议不安装这些工具。若确需使用，请在使用结束后立即卸载，以降低异常环境判断风险。
+#### 3.Android APP应用可能会被检测其特征。这里我们仅提供APP调用的教学，在实际使用中，请尽量隐藏应用，或者考虑卸载应用，改用纯命令行方式调用的testRoot.cpp。
+#### 4.在老旧版本的Android系统中，应用程序无需任何权限即可访问/data/local/tmp目录。在这种情况下，你应该升级Android系统版本，或者卸载SU。
+#### 5.如果你的手机在解锁后会发出警报，你需要自行解决这个问题，因为它与SKRoot无关。
+#### 6.检查应用程序是否在检测Bootloader锁，而不是ROOT权限。如果是这样，你应该安装SKRoot的隐藏Bootloader锁模块。
+#### 7.请检查SELinux状态是否被恶意软件禁用。
