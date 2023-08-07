@@ -107,6 +107,7 @@ static ssize_t wait_and_find_cmdline_process(const char* str_root_key, const cha
 	if (kernel_root::get_root(str_root_key) != 0) {
 		return -1000021;
 	}
+	setpriority(PRIO_PROCESS, 0, -20);
 	clock_t start = clock();
 	while (1) {
 		sleep(0);
