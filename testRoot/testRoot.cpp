@@ -13,7 +13,7 @@
 #define ROOT_KEY "OM4kKoPVGFG2tnVFcs1PJ1qp6HtVymjV0CoTgFDmMdSDALve"
 
 std::string get_executable_directory() {
-    char processdir[4096] = { 0 }; // Consider using PATH_MAX from limits.h
+    char processdir[4096] = {0}; // Consider using PATH_MAX from limits.h
     ssize_t path_len = readlink("/proc/self/exe", processdir, sizeof(processdir));
     if(path_len > 0) {
 		char* path_end = strrchr(processdir, '/');
@@ -173,18 +173,36 @@ void test_clean_su_env() {
 int main(int argc, char* argv[]) {
 	printf(
 		"======================================================\n"
-		"本工具名称: Linux ARM64 完美隐藏ROOT演示\n"
+		"本工具名称: Linux ARM64 完美隐藏ROOT演示\n\n"
 		"本工具功能列表：\n"
-		"\t1.显示自身权限信息\n"
-		"\t2.获取ROOT权限\n"
-		"\t3.执行ROOT命令\n"
-		"\t4.执行原生内核命令\n"
-		"\t5.安装部署隐藏版su\n"
-		"\t6.注入su到指定进程\n"
-		"\t7.完全卸载清理su\n"
-		"\t新一代SKRoot，跟面具完全不同思路，摆脱面具被检测的弱点，完美隐藏root功能，兼容安卓APP直接JNI稳定调用。\n"
+
+		"1. 显示自身权限信息\n"
+		"\tUsage: testRoot id\n\n"
+
+		"2. 获取ROOT权限\n"
+		"\tUsage: testRoot get\n\n"
+
+		"3. 执行ROOT命令\n"
+		"\tUsage: testRoot cmd <command>\n\n"
+
+		"4. 执行原生内核命令\n"
+		"\tUsage: testRoot init <command>\n\n"
+
+		"5. 安装部署su\n"
+		"\tUsage: testRoot su\n\n"
+
+		"6. 注入su到指定进程\n"
+		"\tUsage: testRoot process <process-name>\n\n"
+
+		"7. 完全卸载清理su\n"
+		"\tUsage: testRoot cleansu\n\n"
+		
+		"本工具特点：\n"
+		"新一代SKRoot，跟面具完全不同思路，摆脱面具被检测的弱点，完美隐藏root功能，兼容安卓APP直接JNI稳定调用。\n"
 		"======================================================\n"
+		"如需帮助，请使用对应的命令，或者查看上面的菜单。\n"
 	);
+
 	++argv;
 	--argc;
 	if (argc == 0 || strcmp(argv[0], "id") == 0) { //1.显示自身权限信息
@@ -195,7 +213,7 @@ int main(int argc, char* argv[]) {
 		test_run_root_cmd(argc - 1, argv + 1);
 	} else if (argc >= 2 && strcmp(argv[0], "init") == 0) { //4.执行原生内核命令
 		test_run_init64_cmd(argc - 1, argv + 1);
-	} else if (strcmp(argv[0], "su") == 0) { //5.安装部署隐藏版su
+	} else if (strcmp(argv[0], "su") == 0) { //5.安装部署su
 		test_install_su_env();
 	} else if (argc > 1 && strcmp(argv[0], "process") == 0) { //6.注入su到指定进程
 		test_su_env_inject(argv[1]);
