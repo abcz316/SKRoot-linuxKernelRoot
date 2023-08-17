@@ -21,9 +21,9 @@ add_library( # Sets the name of the library.
         SHARED
 
         # Provides a relative path to your source file(s).
-        ../../../../../testRoot/process64_inject.cpp
-        ../../../../../testRoot/ptrace_arm64_utils.cpp
-        ../../../../../testRoot/su_install_helper.cpp
+        ../../../../../testRoot/kernel_root_kit/kernel_root_kit_process64_inject.cpp
+        ../../../../../testRoot/kernel_root_kit/kernel_root_kit_ptrace_arm64_utils.cpp
+        ../../../../../testRoot/kernel_root_kit/kernel_root_kit_su_install_helper.cpp
         ../../../../../testRoot/base64.cpp
         root.cpp)
 

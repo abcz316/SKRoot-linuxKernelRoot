@@ -4,7 +4,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <sstream>
-
+namespace kernel_root {
 /*生成随机数*/
 static void rand_str(char* dest, int n) {
 	int i, randno;
@@ -15,6 +15,7 @@ static void rand_str(char* dest, int n) {
 		*dest = stardstring[randno];
 		dest++;
 	}
+}
 }
 
 #endif /* _RANDOM_UTILS_H_ */

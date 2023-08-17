@@ -1,10 +1,9 @@
 ﻿#ifndef _PROCESS64_INJECT_H_
 #define _PROCESS64_INJECT_H_
-#include "testRoot.h"
 #include <unistd.h>
 #include <vector>
 
-
+namespace kernel_root {
 //注入64位进程远程执行命令
 struct process64_env {
 	char key[0x1000]; //key和name的值不能大于pagesize
@@ -49,4 +48,5 @@ ssize_t safe_inject_process_run_exit_wrapper(const char* str_root_key, int targe
 
 ssize_t kill_process(const char* str_root_key, pid_t pid);
 ssize_t safe_kill_process(const char* str_root_key, pid_t pid);
+}
 #endif /* _PROCESS64_INJECT_H_ */

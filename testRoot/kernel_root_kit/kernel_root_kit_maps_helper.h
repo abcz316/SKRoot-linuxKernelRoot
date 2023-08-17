@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <iostream>
 
-
+namespace kernel_root {
 static std::string find_process_libc_so_path(pid_t pid) {
 	char line[1024] = { 0 };
 	std::string so_path;
@@ -82,6 +82,6 @@ static void* get_module_base(pid_t pid, const char* module_name) {
 
 	return (void*)addr;
 }
-
+}
 
 #endif /* MAPS_HELPER_H_ */

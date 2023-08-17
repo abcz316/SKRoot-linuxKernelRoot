@@ -1,5 +1,5 @@
-#ifndef _SAFE_FORK_HELPER_H_
-#define _SAFE_FORK_HELPER_H_
+#ifndef _KERNEL_ROOT_KIT_FORK_HELPER_H_
+#define _KERNEL_ROOT_KIT_FORK_HELPER_H_
 #include <string.h>
 #include <iostream>
 #include <fstream>
@@ -8,8 +8,8 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <sys/wait.h>
 
+namespace kernel_root {
 class fork_base_info {
 public:
 	fork_base_info() { reset(); }
@@ -243,5 +243,6 @@ static bool read_fd_from_child(const fork_socketpair_info & finfo, int & fd) {
 	fd = *(int*)CMSG_DATA(&cm);
 	return true;
 }
+}
 
-#endif /* _SAFE_FORK_HELPER_H_ */
+#endif /* _KERNEL_ROOT_KIT_FORK_HELPER_H_ */

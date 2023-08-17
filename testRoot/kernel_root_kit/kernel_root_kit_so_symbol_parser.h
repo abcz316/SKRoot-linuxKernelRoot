@@ -11,7 +11,7 @@
 #include <map>
 #include <vector>
 #include <errno.h>
-
+namespace kernel_root {
 static bool is_elf64_file(int fd) {
 	Elf64_Ehdr elf;
 	int r = read(fd, &elf, sizeof(elf));
@@ -83,5 +83,6 @@ static int get_so_symbol_addr(const char* so_path, std::map<std::string, uint64_
 	munmap(mod, size);
 	close(fd);
 	return 0;
+}
 }
 #endif /* SO_SYMBOL_PARSER_H_ */

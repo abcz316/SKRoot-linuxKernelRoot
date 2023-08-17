@@ -7,11 +7,7 @@
 #include <thread>
 #include <sys/capability.h>
 
-#include "../../../../../testRoot/testRoot.h"
-#include "../../../../../testRoot/kernel_root_helper.h"
-#include "../../../../../testRoot/process64_inject.h"
-#include "../../../../../testRoot/init64_process_helper.h"
-#include "../../../../../testRoot/su_install_helper.h"
+#include "../../../../../testRoot/kernel_root_kit/kernel_root_kit_umbrella.h"
 
 using namespace std;
 
@@ -76,7 +72,7 @@ Java_com_linux_permissionmanager_MainActivity_testRoot(
     env->ReleaseStringUTFChars(rootKey, str1);
 
     std::string result;
-    fork_pipe_info finfo;
+    kernel_root::fork_pipe_info finfo;
     ssize_t err = 0;
     if(fork_pipe_child_process(finfo)) {
         err = kernel_root::get_root(strRootKey.c_str());
@@ -144,7 +140,7 @@ Java_com_linux_permissionmanager_MainActivity_runInit64ProcessCmd(
 
 
     ssize_t  err;
-    string result = safe_run_init64_cmd_wrapper(strRootKey.c_str(), strCmd.c_str(), err);
+    string result = kernel_root::safe_run_init64_cmd_wrapper(strRootKey.c_str(), strCmd.c_str(), err);
 
     stringstream sstr;
     sstr << "runInit64Cmd err:" << err << ", result:" << result;
@@ -174,7 +170,7 @@ Java_com_linux_permissionmanager_MainActivity_installSu(
     stringstream sstr;
     //安装su工具套件
     ssize_t err;
-    std::string su_hide_full_path = safe_install_su(strRootKey.c_str(), strBasePath.c_str(), strOriginSuFullPath.c_str(), err);
+    std::string su_hide_full_path = kernel_root::safe_install_su(strRootKey.c_str(), strBasePath.c_str(), strOriginSuFullPath.c_str(), err);
     sstr << "install su err:" << err<<", su_hide_full_path:" << su_hide_full_path << std::endl;
     g_last_su_full_path = su_hide_full_path;
     if (err == 0) {
@@ -207,7 +203,7 @@ Java_com_linux_permissionmanager_MainActivity_uninstallSu(
 
     stringstream sstr;
 
-    ssize_t err = safe_uninstall_su(strRootKey.c_str(), strBasePath.c_str());
+    ssize_t err = kernel_root::safe_uninstall_su(strRootKey.c_str(), strBasePath.c_str());
     sstr << "uninstallSu err:" << err << std::endl;
     if (err != 0) {
         return env->NewStringUTF(sstr.str().c_str());
@@ -239,21 +235,21 @@ Java_com_linux_permissionmanager_MainActivity_autoSuEnvInject(
 
     //杀光所有历史进程
     std::vector<pid_t> vOut;
-    ssize_t err = safe_find_all_cmdline_process(strRootKey.c_str(), strTargetProcessCmdline.c_str(), vOut);
+    ssize_t err = kernel_root::safe_find_all_cmdline_process(strRootKey.c_str(), strTargetProcessCmdline.c_str(), vOut);
     sstr << "find_all_cmdline_process err:"<< err<<", cnt:"<<vOut.size() << std::endl;
     if (err != 0) {
         return env->NewStringUTF(sstr.str().c_str());
     }
     std::string kill_cmd;
     for (pid_t t : vOut) {
-        err =  safe_kill_process(strRootKey.c_str(), t);
+        err =  kernel_root::safe_kill_process(strRootKey.c_str(), t);
         sstr << "kill_ret err:"<< err << std::endl;
         if (err != 0) {
             return env->NewStringUTF(sstr.str().c_str());
         }
     }
     pid_t pid;
-    err = safe_wait_and_find_cmdline_process(strRootKey.c_str(), strTargetProcessCmdline.c_str(), 60*1000, pid);
+    err = kernel_root::safe_wait_and_find_cmdline_process(strRootKey.c_str(), strTargetProcessCmdline.c_str(), 60*1000, pid);
 
     std::string folder_path = g_last_su_full_path;
     int n = folder_path.find_last_of("/");
@@ -264,7 +260,7 @@ Java_com_linux_permissionmanager_MainActivity_autoSuEnvInject(
     if (err != 0) {
         return env->NewStringUTF(sstr.str().c_str());
     }
-    err = safe_inject_process_env64_PATH_wrapper(strRootKey.c_str(), pid, folder_path.c_str());
+    err = kernel_root::safe_inject_process_env64_PATH_wrapper(strRootKey.c_str(), pid, folder_path.c_str());
     sstr << "autoSuEnvInject ret val:" << err << std::endl;
     if (err != 0) {
         return env->NewStringUTF(sstr.str().c_str());

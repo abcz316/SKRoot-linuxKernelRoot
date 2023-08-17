@@ -1,15 +1,15 @@
 LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
-LOCAL_CPPFLAGS += -std=c++17 -fPIE -frtti -fvisibility=hidden
+LOCAL_CPPFLAGS += -std=c++17 -fPIE -fvisibility=hidden -frtti -fexceptions
 LOCAL_LDFLAGS += -fPIE -pie
 LOCAL_DISABLE_FATAL_LINKER_WARNINGS := true
-LOCAL_MODULE := testRoot.out
+LOCAL_MODULE := testRoot
 LOCAL_SRC_FILES := \
 ../testRoot.cpp \
 ../base64.cpp \
-../process64_inject.cpp \
-../ptrace_arm64_utils.cpp \
-../su_install_helper.cpp
+../kernel_root_kit/kernel_root_kit_process64_inject.cpp \
+../kernel_root_kit/kernel_root_kit_ptrace_arm64_utils.cpp \
+../kernel_root_kit/kernel_root_kit_su_install_helper.cpp
 
 include $(BUILD_EXECUTABLE)

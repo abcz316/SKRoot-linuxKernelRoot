@@ -1,10 +1,22 @@
 ﻿#include "su.h"
 #include "log.h"
 #include "su_hide_path_utils.h"
-#include "../testRoot/kernel_root_helper.h"
-#include "../testRoot/myself_path_utils.h"
+#include "../testRoot/kernel_root_kit/kernel_root_kit_command.h"
 
 namespace {
+	std::string get_executable_directory() {
+		char processdir[4096] = { 0 }; // Consider using PATH_MAX from limits.h
+		ssize_t path_len = readlink("/proc/self/exe", processdir, sizeof(processdir));
+		if(path_len > 0) {
+			char* path_end = strrchr(processdir, '/');
+			if(path_end) {
+				*path_end = '\0';
+				return std::string(processdir);
+			}
+		}
+		return {};
+	}
+
 	/*
 	 * Bionic's atoi runs through strtol().
 	 * Use our own implementation for faster conversion.
@@ -55,11 +67,8 @@ void usage(int status) {
 }
 
 static inline std::string get_root_key() {
-	char myself_path[1024] = { 0 };
-	char processname[1024];
-	get_executable_path(myself_path, processname, sizeof(myself_path));
-	TRACE("su start: my directory:%s, processname:%s\n", myself_path, processname);
-	std::string str_root_key = parse_root_key_by_myself_path(myself_path);
+	std::string myself_path = get_executable_directory();
+	std::string str_root_key = kernel_root::parse_root_key_by_myself_path(myself_path.c_str());
 	return str_root_key;
 }
 
@@ -167,7 +176,7 @@ int su_client_main(int argc, char* argv[]) {
 			new_argv[1] = "-c";
 			new_argv[2] = su_req.command.data();
 		}
-		
+
 		// If you need it, you can unblock this line of code yourself
 		//set_identity(su_req.uid);
 

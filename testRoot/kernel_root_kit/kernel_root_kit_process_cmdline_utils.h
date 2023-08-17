@@ -7,9 +7,9 @@
 #include <string.h>
 #include <vector>
 #include <time.h>
-#include "kernel_root_helper.h"
-#include "kernel_root_key.h"
+#include "kernel_root_kit_command.h"
 
+namespace kernel_root {
 static ssize_t find_all_cmdline_process(const char* str_root_key, const char* target_cmdline, std::vector<pid_t> & vOut)
 {
 	int pid;
@@ -107,7 +107,6 @@ static ssize_t wait_and_find_cmdline_process(const char* str_root_key, const cha
 	if (kernel_root::get_root(str_root_key) != 0) {
 		return -1000021;
 	}
-	setpriority(PRIO_PROCESS, 0, -20);
 	clock_t start = clock();
 	while (1) {
 		sleep(0);
@@ -199,6 +198,7 @@ static ssize_t safe_wait_and_find_cmdline_process(const char* str_root_key, cons
 		}
 	}
 	return err;
+}
 }
 
 #endif /* PROCESS_CMDLINE_UTILS_H_ */

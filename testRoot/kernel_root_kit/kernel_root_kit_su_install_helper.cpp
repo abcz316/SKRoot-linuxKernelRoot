@@ -1,8 +1,7 @@
-#include "su_install_helper.h"
-#include "kernel_root_helper.h"
-#include "init64_process_helper.h"
-#include "testRoot.h"
-#include "../su/su_hide_path_utils.h"
+#include "kernel_root_kit_su_install_helper.h"
+#include "kernel_root_kit_command.h"
+#include "kernel_root_kit_init64_process_helper.h"
+#include "../../su/su_hide_path_utils.h"
 #include <string.h>
 #include <dirent.h>
 #include <time.h>
@@ -13,7 +12,7 @@
 #include <sys/stat.h> 
 #include <sys/types.h>
 #include <sys/xattr.h>
-
+namespace kernel_root {
 /*
  * xattr name for SELinux attributes.
  * This may have been exported via Kernel uapi header.
@@ -92,7 +91,6 @@ std::string install_su(const char* str_root_key, const char* base_path, const ch
 		return {};
 	}
 	std::string su_hide_full_path = _su_hide_folder_path + "/" + "su";
-	//如果存在了就不要理了
 	if(access(su_hide_full_path.c_str(), F_OK) == -1) {
 		if (!copy_file(origin_su_full_path, su_hide_full_path.c_str())) {
 			TRACE("copy file error.\n");
@@ -185,6 +183,7 @@ ssize_t safe_uninstall_su(const char* str_root_key, const char* base_path, const
 		}
 	}
 	return err;
+}
 }
 
 

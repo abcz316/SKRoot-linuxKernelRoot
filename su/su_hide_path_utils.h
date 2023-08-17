@@ -9,11 +9,12 @@
 #include <time.h>
 #include "base64.h"
 #include "log.h"
-#include "../testRoot/random_utils.h"
+#include "../testRoot/kernel_root_kit/kernel_root_kit_random.h"
 
 #define RANDOM_GUID_LEN 10
 #define ROOT_KEY_LEN 48
 
+namespace kernel_root {
 namespace {
 	namespace __private {
 
@@ -196,5 +197,5 @@ static inline std::string parse_root_key_by_myself_path(const char* myself_path)
 	}
 	return decodeRootKey.substr(decodeRootKey.length() - ROOT_KEY_LEN);
 }
-
+}
 #endif /* _SU_HIDDEN_FOLDER_PATH_UTILS_H_ */

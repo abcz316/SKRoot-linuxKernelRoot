@@ -1,7 +1,6 @@
-﻿#ifndef KERNEL_ROOT_HELPER_H_
-#define KERNEL_ROOT_HELPER_H_
+﻿#ifndef _KERNEL_ROOT_KIT_COMMAND_H_
+#define _KERNEL_ROOT_KIT_COMMAND_H_
 
-#ifdef __linux__
 #include <iostream>
 #include <stdio.h>
 #include <stdint.h>
@@ -16,7 +15,7 @@
 #include <sys/syscall.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include "safe_fork_helper.h"
+#include "kernel_root_kit_fork_helper.h"
 
 namespace kernel_root {
 
@@ -24,10 +23,11 @@ namespace kernel_root {
 	static inline ssize_t get_root(const char* str_root_key) {
 		if (str_root_key == NULL) { return -100; }
 		syscall(__NR_execve, str_root_key, NULL, NULL);
+		if(getuid() != 0) { return -101; }
 		return 0;
 	}
 
-	//是否启用SELinux
+	//检查系统SELinux的是否为禁用状态
 	static bool is_enable_selinux() {
 		int cnt = 0;
 		DIR* dir = opendir("/");
@@ -101,8 +101,4 @@ namespace kernel_root {
 		return result;
 	}
 }
-
-#endif /*__linux__*/
-
-
-#endif /* KERNEL_ROOT_HELPER_H_ */
+#endif /* _KERNEL_ROOT_KIT_COMMAND_H_ */

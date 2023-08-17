@@ -3,10 +3,11 @@
 #include <unistd.h>
 #include <thread>
 #include <atomic>
-#include "random_utils.h"
-#include "process64_inject.h"
-#include "process_cmdline_utils.h"
+#include "kernel_root_kit_random.h"
+#include "kernel_root_kit_process64_inject.h"
+#include "kernel_root_kit_process_cmdline_utils.h"
 
+namespace kernel_root {
 //注入init64进程远程执行命令
 static std::string run_init64_cmd_wrapper(
 	const char* str_root_key,
@@ -53,5 +54,6 @@ static std::string safe_run_init64_cmd_wrapper(
 		}
 	}
 	return str_cmd_result;
+}
 }
 #endif /* INIT64_HELPER_H_ */

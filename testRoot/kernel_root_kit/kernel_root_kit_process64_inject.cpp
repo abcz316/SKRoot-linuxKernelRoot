@@ -15,11 +15,14 @@
 #include <sys/wait.h>
 #include <map>
 
-#include "process64_inject.h"
-#include "ptrace_arm64_utils.h"
-#include "maps_helper.h"
-#include "kernel_root_helper.h"
-#include "so_symbol_parser.h"
+#include "kernel_root_kit_process64_inject.h"
+#include "kernel_root_kit_ptrace_arm64_utils.h"
+#include "kernel_root_kit_maps_helper.h"
+#include "kernel_root_kit_command.h"
+#include "kernel_root_kit_so_symbol_parser.h"
+#include "kernel_root_kit_log.h"
+
+namespace kernel_root {
 
 int safe_load_libc64_run_cmd_func_addr(
 	const char* so_path,
@@ -37,7 +40,7 @@ int safe_load_libc64_run_cmd_func_addr(
 
 	void* p_so_addr = get_module_base(-1, so_path);
 	if (p_so_addr) {
-		TRACE("myself have this so.\n");
+		ROOT_PRINTF("myself have this so.\n");
 		//自身有这个so
 		void* p_so = dlopen(so_path, RTLD_NOW | RTLD_GLOBAL);
 		if (p_so) {
@@ -257,7 +260,7 @@ std::string inject_process64_run_cmd(
 	}
 	memset(sp_out_shell_buf.get(), 0, remote_alloc_buf_size);
 
-	TRACE("[+] Injecting process: %d\n", target_pid);
+	ROOT_PRINTF("[+] Injecting process: %d\n", target_pid);
 
 	//①ATTATCH，指定目标进程，开始调试  
 	if (ptrace_attach(target_pid) == -1) {
@@ -281,7 +284,7 @@ std::string inject_process64_run_cmd(
 	//获取远程pid的某个模块的起始地址  
 	remote_libc64_handle = (size_t)get_module_base(target_pid, libc64_so_path);
 	if (remote_libc64_handle == 0) {
-		TRACE("[+] get_module_base failed.\n");
+		ROOT_PRINTF("[+] get_module_base failed.\n");
 		goto _deatch;
 	}
 	mmap_addr = p_mmap_offset ? remote_libc64_handle + p_mmap_offset : 0;
@@ -295,16 +298,16 @@ std::string inject_process64_run_cmd(
 	pclose_addr = p_pclose_offset ? remote_libc64_handle + p_pclose_offset : 0;
 	read_addr = p_read_offset ? remote_libc64_handle + p_read_offset : 0;
 
-	TRACE("[+] Remote mmap address: %p\n", (void*)mmap_addr);
-	TRACE("[+] Remote munmap address: %p\n", (void*)munmap_addr);
-	TRACE("[+] Remote chdir address: %p\n", (void*)p_chdir_offset);
-	TRACE("[+] Remote clearenv address: %p\n", (void*)p_clearenv_offset);
-	TRACE("[+] Remote setenv address: %p\n", (void*)p_setenv_offset);
-	TRACE("[+] Remote execve address: %p\n", (void*)execve_addr);
-	TRACE("[+] Remote fileno address: %p\n", (void*)fileno_addr);
-	TRACE("[+] Remote popen address: %p\n", (void*)popen_addr);
-	TRACE("[+] Remote pclose address: %p\n", (void*)pclose_addr);
-	TRACE("[+] Remote read address: %p\n", (void*)read_addr);
+	ROOT_PRINTF("[+] Remote mmap address: %p\n", (void*)mmap_addr);
+	ROOT_PRINTF("[+] Remote munmap address: %p\n", (void*)munmap_addr);
+	ROOT_PRINTF("[+] Remote chdir address: %p\n", (void*)p_chdir_offset);
+	ROOT_PRINTF("[+] Remote clearenv address: %p\n", (void*)p_clearenv_offset);
+	ROOT_PRINTF("[+] Remote setenv address: %p\n", (void*)p_setenv_offset);
+	ROOT_PRINTF("[+] Remote execve address: %p\n", (void*)execve_addr);
+	ROOT_PRINTF("[+] Remote fileno address: %p\n", (void*)fileno_addr);
+	ROOT_PRINTF("[+] Remote popen address: %p\n", (void*)popen_addr);
+	ROOT_PRINTF("[+] Remote pclose address: %p\n", (void*)pclose_addr);
+	ROOT_PRINTF("[+] Remote read address: %p\n", (void*)read_addr);
 
 
 
@@ -327,7 +330,7 @@ std::string inject_process64_run_cmd(
 	map_base = (uint8_t*)ptrace_retval(&regs);
 	//判断是否需要提权
 	if (user_root_auth) {
-		TRACE("[+] start get root:%s\n", str_root_key);
+		ROOT_PRINTF("[+] start get root:%s\n", str_root_key);
 		//提权ROOT
 		ptrace_writedata(target_pid, map_base, (uint8_t*)str_root_key, strlen(str_root_key) + 1);
 		parameters[0] = (unsigned long)map_base;
@@ -336,7 +339,7 @@ std::string inject_process64_run_cmd(
 		if (ptrace_call_wrapper(target_pid, "execve", (void*)execve_addr, parameters, 3, &regs) == -1) {
 			goto _recovery;
 		}
-		TRACE("[+] get root finished.\n");
+		ROOT_PRINTF("[+] get root finished.\n");
 	}
 
 	//判断是否需要改变工作目录
@@ -389,17 +392,17 @@ std::string inject_process64_run_cmd(
 	fp_cmd = (FILE *)ptrace_retval(&regs);
 	if (!fp_cmd || fp_cmd == (FILE *)-1) {
 		//popen error
-		TRACE("[+] popen error\n");
+		ROOT_PRINTF("[+] popen error\n");
 		goto _recovery;
 	}
-	TRACE("[+] popen success: %p\n", fp_cmd);
+	ROOT_PRINTF("[+] popen success: %p\n", fp_cmd);
 
 	parameters[0] = (unsigned long)fp_cmd;
 	if (ptrace_call_wrapper(target_pid, "fileno", (void*)fileno_addr, parameters, 1, &regs) == -1) {
 		goto _recovery;
 	}
 	pip_fp = (int)ptrace_retval(&regs);
-	TRACE("[+] pip_fp:%d\n", pip_fp);
+	ROOT_PRINTF("[+] pip_fp:%d\n", pip_fp);
 
 	// 循环读取内容
 	while(true) {
@@ -411,7 +414,7 @@ std::string inject_process64_run_cmd(
 			goto _recovery;
 		}
 		remote_really_read = (ssize_t)ptrace_retval(&regs);
-		TRACE("[+] remote_really_read: %zd, %p\n", remote_really_read, erron_regs.regs[0]);
+		ROOT_PRINTF("[+] remote_really_read: %zd, %p\n", remote_really_read, erron_regs.regs[0]);
 
 		//获取erron
 		if (ptrace_getregs(target_pid, &erron_regs) == -1) {
@@ -430,7 +433,7 @@ std::string inject_process64_run_cmd(
 		}
 	}
 
-	TRACE("[+] popen result: %s\n", cmd_exec_result.c_str());
+	ROOT_PRINTF("[+] popen result: %s\n", cmd_exec_result.c_str());
 
 	parameters[0] = (unsigned long)fp_cmd;
 	//执行pclose(fp_cmd);
@@ -447,7 +450,7 @@ std::string inject_process64_run_cmd(
 	}
 
 	out_err = 0;
-	//TRACE("Press enter to detach\n");
+	//ROOT_PRINTF("Press enter to detach\n");
 	//getchar();
 
 	/* restore */
@@ -492,7 +495,7 @@ ssize_t inject_process_env64_PATH(
 		input_env_buf_size = getpagesize();
 	}
 
-	TRACE("[+] Injecting process: %d\n", target_pid);
+	ROOT_PRINTF("[+] Injecting process: %d\n", target_pid);
 
 	//①ATTATCH，指定目标进程，开始调试  
 	if (ptrace_attach(target_pid) == -1) {
@@ -518,7 +521,7 @@ ssize_t inject_process_env64_PATH(
 	//获取远程pid的某个模块的起始地址  
 	remote_libc64_handle = (size_t)get_module_base(target_pid, libc64_so_path);
 	if (remote_libc64_handle == 0) {
-		TRACE("[+] get_module_base failed.\n");
+		ROOT_PRINTF("[+] get_module_base failed.\n");
 		goto _deatch;
 	}
 	mmap_addr = p_mmap_offset ? remote_libc64_handle + p_mmap_offset : 0;
@@ -526,10 +529,10 @@ ssize_t inject_process_env64_PATH(
 	getenv_addr = p_getenv_offset ? remote_libc64_handle + p_getenv_offset : 0;
 	setenv_addr = p_setenv_offset ? remote_libc64_handle + p_setenv_offset : 0;
 
-	TRACE("[+] Remote mmap address: %p\n", (void*)mmap_addr);
-	TRACE("[+] Remote munmap address: %p\n", (void*)munmap_addr);
-	TRACE("[+] Remote getenv address: %p\n", (void*)getenv_addr);
-	TRACE("[+] Remote setenv address: %p\n", (void*)setenv_addr);
+	ROOT_PRINTF("[+] Remote mmap address: %p\n", (void*)mmap_addr);
+	ROOT_PRINTF("[+] Remote munmap address: %p\n", (void*)munmap_addr);
+	ROOT_PRINTF("[+] Remote getenv address: %p\n", (void*)getenv_addr);
+	ROOT_PRINTF("[+] Remote setenv address: %p\n", (void*)setenv_addr);
 
 	/* call mmap (null, 0x4000, PROT_READ | PROT_WRITE | PROT_EXEC,
 							 MAP_ANONYMOUS | MAP_PRIVATE, 0, 0);
@@ -561,7 +564,7 @@ ssize_t inject_process_env64_PATH(
 	ret_getenv = (char*)ptrace_retval(&regs);
 	if (!ret_getenv) {
 		//getenv error
-		TRACE("getenv error\n");
+		ROOT_PRINTF("getenv error\n");
 		goto _recovery;
 	}
 	str_cur_path += add_path;
@@ -575,7 +578,7 @@ ssize_t inject_process_env64_PATH(
 	} while (tmp_read_byte[0] != '\x00');
 
 
-	TRACE("[+] Remote cur path: %s\n", str_cur_path.c_str());
+	ROOT_PRINTF("[+] Remote cur path: %s\n", str_cur_path.c_str());
 
 	//写PATH变量进mmap出来的内存
 	ptrace_writedata(target_pid, map_base + strlen(str_flag_path) + 1, (uint8_t*)str_cur_path.c_str(), str_cur_path.length() + 1);
@@ -590,7 +593,7 @@ ssize_t inject_process_env64_PATH(
 	}
 	if (ptrace_retval(&regs)) {
 		//setenv error
-		TRACE("setenv error\n");
+		ROOT_PRINTF("setenv error\n");
 		goto _recovery;
 	}
 
@@ -603,7 +606,7 @@ ssize_t inject_process_env64_PATH(
 	}
 
 	ret = 0;
-	//TRACE("Press enter to detach\n");
+	//ROOT_PRINTF("Press enter to detach\n");
 	//getchar();
 
 	/* restore */
@@ -645,7 +648,7 @@ ssize_t inject_process64_so(
 		goto _ret;
 	}
 
-	TRACE("[+] Injecting process: %d\n", target_pid);
+	ROOT_PRINTF("[+] Injecting process: %d\n", target_pid);
 
 	//①ATTATCH，指定目标进程，开始调试  
 	if (ptrace_attach(target_pid) == -1) {
@@ -670,7 +673,7 @@ ssize_t inject_process64_so(
 	//获取远程pid的某个模块的起始地址  
 	remote_libc64_handle = (size_t)get_module_base(target_pid, libc64_so_path);
 	if (remote_libc64_handle == 0) {
-		TRACE("[+] get_module_base failed.\n");
+		ROOT_PRINTF("[+] get_module_base failed.\n");
 		goto _deatch;
 	}
 	dlopen_addr = p_dlopen_offset ? remote_libc64_handle + p_dlopen_offset : 0;
@@ -678,10 +681,10 @@ ssize_t inject_process64_so(
 	mmap_addr = p_mmap_offset ? remote_libc64_handle + p_mmap_offset : 0;
 	munmap_addr = p_munmap_offset ? remote_libc64_handle + p_munmap_offset : 0;
 
-	TRACE("[+] Remote dlopen address: %p\n", (void*)p_dlopen_offset);
-	TRACE("[+] Remote dlsym address: %p\n", (void*)p_dlsym_offset);
-	TRACE("[+] Remote mmap address: %p\n", (void*)mmap_addr);
-	TRACE("[+] Remote munmap address: %p\n", (void*)munmap_addr);
+	ROOT_PRINTF("[+] Remote dlopen address: %p\n", (void*)p_dlopen_offset);
+	ROOT_PRINTF("[+] Remote dlsym address: %p\n", (void*)p_dlsym_offset);
+	ROOT_PRINTF("[+] Remote mmap address: %p\n", (void*)mmap_addr);
+	ROOT_PRINTF("[+] Remote munmap address: %p\n", (void*)munmap_addr);
 
 	/* call mmap (null, 0x4000, PROT_READ | PROT_WRITE | PROT_EXEC,
 							 MAP_ANONYMOUS | MAP_PRIVATE, 0, 0);
@@ -714,7 +717,7 @@ ssize_t inject_process64_so(
 	target_so_handle = (void*)ptrace_retval(&regs);
 	if (!target_so_handle) {
 		//dlopen error
-		TRACE("dlopen error\n");
+		ROOT_PRINTF("dlopen error\n");
 		goto _recovery;
 	}
 
@@ -731,7 +734,7 @@ ssize_t inject_process64_so(
 	target_func_addr = (void*)ptrace_retval(&regs);
 	if (!target_func_addr) {
 		//dlsym error
-		TRACE("dlsym error\n");
+		ROOT_PRINTF("dlsym error\n");
 		goto _recovery;
 	}
 
@@ -749,7 +752,7 @@ ssize_t inject_process64_so(
 	//	goto _recovery;
 	//}
 	ret = 0;
-	//TRACE("Press enter to detach\n");
+	//ROOT_PRINTF("Press enter to detach\n");
 	//getchar();
 
 	/* restore */
@@ -771,7 +774,7 @@ ssize_t inject_process64_run_exit(
 	size_t exit_addr;
 	struct pt_regs regs, original_regs;
 	unsigned long parameters[1];
-	TRACE("[+] Injecting process: %d\n", target_pid);
+	ROOT_PRINTF("[+] Injecting process: %d\n", target_pid);
 
 	//①ATTATCH，指定目标进程，开始调试  
 	if (ptrace_attach(target_pid) == -1) {
@@ -796,18 +799,18 @@ ssize_t inject_process64_run_exit(
 	//获取远程pid的某个模块的起始地址  
 	remote_libc64_handle = (size_t)get_module_base(target_pid, libc64_so_path);
 	if (remote_libc64_handle == 0) {
-		TRACE("[+] get_module_base failed.\n");
+		ROOT_PRINTF("[+] get_module_base failed.\n");
 		goto _deatch;
 	}
 	exit_addr = p_exit_offset ? remote_libc64_handle + p_exit_offset : 0;
-	TRACE("[+] Remote exit address: %p\n", (void*)p_exit_offset);
+	ROOT_PRINTF("[+] Remote exit address: %p\n", (void*)p_exit_offset);
 
 	parameters[0] = 0;  
 	if (ptrace_call_wrapper(target_pid, "_exit", (void*)exit_addr, parameters, 1, &regs) == -1) {
 		goto _recovery;
 	}
 	ret = 0;
-	//TRACE("Press enter to detach\n");
+	//ROOT_PRINTF("Press enter to detach\n");
 	//getchar();
 
 	/* restore */
@@ -847,7 +850,7 @@ std::string inject_process64_run_cmd_wrapper(
 		out_err = -243;
 		return {};
 	}
-	TRACE("target_process_libc_so_path:%s\n", target_process_libc_so_path.c_str());
+	ROOT_PRINTF("target_process_libc_so_path:%s\n", target_process_libc_so_path.c_str());
 
 	size_t p_mmap_offset;
 	size_t p_munmap_offset;
@@ -873,20 +876,20 @@ std::string inject_process64_run_cmd_wrapper(
 		p_read_offset);
 
 	if (r != 0) {
-		TRACE("safe_load_libc64_run_cmd_func_addr error:%d\n", r);
+		ROOT_PRINTF("safe_load_libc64_run_cmd_func_addr error:%d\n", r);
 		out_err = r;
 		return {};
 	}
-	TRACE("p_mmap_offset:%zu\n", p_mmap_offset);
-	TRACE("p_munmap_offset:%zu\n", p_munmap_offset);
-	TRACE("p_chdir_offset:%zu\n", p_chdir_offset);
-	TRACE("p_clearenv_offset:%zu\n", p_clearenv_offset);
-	TRACE("p_setenv_offset:%zu\n", p_setenv_offset);
-	TRACE("p_execve_offset:%zu\n", p_execve_offset);
-	TRACE("p_fileno_offset:%zu\n", p_fileno_offset);
-	TRACE("p_popen_offset:%zu\n", p_popen_offset);
-	TRACE("p_pclose_offset:%zu\n", p_pclose_offset);
-	TRACE("p_read_offset:%zu\n", p_read_offset);
+	ROOT_PRINTF("p_mmap_offset:%zu\n", p_mmap_offset);
+	ROOT_PRINTF("p_munmap_offset:%zu\n", p_munmap_offset);
+	ROOT_PRINTF("p_chdir_offset:%zu\n", p_chdir_offset);
+	ROOT_PRINTF("p_clearenv_offset:%zu\n", p_clearenv_offset);
+	ROOT_PRINTF("p_setenv_offset:%zu\n", p_setenv_offset);
+	ROOT_PRINTF("p_execve_offset:%zu\n", p_execve_offset);
+	ROOT_PRINTF("p_fileno_offset:%zu\n", p_fileno_offset);
+	ROOT_PRINTF("p_popen_offset:%zu\n", p_popen_offset);
+	ROOT_PRINTF("p_pclose_offset:%zu\n", p_pclose_offset);
+	ROOT_PRINTF("p_read_offset:%zu\n", p_read_offset);
 
 	return inject_process64_run_cmd(
 		str_root_key,
@@ -979,7 +982,7 @@ ssize_t inject_process_env64_PATH_wrapper(const char* str_root_key, int target_p
 	if (target_process_libc_so_path.empty()) {
 		return -273;
 	}
-	TRACE("target_process_libc_so_path:%s\n", target_process_libc_so_path.c_str());
+	ROOT_PRINTF("target_process_libc_so_path:%s\n", target_process_libc_so_path.c_str());
 
 
 	size_t p_mmap_offset;
@@ -995,13 +998,13 @@ ssize_t inject_process_env64_PATH_wrapper(const char* str_root_key, int target_p
 		p_setenv_offset);
 
 	if (ret != 0) {
-		TRACE("safe_load_libc64_modify_env_func_addr error:%d\n", ret);
+		ROOT_PRINTF("safe_load_libc64_modify_env_func_addr error:%d\n", ret);
 		return ret;
 	}
-	TRACE("p_mmap_offset:%zu\n", p_mmap_offset);
-	TRACE("p_munmap_offset:%zu\n", p_munmap_offset);
-	TRACE("p_getenv_offset:%zu\n", p_getenv_offset);
-	TRACE("p_setenv_offset:%zu\n", p_setenv_offset);
+	ROOT_PRINTF("p_mmap_offset:%zu\n", p_mmap_offset);
+	ROOT_PRINTF("p_munmap_offset:%zu\n", p_munmap_offset);
+	ROOT_PRINTF("p_getenv_offset:%zu\n", p_getenv_offset);
+	ROOT_PRINTF("p_setenv_offset:%zu\n", p_setenv_offset);
 
 	if (inject_process_env64_PATH(target_pid, target_process_libc_so_path.c_str(), p_mmap_offset, p_munmap_offset, p_getenv_offset, p_setenv_offset, add_path) != 0) {
 		return -274;
@@ -1046,7 +1049,7 @@ ssize_t safe_inject_process_env64_PATH_wrapper(const char* str_root_key, int tar
 		out_err = -286;
 		return {};
 	}
-	TRACE("target_process_libc_so_path:%s\n", libc_path.c_str());
+	ROOT_PRINTF("target_process_libc_so_path:%s\n", libc_path.c_str());
 
 
 	size_t p_mmap_offset;
@@ -1062,13 +1065,13 @@ ssize_t safe_inject_process_env64_PATH_wrapper(const char* str_root_key, int tar
 		p_setenv_offset);
 
 	if (out_err != 0) {
-		TRACE("safe_load_libc64_modify_env_func_addr error:%zd\n", out_err);
+		ROOT_PRINTF("safe_load_libc64_modify_env_func_addr error:%zd\n", out_err);
 		return out_err;
 	}
-	TRACE("p_mmap_offset:%zu\n", p_mmap_offset);
-	TRACE("p_munmap_offset:%zu\n", p_munmap_offset);
-	TRACE("p_getenv_offset:%zu\n", p_getenv_offset);
-	TRACE("p_setenv_offset:%zu\n", p_setenv_offset);
+	ROOT_PRINTF("p_mmap_offset:%zu\n", p_mmap_offset);
+	ROOT_PRINTF("p_munmap_offset:%zu\n", p_munmap_offset);
+	ROOT_PRINTF("p_getenv_offset:%zu\n", p_getenv_offset);
+	ROOT_PRINTF("p_setenv_offset:%zu\n", p_setenv_offset);
 
 
 	finfo.reset();
@@ -1105,7 +1108,7 @@ ssize_t inject_process64_so_wrapper(const char* str_root_key, pid_t target_pid, 
 	if (target_process_libc_so_path.empty()) {
 		return -303;
 	}
-	TRACE("target_process_libc_so_path:%s\n", target_process_libc_so_path.c_str());
+	ROOT_PRINTF("target_process_libc_so_path:%s\n", target_process_libc_so_path.c_str());
 
 	size_t p_dlopen_offset;
 	size_t p_dlsym_offset;
@@ -1119,13 +1122,13 @@ ssize_t inject_process64_so_wrapper(const char* str_root_key, pid_t target_pid, 
 		p_munmap_offset);
 
 	if (ret != 0) {
-		TRACE("safe_load_libc64_so_inject_func_addr error:%d\n", ret);
+		ROOT_PRINTF("safe_load_libc64_so_inject_func_addr error:%d\n", ret);
 		return ret;
 	}
-	TRACE("p_dlopen_offset:%zu\n", p_dlopen_offset);
-	TRACE("p_dlsym_offset:%zu\n", p_dlsym_offset);
-	TRACE("p_mmap_offset:%zu\n", p_mmap_offset);
-	TRACE("p_munmap_offset:%zu\n", p_munmap_offset);
+	ROOT_PRINTF("p_dlopen_offset:%zu\n", p_dlopen_offset);
+	ROOT_PRINTF("p_dlsym_offset:%zu\n", p_dlsym_offset);
+	ROOT_PRINTF("p_mmap_offset:%zu\n", p_mmap_offset);
+	ROOT_PRINTF("p_munmap_offset:%zu\n", p_munmap_offset);
 
 	if (inject_process64_so(
 		target_pid,
@@ -1177,7 +1180,7 @@ ssize_t safe_inject_process64_so_wrapper(const char* str_root_key, pid_t target_
 		out_err = -315;
 		return {};
 	}
-	TRACE("target process libc so path:%s\n", libc_path.c_str());
+	ROOT_PRINTF("target process libc so path:%s\n", libc_path.c_str());
 
 	size_t p_dlopen_offset;
 	size_t p_dlsym_offset;
@@ -1191,13 +1194,13 @@ ssize_t safe_inject_process64_so_wrapper(const char* str_root_key, pid_t target_
 		p_munmap_offset);
 
 	if (out_err != 0) {
-		TRACE("safe_load_libc64_so_inject_func_addr error:%zd\n", out_err);
+		ROOT_PRINTF("safe_load_libc64_so_inject_func_addr error:%zd\n", out_err);
 		return out_err;
 	}
-	TRACE("p_dlopen_offset:%zu\n", p_dlopen_offset);
-	TRACE("p_dlsym_offset:%zu\n", p_dlsym_offset);
-	TRACE("p_mmap_offset:%zu\n", p_mmap_offset);
-	TRACE("p_munmap_offset:%zu\n", p_munmap_offset);
+	ROOT_PRINTF("p_dlopen_offset:%zu\n", p_dlopen_offset);
+	ROOT_PRINTF("p_dlsym_offset:%zu\n", p_dlsym_offset);
+	ROOT_PRINTF("p_mmap_offset:%zu\n", p_mmap_offset);
+	ROOT_PRINTF("p_munmap_offset:%zu\n", p_munmap_offset);
 
 	finfo.reset();
 	if(fork_pipe_child_process(finfo)) {
@@ -1253,7 +1256,7 @@ ssize_t inject_process_run_exit_wrapper(const char* str_root_key, int target_pid
 	if (target_process_libc_so_path.empty()) {
 		return -273;
 	}
-	TRACE("target_process_libc_so_path:%s\n", target_process_libc_so_path.c_str());
+	ROOT_PRINTF("target_process_libc_so_path:%s\n", target_process_libc_so_path.c_str());
 
 
 	size_t p_exit_offset;
@@ -1263,10 +1266,10 @@ ssize_t inject_process_run_exit_wrapper(const char* str_root_key, int target_pid
 		p_exit_offset);
 
 	if (err != 0) {
-		TRACE("safe_load_libc64_exit_func_addr error:%d\n", err);
+		ROOT_PRINTF("safe_load_libc64_exit_func_addr error:%d\n", err);
 		return err;
 	}
-	TRACE("p_exit_offset:%zu\n", p_exit_offset);
+	ROOT_PRINTF("p_exit_offset:%zu\n", p_exit_offset);
 
 	if (inject_process64_run_exit(target_pid, target_process_libc_so_path.c_str(), p_exit_offset) != 0) {
 		return -274;
@@ -1330,4 +1333,5 @@ ssize_t safe_kill_process(const char* str_root_key, pid_t pid) {
 		}
 	}
 	return err;
+}
 }
