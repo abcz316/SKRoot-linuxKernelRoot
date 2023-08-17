@@ -9,6 +9,7 @@
 #include <iostream>
 #include <fstream>
 #include <memory>
+#include <filesystem>
 #include <sys/stat.h> 
 #include <sys/types.h>
 #include <sys/xattr.h>
@@ -157,13 +158,9 @@ ssize_t uninstall_su(const char* str_root_key, const char* base_path, const char
 		remove(std::string(_su_hide_path + std::string("/su")).c_str());
 
 		//文件夹也删掉
-		std::string del_dir_cmd = "rm -rf ";
-		del_dir_cmd += _su_hide_path;
-		ssize_t err;
-		kernel_root::run_root_cmd(str_root_key, del_dir_cmd.c_str(), err);
-		if (err) {
-			return err;
-		}
+		try {
+			std::filesystem::remove_all(_su_hide_path);
+		} catch (...) {}
 		return access(_su_hide_path.c_str(), F_OK) == -1 ? 0 : -512;
 
 	} while (1);
