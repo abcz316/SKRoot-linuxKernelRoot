@@ -5,7 +5,7 @@
 
 namespace {
 	std::string get_executable_directory() {
-		char processdir[4096] = { 0 }; // Consider using PATH_MAX from limits.h
+		char processdir[4096] = { 0 };
 		ssize_t path_len = readlink("/proc/self/exe", processdir, sizeof(processdir));
 		if(path_len > 0) {
 			char* path_end = strrchr(processdir, '/');
