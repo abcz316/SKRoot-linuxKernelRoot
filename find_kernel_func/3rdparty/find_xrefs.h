@@ -132,12 +132,13 @@ void printf_xrefs_result_map(const std::map<std::tuple<std::string, size_t>, std
 		printf("Search result is empty.\n");
 		return;
 	}
+	int counter = 1;
 	for (auto iter = result_map.begin(); iter != result_map.end(); iter++) {
 		if (!iter->second) {
 			continue;
 		}
 		for (auto& xrefs_item : *iter->second) {
-			printf("function %s xrefs location is->0x%llx,\nfunction %s entry range is->0x%llx\n\n", std::get<0>(iter->first).c_str(),
+			printf("[%d]: function %s xrefs location is->0x%llx,\nfunction %s entry range is->0x%llx\n\n", counter++, std::get<0>(iter->first).c_str(),
 				xrefs_item.xrefs_location, std::get<0>(iter->first).c_str(), xrefs_item.belong_function_entry);
 		}
 	}
@@ -148,11 +149,12 @@ void printf_head_result_map(const std::map<size_t, std::shared_ptr<size_t>>& res
 		printf("Search result is empty.\n");
 		return;
 	}
+	int counter = 1;
 	for (auto iter = result_map.begin(); iter != result_map.end(); iter++) {
 		if (!iter->second) {
 			continue;
 		}
-		printf("key location is->0x%llx, function entry range is->0x%llx\n", iter->first, *iter->second);
+		printf("[%d]: key location is->0x%llx, function entry range is->0x%llx\n", counter++, iter->first, *iter->second);
 	}
 }
 
