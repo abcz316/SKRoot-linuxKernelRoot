@@ -158,6 +158,9 @@ size_t path_do_execve(const char* file_buf, const string& str_root_key, size_t  
 	string strAsmCode = sstrAsm.str();
 	cout << endl << strAsmCode << endl;
 	string strBytes = AsmToBytes(strAsmCode);
+	if(!strBytes.length()) {
+		return 0;
+	}
 	nHookFuncSize = strBytes.length() / 2;
 	char hookOrigCmd[4] = { 0 };
 	memcpy(&hookOrigCmd, (void*)((size_t)file_buf + do_execve_entry_addr), sizeof(hookOrigCmd));
@@ -167,6 +170,9 @@ size_t path_do_execve(const char* file_buf, const string& str_root_key, size_t  
 	stringstream sstrAsm2;
 	sstrAsm2 << "B #" << hook_func_start_addr - do_execve_entry_addr << endl;
 	string strBytes2 = AsmToBytes(sstrAsm2.str());
+	if(!strBytes2.length()) {
+		return 0;
+	}
 	vec_out_patch_bytes_data.push_back({ strBytes2, do_execve_entry_addr });
 	hook_func_start_addr += nHookFuncSize;
 	return hook_func_start_addr;
@@ -209,6 +215,10 @@ size_t path_avc_denied(const char* file_buf, size_t hook_func_start_addr, size_t
 	string strAsmCode = sstrAsm.str();
 	cout << endl << strAsmCode << endl;
 	string strBytes = AsmToBytes(strAsmCode);
+	if(!strBytes.length()) {
+		return 0;
+	}
+	
 	size_t nHookFuncSize = strBytes.length() / 2;
 	char hookOrigCmd[4] = { 0 };
 	memcpy(&hookOrigCmd, (void*)((size_t)file_buf + avc_denied_entry_addr), sizeof(hookOrigCmd));
@@ -218,6 +228,10 @@ size_t path_avc_denied(const char* file_buf, size_t hook_func_start_addr, size_t
 	stringstream sstrAsm2;
 	sstrAsm2 << "B #" << hook_func_start_addr - avc_denied_entry_addr << endl;
 	string strBytes2 = AsmToBytes(sstrAsm2.str());
+	if(!strBytes2.length()) {
+		return 0;
+	}
+	
 	vec_out_patch_bytes_data.push_back({ strBytes2, avc_denied_entry_addr });
 	return hook_func_start_addr + nHookFuncSize;
 }
@@ -337,10 +351,19 @@ int main(int argc, char* argv[]) {
 		cin >> str_root_key;
 	}
 	vector<patch_bytes_data> vec_patch_bytes_data;
-	hook_func_start_addr = path_do_execve(image, str_root_key, hook_func_start_addr, do_execve_entry_addr,
-		task_struct_offset_cred, task_struct_offset_seccomp, vec_patch_bytes_data);
-	path_avc_denied(image, hook_func_start_addr, avc_denied_entry_addr, task_struct_offset_cred, vec_patch_bytes_data);
-
+	hook_func_start_addr = path_do_execve(image, str_root_key, hook_func_start_addr, do_execve_entry_addr, task_struct_offset_cred, task_struct_offset_seccomp, vec_patch_bytes_data);
+	if(hook_func_start_addr == 0) {
+		cout << "生成汇编代码失败！请检查输入的参数！" << endl;
+		system("pause");
+		return 0;
+	}
+	
+	if(path_avc_denied(image, hook_func_start_addr, avc_denied_entry_addr, task_struct_offset_cred, vec_patch_bytes_data) == 0) {
+		cout << "生成汇编代码失败！请检查输入的参数！" << endl;
+		system("pause");
+		return 0;
+	}
+	
 	cout << "#获取ROOT权限的密匙：" << str_root_key.c_str() << endl << endl;
 
 	size_t need_write_modify_in_file = 0;

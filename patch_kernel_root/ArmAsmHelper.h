@@ -52,6 +52,10 @@ std::string AsmToBytes(const std::string& strArm64Asm) {
 			}
 			if (!line.length()) { continue; }
 			if (line.length() == 1 && line == "\n") { continue; }
+			if (line.find("Error") != -1) {
+				in.close();
+				return {};
+			}
 			if (line.find("AARCH64 GAS") != -1) { continue; }
 
 			std::stringstream ssGetMidBuf;
