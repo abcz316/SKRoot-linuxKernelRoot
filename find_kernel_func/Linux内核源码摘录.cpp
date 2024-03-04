@@ -1683,3 +1683,120 @@ static int __ref kernel_init(void *unused)
 	panic("No working init found.  Try passing init= option to kernel. "
 	      "See Linux Documentation/admin-guide/init.rst for guidance.");
 }
+
+const struct cred *get_task_cred(struct task_struct *task)
+{
+	const struct cred *cred;
+
+	rcu_read_lock();
+
+	do {
+		cred = __task_cred((task));
+		BUG_ON(!cred);
+	} while (!get_cred_rcu(cred));
+
+	rcu_read_unlock();
+	return cred;
+}
+EXPORT_SYMBOL(get_task_cred);
+static inline void task_state(struct seq_file *m, struct pid_namespace *ns,
+				struct pid *pid, struct task_struct *p)
+{
+	struct user_namespace *user_ns = seq_user_ns(m);
+	struct group_info *group_info;
+	int g, umask = -1;
+	struct task_struct *tracer;
+	const struct cred *cred;
+	pid_t ppid, tpid = 0, tgid, ngid;
+	unsigned int max_fds = 0;
+
+	rcu_read_lock();
+	ppid = pid_alive(p) ?
+		task_tgid_nr_ns(rcu_dereference(p->real_parent), ns) : 0;
+
+	tracer = ptrace_parent(p);
+	if (tracer)
+		tpid = task_pid_nr_ns(tracer, ns);
+
+	tgid = task_tgid_nr_ns(p, ns);
+	ngid = task_numa_group_id(p);
+	cred = get_task_cred(p);
+
+	task_lock(p);
+	if (p->fs)
+		umask = p->fs->umask;
+	if (p->files)
+		max_fds = files_fdtable(p->files)->max_fds;
+	task_unlock(p);
+	rcu_read_unlock();
+
+	if (umask >= 0)
+		seq_printf(m, "Umask:\t%#04o\n", umask);
+	seq_puts(m, "State:\t");
+	seq_puts(m, get_task_state(p));
+
+	seq_put_decimal_ull(m, "\nTgid:\t", tgid);
+	seq_put_decimal_ull(m, "\nNgid:\t", ngid);
+	seq_put_decimal_ull(m, "\nPid:\t", pid_nr_ns(pid, ns));
+	seq_put_decimal_ull(m, "\nPPid:\t", ppid);
+	seq_put_decimal_ull(m, "\nTracerPid:\t", tpid);
+	seq_put_decimal_ull(m, "\nUid:\t", from_kuid_munged(user_ns, cred->uid));
+	seq_put_decimal_ull(m, "\t", from_kuid_munged(user_ns, cred->euid));
+	seq_put_decimal_ull(m, "\t", from_kuid_munged(user_ns, cred->suid));
+	seq_put_decimal_ull(m, "\t", from_kuid_munged(user_ns, cred->fsuid));
+	seq_put_decimal_ull(m, "\nGid:\t", from_kgid_munged(user_ns, cred->gid));
+	seq_put_decimal_ull(m, "\t", from_kgid_munged(user_ns, cred->egid));
+	seq_put_decimal_ull(m, "\t", from_kgid_munged(user_ns, cred->sgid));
+	seq_put_decimal_ull(m, "\t", from_kgid_munged(user_ns, cred->fsgid));
+	seq_put_decimal_ull(m, "\nFDSize:\t", max_fds);
+
+	seq_puts(m, "\nGroups:\t");
+	group_info = cred->group_info;
+	for (g = 0; g < group_info->ngroups; g++)
+		seq_put_decimal_ull(m, g ? " " : "",
+				from_kgid_munged(user_ns, group_info->gid[g]));
+	put_cred(cred);
+	/* Trailing space shouldn't have been added in the first place. */
+	seq_putc(m, ' ');
+
+#ifdef CONFIG_PID_NS
+	seq_puts(m, "\nNStgid:");
+	for (g = ns->level; g <= pid->level; g++)
+		seq_put_decimal_ull(m, "\t", task_tgid_nr_ns(p, pid->numbers[g].ns));
+	seq_puts(m, "\nNSpid:");
+	for (g = ns->level; g <= pid->level; g++)
+		seq_put_decimal_ull(m, "\t", task_pid_nr_ns(p, pid->numbers[g].ns));
+	seq_puts(m, "\nNSpgid:");
+	for (g = ns->level; g <= pid->level; g++)
+		seq_put_decimal_ull(m, "\t", task_pgrp_nr_ns(p, pid->numbers[g].ns));
+	seq_puts(m, "\nNSsid:");
+	for (g = ns->level; g <= pid->level; g++)
+		seq_put_decimal_ull(m, "\t", task_session_nr_ns(p, pid->numbers[g].ns));
+#endif
+	seq_putc(m, '\n');
+}
+int proc_pid_status(struct seq_file *m, struct pid_namespace *ns,
+			struct pid *pid, struct task_struct *task)
+{
+	struct mm_struct *mm = get_task_mm(task);
+
+	seq_puts(m, "Name:\t");
+	proc_task_name(m, task, true);
+	seq_putc(m, '\n');
+
+	task_state(m, ns, pid, task);
+
+	if (mm) {
+		task_mem(m, mm);
+		task_core_dumping(m, mm);
+		task_thp_status(m, mm);
+		mmput(mm);
+	}
+	task_sig(m, task);
+	task_cap(m, task);
+	task_seccomp(m, task);
+	task_cpus_allowed(m, task);
+	cpuset_task_status_allowed(m, task);
+	task_context_switch_counts(m, task);
+	return 0;
+}
