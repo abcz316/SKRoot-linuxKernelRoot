@@ -1683,7 +1683,18 @@ static int __ref kernel_init(void *unused)
 	panic("No working init found.  Try passing init= option to kernel. "
 	      "See Linux Documentation/admin-guide/init.rst for guidance.");
 }
-
+/**
+ * __task_cred - Access a task's objective credentials
+ * @task: The task to query
+ *
+ * Access the objective credentials of a task.  The caller must hold the RCU
+ * readlock.
+ *
+ * The result of this function should not be passed directly to get_cred();
+ * rather get_task_cred() should be used instead.
+ */
+#define __task_cred(task)	\
+	rcu_dereference((task)->real_cred)
 const struct cred *get_task_cred(struct task_struct *task)
 {
 	const struct cred *cred;
