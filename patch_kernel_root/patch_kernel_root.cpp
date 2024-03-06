@@ -324,8 +324,8 @@ int main(int argc, char* argv[]) {
 		}
 	}
 
-	cout << "请选择应用进程在获取ROOT权限的时候，是否需要提升进程的seccomp，此项为非必需项（1需要；2不需要）：" << endl;
-	cout << "说明：提升进程的seccomp可以使进程直接获得完整的API能力，如不提升则应用进程也能间接通过注入init来获得完整的API能力。" << endl;
+	cout << "是否需要提升root进程的seccomp？1需要，2不需要（非必需项）：" << endl;
+	cout << "说明：提升seccomp可使进程拥有完整的API能力；如不提升，也可通过注入init来拥有完整的API能力。" << endl;
 	size_t task_struct_offset_seccomp = 0;
 
 	size_t is_patch_seccomp = 0;

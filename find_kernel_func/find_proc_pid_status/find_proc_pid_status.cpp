@@ -124,6 +124,8 @@ void SearchFeature(const char* image, size_t image_size) {
 	find_xrefs_link((const char*)image, image_size, result_map);
 	printf_xrefs_result_map(result_map);
 	std::cout << "请注意！proc_pid_status里面的Uid取值不是cred而是real_cred，需将real_cred的值+8才能得到cred，即cred=real_cred+8" << std::endl;
+	std::cout << "提示1：因为内核代码中是BUG_ON(!cred);，所以如果是real_cred则会走到BRK #0x800指令引发软中断，这是判断real_cred偏移准确性的关键。" << std::endl;
+	std::cout << "提示2：请勿太过信任IDA中的伪代码数值，请跳转至反汇编代码确认偏移值。" << std::endl;
 }
 
 int main(int argc, char* argv[]) {
