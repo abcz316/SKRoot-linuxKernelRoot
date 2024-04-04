@@ -1,40 +1,31 @@
 package com.linux.permissionmanager.Model;
 
+import android.content.Context;
+import android.content.pm.PackageInfo;
 import android.graphics.drawable.Drawable;
 
 public class SelectAppRecyclerItem {
-    private Drawable icon=null;
-    private String showName;
-    private String packageName;
+    private PackageInfo packageInfo;
 
-    public SelectAppRecyclerItem(Drawable icon, String showName, String packageName){
-        this.icon=icon;
-        this.showName = showName;
-        this.packageName = packageName;
+    public SelectAppRecyclerItem(PackageInfo packageInfo){
+        this.packageInfo = packageInfo;
     }
 
-    public Drawable getIcon() {
-        return icon;
+    public PackageInfo getPackageInfo() {
+        return packageInfo;
     }
 
-    public void setIcon(Drawable icon) {
-        this.icon = icon;
-    }
-
-    public String getShowName() {
+    public String getShowName(Context ctx) {
+        String showName = this.packageInfo.applicationInfo.loadLabel(ctx.getPackageManager()).toString();
         return showName;
     }
-
-    public void setShowName(String showName) {
-        this.showName = showName;
-    }
-
     public String getPackageName() {
+        String packageName = this.packageInfo.applicationInfo.packageName;
         return packageName;
     }
-
-    public void setPackageName(String packageName) {
-        this.packageName = packageName;
+    public Drawable getDrawable(Context ctx) {
+        Drawable icon =  this.packageInfo.applicationInfo.loadIcon(ctx.getPackageManager());
+        return icon;
     }
 
 }

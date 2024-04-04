@@ -1,6 +1,7 @@
 package com.linux.permissionmanager.Adapter;
 
 import android.content.Context;
+import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.os.Message;
 import android.text.Html;
@@ -17,18 +18,15 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.linux.permissionmanager.Model.SelectAppRecyclerItem;
 import com.linux.permissionmanager.R;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class SelectAppRecyclerAdapter extends RecyclerView.Adapter<SelectAppRecyclerAdapter.ViewHolder> {
-
-
-
     public static class ViewHolder extends RecyclerView.ViewHolder {
         public View v;
         public ImageView select_app_icon;
         public TextView select_app_text;
         public TextView select_package_name;
-        // TODO Auto-generated method stub
         public ViewHolder(View v) {
             super(v);
             this.v = v;
@@ -39,14 +37,26 @@ public class SelectAppRecyclerAdapter extends RecyclerView.Adapter<SelectAppRecy
     private int resourceId;
     private List<SelectAppRecyclerItem> objects;
     private PopupWindow popupWindow;
-    private Handler selectAppItemCallback;
-    public SelectAppRecyclerAdapter(Context context, int textViewResourceId, List<SelectAppRecyclerItem> objects, PopupWindow popupWindow, Handler selectAppItemCallback) {
+    private Handler selectAppCallback;
+    private Context ctx;
+    public SelectAppRecyclerAdapter(Context ctx, int textViewResourceId, List<SelectAppRecyclerItem> objects, PopupWindow popupWindow, Handler selectAppCallback) {
         this.resourceId = textViewResourceId;
-        this.objects = objects;
+        this.objects = new ArrayList<>(objects);
         this. popupWindow = popupWindow;
-        this. selectAppItemCallback = selectAppItemCallback;
+        this. selectAppCallback = selectAppCallback;
+        this. ctx = ctx;
     }
 
+    public void updateList(List<SelectAppRecyclerItem> newList) {
+        objects.clear();
+        objects.addAll(newList);
+        notifyDataSetChanged();
+    }
+
+
+    public List<SelectAppRecyclerItem> getList() {
+        return objects;
+    }
 
 
     @NonNull
@@ -64,15 +74,18 @@ public class SelectAppRecyclerAdapter extends RecyclerView.Adapter<SelectAppRecy
 
     @Override
     public void onBindViewHolder(@NonNull SelectAppRecyclerAdapter.ViewHolder holder, int position) {
-        SelectAppRecyclerItem appItem=objects.get(position);           //获取当前项的实例
+        SelectAppRecyclerItem appItem=objects.get(position);
+        String showName = appItem.getShowName(ctx);
+        String packageName = appItem.getPackageName();
+        Drawable icon = appItem.getDrawable(ctx);
 
         //图标+进程PID+名字+内存
-        holder.select_app_icon.setImageDrawable(appItem.getIcon());
-        String  showText="<font color = \"#88CC88\">"+appItem.getShowName() +"</font> "
-                +" <font color = \"#88CCCC\">"+" ("+appItem.getPackageName()+")"+"</font>";
+        holder.select_app_icon.setImageDrawable(icon);
+        String  showText="<font color = \"#88CC88\">"+showName +"</font> "
+                +" <font color = \"#88CCCC\">"+" ("+packageName+")"+"</font>";
 
         holder.select_app_text.setText(Html.fromHtml(showText));
-        holder.select_package_name.setText(appItem.getPackageName());
+        holder.select_package_name.setText(packageName);
 
         //item被点击
         holder.v.setOnClickListener(new ClickRecyclerItemListener(appItem));
@@ -100,11 +113,7 @@ public class SelectAppRecyclerAdapter extends RecyclerView.Adapter<SelectAppRecy
             popupWindow.dismiss();
             Message msg = new Message();
             msg.obj = (SelectAppRecyclerItem)appItem;
-            selectAppItemCallback.sendMessage(msg);
+            selectAppCallback.sendMessage(msg);
         }
     }
-
-
-
-
 }

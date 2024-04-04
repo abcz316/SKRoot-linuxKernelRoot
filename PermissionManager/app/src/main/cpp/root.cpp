@@ -7,60 +7,12 @@
 #include <thread>
 #include <sys/capability.h>
 
-#include "../../../../../testRoot/kernel_root_kit/kernel_root_kit_umbrella.h"
-
+#include "../../../../../testRoot/jni/kernel_root_kit/kernel_root_kit_umbrella.h"
+#include "../../../../../testRoot/jni/testRoot.h"
+#include "urlEncodeUtils.h"
 using namespace std;
 
 std::string g_last_su_full_path;
-
-string getCapabilityInfo()
-{
-    __uid_t now_uid, now_euid, now_suid;
-    if (getresuid(&now_uid, &now_euid, &now_suid)) {
-        return "FAILED getresuid()";
-    }
-
-
-    __gid_t now_gid, now_egid, now_sgid;
-    if (getresgid(&now_gid, &now_egid, &now_sgid)) {
-        return "FAILED getresgid()";
-    }
-
-    stringstream sstrCapInfo;
-    sstrCapInfo<< "Current process information:\n";
-    sstrCapInfo<< "uid:"<<now_uid <<"," << std::endl <<"euid:"<< now_euid <<"," << std::endl
-    <<"suid:"<< now_suid <<"," << std::endl <<"gid:"<< now_gid <<"," << std::endl
-    <<"egid:"<< now_egid <<"," << std::endl <<"sgid:"<< now_sgid <<"\n";
-
-    struct __user_cap_header_struct cap_header_data;
-    cap_user_header_t cap_header = &cap_header_data;
-
-    struct __user_cap_data_struct cap_data_data;
-    cap_user_data_t cap_data = &cap_data_data;
-
-    cap_header->pid = getpid();
-    cap_header->version = _LINUX_CAPABILITY_VERSION_3; //_1、_2、_3
-
-    if (capget(cap_header, cap_data) < 0) {
-        return "FAILED capget()";
-        // perror("FAILED capget()");
-        //exit(1);
-    }
-    sstrCapInfo << "cap effective:" << hex <<cap_data->effective << "," << std::endl
-    <<"cap permitted:"<< hex << cap_data->permitted<< "," << std::endl
-    <<"cap inheritable:"<< hex <<cap_data->inheritable<< std::endl;
-    FILE * fp = popen("getenforce", "r");
-    if (fp)
-    {
-        char cmd[512] = { 0 };
-        fread(cmd, 1, sizeof(cmd), fp);
-        pclose(fp);
-
-        sstrCapInfo<< "read system SELinux status:"<< cmd;
-    }
-
-    return sstrCapInfo.str();
-}
 
 extern "C" JNIEXPORT jstring JNICALL
 Java_com_linux_permissionmanager_MainActivity_testRoot(
@@ -80,11 +32,11 @@ Java_com_linux_permissionmanager_MainActivity_testRoot(
         result += std::to_string(err);
         result += "\n\n";
         if(err == 0) {
-            result += getCapabilityInfo();
+            result += get_capability_info();
             result += "\n\n";
         }
-        write_errcode_to_father(finfo, err);
-        write_string_to_father(finfo, result);
+        write_errcode_from_child(finfo, err);
+        write_string_from_child(finfo, result);
         _exit(0);
         return 0;
     }
@@ -152,8 +104,7 @@ Java_com_linux_permissionmanager_MainActivity_installSu(
         JNIEnv* env,
         jobject /* this */,
         jstring rootKey,
-        jstring basePath,
-        jstring originSuFullPath) {
+        jstring basePath) {
 
     const char *str1 = env->GetStringUTFChars(rootKey, 0);
     string strRootKey= str1;
@@ -163,14 +114,10 @@ Java_com_linux_permissionmanager_MainActivity_installSu(
     string strBasePath= str1;
     env->ReleaseStringUTFChars(basePath, str1);
 
-    str1 = env->GetStringUTFChars(originSuFullPath, 0);
-    string strOriginSuFullPath= str1;
-    env->ReleaseStringUTFChars(originSuFullPath, str1);
-
     stringstream sstr;
     //安装su工具套件
     ssize_t err;
-    std::string su_hide_full_path = kernel_root::safe_install_su(strRootKey.c_str(), strBasePath.c_str(), strOriginSuFullPath.c_str(), err);
+    std::string su_hide_full_path = kernel_root::safe_install_su(strRootKey.c_str(), strBasePath.c_str(), err);
     sstr << "install su err:" << err<<", su_hide_full_path:" << su_hide_full_path << std::endl;
     g_last_su_full_path = su_hide_full_path;
     if (err == 0) {
@@ -234,14 +181,14 @@ Java_com_linux_permissionmanager_MainActivity_autoSuEnvInject(
     stringstream sstr;
 
     //杀光所有历史进程
-    std::vector<pid_t> vOut;
-    ssize_t err = kernel_root::safe_find_all_cmdline_process(strRootKey.c_str(), strTargetProcessCmdline.c_str(), vOut);
-    sstr << "find_all_cmdline_process err:"<< err<<", cnt:"<<vOut.size() << std::endl;
+    std::set<pid_t> out;
+    ssize_t err = kernel_root::safe_find_all_cmdline_process(strRootKey.c_str(), strTargetProcessCmdline.c_str(), out);
+    sstr << "find_all_cmdline_process err:"<< err<<", cnt:"<<out.size() << std::endl;
     if (err != 0) {
         return env->NewStringUTF(sstr.str().c_str());
     }
     std::string kill_cmd;
-    for (pid_t t : vOut) {
+    for (pid_t t : out) {
         err =  kernel_root::safe_kill_process(strRootKey.c_str(), t);
         sstr << "kill_ret err:"<< err << std::endl;
         if (err != 0) {
@@ -268,3 +215,130 @@ Java_com_linux_permissionmanager_MainActivity_autoSuEnvInject(
     sstr << "autoSuEnvInject done.";
     return env->NewStringUTF(sstr.str().c_str());
 }
+
+
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_linux_permissionmanager_MainActivity_getAllCmdlineProcess(
+        JNIEnv* env,
+        jobject /* this */,
+        jstring rootKey) {
+    std::stringstream ss;
+
+    const char *str1 = env->GetStringUTFChars(rootKey, 0);
+    std::string strRootKey = str1;
+    env->ReleaseStringUTFChars(rootKey, str1);
+
+    std::map<pid_t, std::string> pid_map;
+    ssize_t err = kernel_root::safe_get_all_cmdline_process(strRootKey.c_str(), pid_map);
+    if(err != 0) {
+        ss << "get_all_cmdline_process err:"<< err<< std::endl;
+        return env->NewStringUTF(ss.str().c_str());
+    }
+
+    ss << "{\"data\":[";
+    for (auto iter = pid_map.begin(); iter != pid_map.end(); ) {
+        size_t len = iter->second.length();
+        size_t max_encoded_len = 3 * len + 1;
+        shared_ptr<char> spData(new (std::nothrow) char[max_encoded_len], std::default_delete<char[]>());
+        memset(spData.get(), 0, max_encoded_len);
+        url_encode(const_cast<char*>(iter->second.c_str()), spData.get());
+        ss << "{\"" << iter->first << "\":\"" << spData.get() << "\"}";
+        if (++iter != pid_map.end()) {
+            ss << ",";
+        }
+    }
+    ss << "]}";
+    return env->NewStringUTF(ss.str().c_str());
+}
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_linux_permissionmanager_MainActivity_parasitePrecheckApp(
+        JNIEnv* env,
+        jobject /* this */,
+        jstring rootKey,
+        jstring targetProcessCmdline) {
+
+    const char *str1 = env->GetStringUTFChars(rootKey, 0);
+    string strRootKey= str1;
+    env->ReleaseStringUTFChars(rootKey, str1);
+
+    str1 = env->GetStringUTFChars(targetProcessCmdline, 0);
+    string strTargetProcessCmdline = str1;
+    env->ReleaseStringUTFChars(targetProcessCmdline, str1);
+
+    stringstream sstr;
+    std::set<pid_t> test_pid;
+    ssize_t err = kernel_root::safe_find_all_cmdline_process(strRootKey.c_str(), strTargetProcessCmdline.c_str(), test_pid);
+    if (err != 0) {
+        sstr << "find_all_cmdline_process err:"<< err<<", cnt:"<< test_pid.size() << std::endl;
+        return env->NewStringUTF(sstr.str().c_str());
+    }
+    if (test_pid.size() == 0) {
+        sstr << "目标进程不存在" << std::endl;
+        return env->NewStringUTF(sstr.str().c_str());
+    }
+
+    std::set<std::string> so_path_list;
+    err = kernel_root::safe_parasite_precheck_app(strRootKey.c_str(), strTargetProcessCmdline.c_str(), so_path_list);
+    if (err) {
+        sstr << "parasite_precheck_app ret val:" << err << std::endl;
+        if(err == -9903) {
+            sstr << "此目标APP为32位应用，无法寄生" << err << std::endl;
+        }
+        return env->NewStringUTF(sstr.str().c_str());
+    }
+
+    if (!so_path_list.size()) {
+        sstr << "目标APP无法寄生：无法检测到目标APP的JNI环境，您可尝试重启目标APP后再试" << std::endl;
+        return env->NewStringUTF(sstr.str().c_str());
+    }
+
+    sstr << "{\"soPaths\":[";
+    for (auto iter = so_path_list.begin(); iter != so_path_list.end(); ) {
+        size_t len = iter->length();
+        size_t max_encoded_len = 3 * len + 1;
+        std::shared_ptr<char> spData(new (std::nothrow) char[max_encoded_len], std::default_delete<char[]>());
+        memset(spData.get(), 0, max_encoded_len);
+        url_encode(const_cast<char*>(iter->c_str()), spData.get());
+        sstr << "\"" << spData.get() << "\"";
+        if (++iter != so_path_list.end()) {
+            sstr << ",";
+        }
+    }
+    sstr << "]}";
+    return env->NewStringUTF(sstr.str().c_str());
+
+}
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_linux_permissionmanager_MainActivity_parasiteImplantApp(
+        JNIEnv* env,
+        jobject /* this */,
+        jstring rootKey,
+        jstring targetProcessCmdline,
+        jstring targetSoFullPath) {
+
+    const char *str1 = env->GetStringUTFChars(rootKey, 0);
+    string strRootKey= str1;
+    env->ReleaseStringUTFChars(rootKey, str1);
+
+    str1 = env->GetStringUTFChars(targetProcessCmdline, 0);
+    string strTargetProcessCmdline = str1;
+    env->ReleaseStringUTFChars(targetProcessCmdline, str1);
+
+    str1 = env->GetStringUTFChars(targetSoFullPath, 0);
+    string strTargetSoFullPath = str1;
+    env->ReleaseStringUTFChars(targetSoFullPath, str1);
+
+    stringstream sstr;
+    ssize_t err = kernel_root::safe_parasite_implant_app(strRootKey.c_str(), strTargetProcessCmdline.c_str(), strTargetSoFullPath.c_str());
+    if (err != 0) {
+        sstr << "parasite_implant_app err:"<< err << std::endl;
+        return env->NewStringUTF(sstr.str().c_str());
+    }
+    sstr << "parasiteImplantApp done.";
+    return env->NewStringUTF(sstr.str().c_str());
+
+}
+

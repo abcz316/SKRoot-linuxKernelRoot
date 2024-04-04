@@ -4,11 +4,22 @@
     <option name="filePathToZoomLevelMap">
       <map>
         <entry key="..\:/Users/abc/AndroidStudioProjects/linuxKernelRoot/PermissionManager/app/src/main/res/drawable-v24/ic_launcher_foreground.xml" value="0.1795" />
-        <entry key="..\:/Users/abc/AndroidStudioProjects/linuxKernelRoot/PermissionManager/app/src/main/res/layout/activity_main.xml" value="0.5" />
+        <entry key="..\:/Users/abc/AndroidStudioProjects/linuxKernelRoot/PermissionManager/app/src/main/res/drawable/ic_launcher_background.xml" value="0.109" />
+        <entry key="..\:/Users/abc/AndroidStudioProjects/linuxKernelRoot/PermissionManager/app/src/main/res/drawable/line.xml" value="0.109" />
+        <entry key="..\:/Users/abc/AndroidStudioProjects/linuxKernelRoot/PermissionManager/app/src/main/res/drawable/line_drawable.xml" value="0.109" />
+        <entry key="..\:/Users/abc/AndroidStudioProjects/linuxKernelRoot/PermissionManager/app/src/main/res/drawable/ripple_grey.xml" value="0.109" />
+        <entry key="..\:/Users/abc/AndroidStudioProjects/linuxKernelRoot/PermissionManager/app/src/main/res/drawable/shape_wnd_grey_corner.xml" value="0.109" />
+        <entry key="..\:/Users/abc/AndroidStudioProjects/linuxKernelRoot/PermissionManager/app/src/main/res/drawable/thumb.xml" value="0.109" />
+        <entry key="..\:/Users/abc/AndroidStudioProjects/linuxKernelRoot/PermissionManager/app/src/main/res/drawable/thumb_drawable.xml" value="0.109" />
+        <entry key="..\:/Users/abc/AndroidStudioProjects/linuxKernelRoot/PermissionManager/app/src/main/res/layout/activity_main.xml" value="0.375" />
+        <entry key="..\:/Users/abc/AndroidStudioProjects/linuxKernelRoot/PermissionManager/app/src/main/res/layout/select_app_recycler_item.xml" value="0.22447916666666667" />
+        <entry key="..\:/Users/abc/AndroidStudioProjects/linuxKernelRoot/PermissionManager/app/src/main/res/layout/select_app_wnd.xml" value="0.375" />
+        <entry key="..\:/Users/abc/AndroidStudioProjects/linuxKernelRoot/PermissionManager/app/src/main/res/layout/select_file_recycler_item.xml" value="0.335" />
+        <entry key="..\:/Users/abc/AndroidStudioProjects/linuxKernelRoot/PermissionManager/app/src/main/res/layout/select_file_wnd.xml" value="0.165" />
         <entry key="..\:/ceserver/linuxKernelRoot/PermissionManager/app/src/main/res/drawable/ripple_grey.xml" value="0.1295" />
         <entry key="..\:/ceserver/linuxKernelRoot/PermissionManager/app/src/main/res/layout/select_app_recycler_item.xml" value="0.1875" />
         <entry key="..\:/ceserver/linuxKernelRoot/PermissionManager/app/src/main/res/layout/select_app_wnd.xml" value="0.1875" />
-        <entry key="..\:/linuxKernelRoot/PermissionManager/app/src/main/res/layout/activity_main.xml" value="0.33" />
+        <entry key="..\:/linuxKernelRoot/PermissionManager/app/src/main/res/layout/activity_main.xml" value="0.5155875299760192" />
         <entry key="..\:/linuxKernelRoot/PermissionManager/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml" value="0.1795" />
       </map>
     </option>

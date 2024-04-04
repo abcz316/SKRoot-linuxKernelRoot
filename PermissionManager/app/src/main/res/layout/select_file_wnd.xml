@@ -25,7 +25,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
                 android:layout_marginLeft="15dp"
-                android:text="选择应用"
+                android:text="选择文件"
                 style="@style/MediumText"
                 />
 
@@ -69,38 +69,9 @@
                     android:text="X"/>
             </LinearLayout>
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-
-
-                <CheckBox
-                    android:id="@+id/show_system_app_ckbox"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="系统应用"
-                    android:textColor="@color/white" />
-
-                <CheckBox
-                    android:id="@+id/show_thirty_app_ckbox"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="第三方应用"
-                    android:checked="true"
-                    android:textColor="@color/white" />
-
-                <CheckBox
-                    android:id="@+id/show_running_app_ckbox"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="正在运行"
-                    android:checked="true"
-                    android:textColor="@color/white" />
-            </LinearLayout>
 
             <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/select_app_recycler_view"
+                android:id="@+id/select_file_recycler_view"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_marginTop="5dp"

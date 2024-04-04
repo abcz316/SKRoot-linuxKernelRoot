@@ -4,9 +4,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:padding="10px"
     tools:context=".MainActivity">
-
-
 
 
     <TextView
@@ -49,6 +48,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="菜单功能列表："
+                android:textColor="@color/black"
                 />
 
             <Button
@@ -94,11 +94,18 @@
 
                 <Button
                 android:layout_marginTop="5dp"
-                android:layout_marginBottom="15dp"
                 android:id="@+id/clean_su_btn"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="6.完全卸载清理su"
+                />
+
+                <Button
+                android:layout_marginTop="5dp"
+                android:id="@+id/implant_app_btn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="7.寄生到目标APP"
                 />
 
         </LinearLayout>
@@ -123,6 +130,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="输出信息:"
+                android:textColor="@color/black"
                 />
 
             <LinearLayout
