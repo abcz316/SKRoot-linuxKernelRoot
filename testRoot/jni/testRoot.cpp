@@ -1,8 +1,7 @@
 ﻿#include "testRoot.h"
 
 // TODO：请将此处的KEY替换为你的内核ROOT KEY
-#define ROOT_KEY "u24kKoPVSAG1tnwlcs1PJ1qp6HtVymj60CoTgsjmMd1UALve"
-//#define ROOT_KEY "OM4kKoPVGFG2tnVFcs1PJ1qp6HtVymjV0CoTgFDmMdSDALve"
+#define ROOT_KEY "OM4kKoPVGFG2tnVFcs1PJ1qp6HtVymjV0CoTgFDmMdSDALve"
 
 namespace {
 constexpr const char* k_su_base_path = "/data/local/tmp";
