@@ -31,7 +31,6 @@
 2.编译并启动`PermissionManager`或者`testRoot`，输入ROOT密匙值，开始享受舒爽的ROOT环境。
 
 ## 更新日志：
-
 **2.0:**
   * **1.新增seccomp补丁代码**
   * **2.新增寄生目标功能**
