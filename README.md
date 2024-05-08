@@ -28,7 +28,7 @@
 ## 使用流程：
 1.将内核文件拖拽置`patch_kernel_root.exe`即可一键自动化流程补丁内核，同时会自动生成ROOT密匙。
 
-2.启动`PermissionManager`，输入ROOT密匙值，开始享受舒爽的ROOT环境。
+2.编译并启动`PermissionManager`或者`testRoot`，输入ROOT密匙值，开始享受舒爽的ROOT环境。
 
 ## 更新日志：
 
