@@ -16,7 +16,6 @@
 * **让所有的ROOT检测手段都回归尘土吧，愿世界迎来一个美好的ROOT时代！**
 
 ![image](https://github.com/abcz316/linuxKernelRoot/blob/master/ScreenCap/1.png)
-![image](https://github.com/abcz316/linuxKernelRoot/blob/master/ScreenCap/2.png)
 ![image](https://github.com/abcz316/linuxKernelRoot/blob/master/ScreenCap/3.png)
 ![image](https://github.com/abcz316/linuxKernelRoot/blob/master/ScreenCap/4.png)
 
