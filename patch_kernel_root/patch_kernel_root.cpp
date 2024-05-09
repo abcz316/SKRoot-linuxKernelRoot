@@ -13,6 +13,7 @@ struct patch_bytes_data {
 
 size_t path_do_execve(const std::vector<char>& file_buf, const std::string& str_root_key, size_t hook_func_start_addr,
 	size_t do_execve_entry_addr,
+	size_t do_execve_key_reg,
 	std::string &t_mode_name,
 	std::vector<size_t>& task_struct_offset_cred,
 	std::vector<size_t> &task_struct_offset_seccomp,
@@ -38,9 +39,9 @@ size_t path_do_execve(const std::vector<char>& file_buf, const std::string& str_
 		<< "STP X9, X10, [sp, #-16]!" << std::endl
 		<< "STP X11, X12, [sp, #-16]!" << std::endl
 		<< "MOV X7, 0xFFFFFFFFFFFFF001" << std::endl
-		<< "CMP X1, X7" << std::endl
+		<< "CMP X"<< do_execve_key_reg <<", X7" << std::endl
 		<< "BCS #" << 120 + add_t_asm_offset << std::endl
-		<< "LDR X7, [X1]" << std::endl
+		<< "LDR X7, [X"<< do_execve_key_reg <<"]" << std::endl
 		<< "CBZ X7, #" << 112 + add_t_asm_offset << std::endl
 		<< "ADR X8, #-84" << std::endl
 		<< "MOV X9, #0" << std::endl
@@ -249,6 +250,8 @@ int main(int argc, char* argv[]) {
 	std::cout << "_text:" << sym._text_offset << std::endl;
 	std::cout << "_stext:" << sym._stext_offset << std::endl;
 	std::cout << "do_execve:" << sym.do_execve_offset << std::endl;
+	std::cout << "do_execveat:" << sym.do_execveat_offset << std::endl;
+	std::cout << "do_execveat_common:" << sym.do_execveat_common_offset << std::endl;
 	std::cout << "avc_denied:" << sym.avc_denied_offset << std::endl;
 	std::cout << "revert_creds:" << sym.revert_creds_offset << std::endl;
 	std::cout << "prctl_get_seccomp:" << sym.prctl_get_seccomp_offset << std::endl;
@@ -318,7 +321,19 @@ int main(int argc, char* argv[]) {
 		std::cout << "请输入ROOT密匙（48个字符的字符串，包含大小写和数字）：" << std::endl;
 		std::cin >> str_root_key;
 	}
-	hook_func_start_addr = path_do_execve(file_buf, str_root_key, hook_func_start_addr, sym.do_execve_offset, t_mode_name, v_cred_offset, v_seccomp_offset, vec_patch_bytes_data);
+
+	size_t do_execve_entry_addr = sym.do_execveat_common_offset;
+	size_t do_execve_key_reg = 1;
+	if (do_execve_entry_addr == 0) {
+		do_execve_entry_addr = sym.do_execveat_offset;
+		do_execve_key_reg = 1;
+		if (do_execve_entry_addr == 0) {
+			do_execve_entry_addr = sym.do_execve_offset;
+			do_execve_key_reg = 0;
+		}
+	}
+
+	hook_func_start_addr = path_do_execve(file_buf, str_root_key, hook_func_start_addr, do_execve_entry_addr, do_execve_key_reg, t_mode_name, v_cred_offset, v_seccomp_offset, vec_patch_bytes_data);
 	if (hook_func_start_addr) {
 		hook_func_start_addr = path_avc_denied(file_buf, hook_func_start_addr, sym.avc_denied_offset, t_mode_name, v_cred_offset, vec_patch_bytes_data);
 	}

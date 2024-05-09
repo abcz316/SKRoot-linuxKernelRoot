@@ -29,11 +29,10 @@ bool AnalyzeKernel::find_symbol_offset() {
 	m_kernel_sym_offset._text_offset = m_kernel_sym_parser.kallsyms_lookup_name("_text");
 	m_kernel_sym_offset._stext_offset = m_kernel_sym_parser.kallsyms_lookup_name("_stext");
 	m_kernel_sym_offset.do_execve_offset = m_kernel_sym_parser.kallsyms_lookup_name("do_execve");
-	if (m_kernel_sym_offset.do_execve_offset == 0) {
-		m_kernel_sym_offset.do_execve_offset = m_kernel_sym_parser.kallsyms_lookup_name("do_execveat");
-	}
-	if (m_kernel_sym_offset.do_execve_offset == 0) {
-		m_kernel_sym_offset.do_execve_offset = m_kernel_sym_parser.kallsyms_lookup_name("do_execveat_common", true);
+	m_kernel_sym_offset.do_execveat_offset = m_kernel_sym_parser.kallsyms_lookup_name("do_execveat");
+	m_kernel_sym_offset.do_execveat_common_offset = m_kernel_sym_parser.kallsyms_lookup_name("do_execveat_common");
+	if (m_kernel_sym_offset.do_execveat_common_offset == 0) {
+		m_kernel_sym_offset.do_execveat_common_offset = m_kernel_sym_parser.kallsyms_lookup_name("do_execveat_common", true);
 	}
 	m_kernel_sym_offset.avc_denied_offset = m_kernel_sym_parser.kallsyms_lookup_name("avc_denied");
 	if (m_kernel_sym_offset.avc_denied_offset == 0) {
@@ -49,5 +48,6 @@ bool AnalyzeKernel::find_symbol_offset() {
 	m_kernel_sym_offset.__ubsan_handle_cfi_check_fail_abort_offset = m_kernel_sym_parser.kallsyms_lookup_name("__ubsan_handle_cfi_check_fail_abort");
 	m_kernel_sym_offset.__ubsan_handle_cfi_check_fail_offset = m_kernel_sym_parser.kallsyms_lookup_name("__ubsan_handle_cfi_check_fail");
 	m_kernel_sym_offset.report_cfi_failure_offset = m_kernel_sym_parser.kallsyms_lookup_name("report_cfi_failure");
-	return m_kernel_sym_offset.do_execve_offset && m_kernel_sym_offset.avc_denied_offset && m_kernel_sym_offset.revert_creds_offset && m_kernel_sym_offset.prctl_get_seccomp_offset;
+	return (m_kernel_sym_offset.do_execve_offset || m_kernel_sym_offset.do_execveat_offset || m_kernel_sym_offset.do_execveat_common_offset
+		) && m_kernel_sym_offset.avc_denied_offset && m_kernel_sym_offset.revert_creds_offset && m_kernel_sym_offset.prctl_get_seccomp_offset;
 }

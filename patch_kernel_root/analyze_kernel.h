@@ -7,6 +7,8 @@ struct KernelSymbolOffset {
 	size_t _text_offset = 0;
 	size_t _stext_offset = 0;
 	size_t do_execve_offset = 0;
+	size_t do_execveat_offset = 0;
+	size_t do_execveat_common_offset = 0;
 	size_t avc_denied_offset = 0;
 	size_t revert_creds_offset = 0;
 	size_t prctl_get_seccomp_offset = 0;
