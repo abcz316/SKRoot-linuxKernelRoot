@@ -33,7 +33,18 @@ bool KallsymsLookupName_4_6_0::init() {
 
 	std::cout << std::hex << "kallsyms_num: 0x" << m_kallsyms_num << std::endl;
 
-	offset_list_start = offset_list_end - m_kallsyms_num * sizeof(long);
+	// revise the offset list offset again
+	const int offset_list_var_len = sizeof(long);
+	offset_list_start = offset_list_end - m_kallsyms_num * offset_list_var_len;
+	long test_first_offset_list_val;
+	do {
+		test_first_offset_list_val = *(long*)&m_file_buf[offset_list_start];
+		if (test_first_offset_list_val) {
+			offset_list_start -= offset_list_var_len;
+			offset_list_end -= offset_list_var_len;
+		}
+	} while (test_first_offset_list_val);
+
 	std::cout << std::hex << "kallsyms_offset_start: 0x" << offset_list_start << std::endl;
 	std::cout << std::hex << "kallsyms_offset_end: 0x" << offset_list_end << std::endl;
 	m_kallsyms_offsets.offset = offset_list_start;
@@ -108,7 +119,7 @@ bool KallsymsLookupName_4_6_0::find_kallsyms_offsets_list(size_t& start, size_t&
 		for (; j + var_len < m_file_buf.size(); j += var_len) {
 			val1 = *(long*)&m_file_buf[j];
 			val2 = *(long*)&m_file_buf[j + var_len];
-			if (val1 > val2 || val2 == 0 || val2 == 0x10000000) {
+			if (val1 > val2 || val2 == 0 || (val2 - val1) > 0x1000000) {
 				j += var_len;
 				break;
 			}
