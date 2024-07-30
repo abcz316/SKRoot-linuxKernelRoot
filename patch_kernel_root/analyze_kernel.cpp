@@ -28,6 +28,7 @@ KernelSymbolOffset AnalyzeKernel::get_symbol_offset() {
 bool AnalyzeKernel::find_symbol_offset() {
 	m_kernel_sym_offset._text_offset = m_kernel_sym_parser.kallsyms_lookup_name("_text");
 	m_kernel_sym_offset._stext_offset = m_kernel_sym_parser.kallsyms_lookup_name("_stext");
+	m_kernel_sym_offset.panic_offset = m_kernel_sym_parser.kallsyms_lookup_name("panic");
 	m_kernel_sym_offset.do_execve_offset = m_kernel_sym_parser.kallsyms_lookup_name("do_execve");
 	m_kernel_sym_offset.do_execveat_offset = m_kernel_sym_parser.kallsyms_lookup_name("do_execveat");
 	m_kernel_sym_offset.do_execveat_common_offset = m_kernel_sym_parser.kallsyms_lookup_name("do_execveat_common");

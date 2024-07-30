@@ -81,7 +81,7 @@ bool KallsymsLookupName_4_6_0::init() {
 
 	size_t token_index_start = 0;
 	if (!find_kallsyms_token_index(token_table_end, token_index_start)) {
-		std::cout << "Unable to find the list of kallsyms token table" << std::endl;
+		std::cout << "Unable to find the list of kallsyms token index" << std::endl;
 		return false;
 	}
 	std::cout << std::hex << "kallsyms_token_index_start: 0x" << token_index_start << std::endl;

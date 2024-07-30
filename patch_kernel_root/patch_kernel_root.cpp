@@ -205,7 +205,7 @@ bool parser_seccomp_offset(const std::vector<char> &file_buf, size_t start, std:
 }
 
 bool check_file_path(const char* file_path) {
-	int len = strlen(file_path);
+	size_t len = strlen(file_path);
 	if (len > 4 && strcmp(file_path + len - 4, ".img") == 0) {
 		return false;
 	}
@@ -218,13 +218,27 @@ int main(int argc, char* argv[]) {
 
 	std::cout << "本工具用于生成SKRoot ARM64 Linux内核ROOT提权代码 V2" << std::endl << std::endl;
 
+#ifdef _DEBUG
+#else
 	if (argc < 1) {
 		std::cout << "无输入文件" << std::endl;
 		system("pause");
 		return 0;
 	}
+#endif
+
+#ifdef _DEBUG
+	//const char* file_path = R"***(C:\Users\maily\Desktop\kernel)***";
+	//const char* file_path = R"***(C:\Users\maily\Desktop\k20.img-kernel)***";
+	//const char* file_path = R"***(C:\Users\maily\Desktop\mi8v9)***";
+	//const char* file_path = R"***(C:\Users\maily\Desktop\mi8v10)***";
+	//const char* file_path = R"***(C:\Users\maily\Desktop\mi5)***";
+	//const char* file_path = R"***(C:\Users\maily\Desktop\mi6max)***";
+	//const char* file_path = R"***(C:\Users\maily\Desktop\skr_fix_6s\o.img-kernel)***";
+	//const char* file_path = R"***(C:\Users\maily\Desktop\vmlinux\vmlinux)***";
+#else
 	const char* file_path = argv[0];
-	
+#endif
 	if (!check_file_path(file_path)) {
 		std::cout << "Please enter the correct Linux kernel binary file path. " << std::endl;
 		std::cout << "For example, if it is boot.img, you need to first decompress boot.img and then extract the kernel file inside." << std::endl;
@@ -249,6 +263,7 @@ int main(int argc, char* argv[]) {
 
 	std::cout << "_text:" << sym._text_offset << std::endl;
 	std::cout << "_stext:" << sym._stext_offset << std::endl;
+	std::cout << "panic:" << sym.panic_offset << std::endl;
 	std::cout << "do_execve:" << sym.do_execve_offset << std::endl;
 	std::cout << "do_execveat:" << sym.do_execveat_offset << std::endl;
 	std::cout << "do_execveat_common:" << sym.do_execveat_common_offset << std::endl;
@@ -288,10 +303,20 @@ int main(int argc, char* argv[]) {
 	std::vector<patch_bytes_data> vec_patch_bytes_data;
 
 	//cfi bypass
-	size_t hook_func_start_addr = 0x300;
+	std::vector<size_t> v_hook_func_start_addr;
+
 	if (sym.__cfi_check_offset) {
-		hook_func_start_addr = patch_ret_cmd(file_buf, sym.__cfi_check_offset, vec_patch_bytes_data);
+		size_t hook_start = patch_ret_cmd(file_buf, sym.__cfi_check_offset, vec_patch_bytes_data);
+		v_hook_func_start_addr.push_back(hook_start);
+	} else {
+		if (sym.panic_offset) {
+			v_hook_func_start_addr.push_back(sym.panic_offset);
+		}
 	}
+	if (v_hook_func_start_addr.size() == 0) {
+		v_hook_func_start_addr.push_back(0x300);
+	}
+
 	if (sym.__cfi_check_fail_offset) {
 		patch_ret_cmd(file_buf, sym.__cfi_check_fail_offset, vec_patch_bytes_data);
 	}
@@ -332,12 +357,15 @@ int main(int argc, char* argv[]) {
 			do_execve_key_reg = 0;
 		}
 	}
-
-	hook_func_start_addr = path_do_execve(file_buf, str_root_key, hook_func_start_addr, do_execve_entry_addr, do_execve_key_reg, t_mode_name, v_cred_offset, v_seccomp_offset, vec_patch_bytes_data);
-	if (hook_func_start_addr) {
-		hook_func_start_addr = path_avc_denied(file_buf, hook_func_start_addr, sym.avc_denied_offset, t_mode_name, v_cred_offset, vec_patch_bytes_data);
+	size_t first_hook_func_addr = v_hook_func_start_addr[0];
+	size_t next_hook_func_addr = path_do_execve(file_buf, str_root_key, first_hook_func_addr, do_execve_entry_addr, do_execve_key_reg, t_mode_name, v_cred_offset, v_seccomp_offset, vec_patch_bytes_data);
+	if (v_hook_func_start_addr.size() > 1) {
+		next_hook_func_addr = v_hook_func_start_addr[1];
 	}
-	if (hook_func_start_addr == 0) {
+	if (next_hook_func_addr) {
+		next_hook_func_addr = path_avc_denied(file_buf, next_hook_func_addr, sym.avc_denied_offset, t_mode_name, v_cred_offset, vec_patch_bytes_data);
+	}
+	if (next_hook_func_addr == 0) {
 		std::cout << "生成汇编代码失败！请检查输入的参数！" << std::endl;
 		system("pause");
 		return 0;
