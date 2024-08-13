@@ -25,8 +25,8 @@ jobs:
             echo KEYSTORE_PASSWORD='${{ secrets.KEYSTORE_PASSWORD }}' >> gradle.properties
             echo KEY_ALIAS='${{ secrets.KEY_ALIAS }}' >> gradle.properties
             echo KEY_PASSWORD='${{ secrets.KEY_PASSWORD }}' >> gradle.properties
-            echo KEYSTORE_FILE='../appKey.jks' >> gradle.properties
-            echo ${{ secrets.KEYSTORE }} | base64 --decode > appKey.jks
+            echo KEYSTORE_FILE='../app.jks' >> gradle.properties
+            #echo ${{ secrets.KEYSTORE }} | base64 --decode > appKey.jks
           fi
           if [ ! -z "${{ vars.APPLICATION_ID }}" ]; then
             echo "[+] 自定义应用包名"
