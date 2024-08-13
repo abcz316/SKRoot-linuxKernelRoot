@@ -37,6 +37,7 @@ android {
             version '3.18.1'
         }
     }
+    ndkVersion = "26.2.11394342"
     buildFeatures {
         viewBinding true
     }
