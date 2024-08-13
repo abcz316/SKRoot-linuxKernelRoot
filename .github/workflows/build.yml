@@ -1,40 +1,86 @@
-name: Gradle Build
+name: Build Manager
 
 on:
-  push:
-    branches:
-      - master
-  pull_request:
-    branches:
-      - master
+  watch:
+    types: [started]
+  workflow_dispatch:
 
 jobs:
-  build:
+  build-manage:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./PermissionManager
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
-    - name: Set up JDK 17
-      uses: actions/setup-java@v1
-      with:
-        java-version: 17
+      - name: Custom key, applicationId and app_name
+        run: |
+          if [ ! -z "${{ secrets.KEYSTORE }}" ]; then
+            echo "[+] 添加签名信息"
+            echo KEYSTORE_PASSWORD='${{ secrets.KEYSTORE_PASSWORD }}' >> gradle.properties
+            echo KEY_ALIAS='${{ secrets.KEY_ALIAS }}' >> gradle.properties
+            echo KEY_PASSWORD='${{ secrets.KEY_PASSWORD }}' >> gradle.properties
+            echo KEYSTORE_FILE='../appKey.jks' >> gradle.properties
+            echo ${{ secrets.KEYSTORE }} | base64 --decode > appKey.jks
+          fi
+          if [ ! -z "${{ vars.APPLICATION_ID }}" ]; then
+            echo "[+] 自定义应用包名"
+            sed -i 's/applicationId "com.linux.permissionmanager"/applicationId "${{ vars.APPLICATION_ID }}"/g' app/build.gradle
+          fi
+          if [ ! -z "${{ vars.APPLICATION_NAME }}" ]; then
+            echo "[+] 自定义应用名"
+            sed -i 's/PermissionManager/${{ vars.APPLICATION_NAME }}/g' app/src/main/res/values/strings.xml
+          fi
+          if [ ! -z "${{ secrets.ROOT_KEY }}" ]; then
+            echo "[+] 自定义root-key"
+            sed -i 's/rootKey = "[A-Za-z0-9]\+"/rootKey = "${{ secrets.ROOT_KEY }}"/g' app/src/main/java/com/linux/permissionmanager/MainActivity.java
+          fi
+          if [ ! -z "${{ vars.DISABLE_TIME_LIMIT }}" ]; then
+            echo "[+] 关闭有效期限制"
+            sed -i '/密匙保留仅仅当天有效/,/encryKey.c_str());/d' ../su/su_hide_path_utils.h
+            sed -i 's/decodeRootKey = base64_decode(decodeRootKey);/std::string decodeRootKey = base64_decode((const char*)path.c_str());/g' ../su/su_hide_path_utils.h
+            #sed -i '/if (decodeRootKey/,/\t}/d' ../su/su_hide_path_utils.h
+            #sed -i 's/return decodeRootKey.substr(decodeRootKey.length() - ROOT_KEY_LEN)/return decodeRootKey/g' ../su/su_hide_path_utils.h
+          fi
+          if [ ! -z "${{ vars.SU_DEBUG }}" ]; then
+            echo "[+] 开启调试"
+            sed -i 's/-std=c++17/-std=c++17 -g -O0/g' app/build.gradle
+            sed -i '/APP_STL/a APP_OPTIM := debug' ../su/jni/Application.mk
+            sed -i 's/-fexceptions/-fexceptions -g -O0/g' ../su/jni/Android.mk
+            sed -i 's/-pie/-pie -g/g' ../su/jni/Android.mk
+          fi
+      
+      - name: set up JDK 11
+        uses: actions/setup-java@v3
+        with:
+          java-version: '11'
+          distribution: 'temurin'
+          cache: gradle
+      
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
+        with:
+          gradle-home-cache-cleanup: true
+  
+      - name: Grant execute permission for gradlew
+        run: |
+          chmod +x gradlew
+          sudo find ${ANDROID_HOME} -mindepth 1 -maxdepth 1 ! -name licenses -exec rm -rf {} +
+          sudo apt update
+          sudo apt install -y git-core gnupg flex bison build-essential zip curl zlib1g-dev gcc-multilib g++-multilib libc6-dev-i386 libncurses5 lib32ncurses5-dev x11proto-core-dev libx11-dev lib32z1-dev libgl1-mesa-dev libxml2-utils xsltproc unzip fontconfig
+          gcc -v && clang -v
 
-    # - name: Set up Android SDK
-    #   uses: android-actions/setup-android@v2
-    #   with:
-    #     api-level: 30
-    #     build-tools: 30.0.3
+      - name: Build with Gradle
+        run: |
+          ./gradlew clean assemble
 
-    - name: Grant execute permission for gradlew
-      run: chmod +x ./PermissionManager/gradlew
-
-    - name: Build with Gradle
-      working-directory: ./PermissionManager
-      run: ./gradlew build
-    - name: Upload APK
-      uses: actions/upload-artifact@v2
-      with:
-        name: my-build-apk
-        path: ./**/*.apk
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: PermissionManager
+          path: PermissionManager/app/build/outputs/apk
