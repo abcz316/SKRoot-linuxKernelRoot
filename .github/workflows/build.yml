@@ -20,6 +20,13 @@ jobs:
       uses: actions/setup-java@v2
       with:
         java-version: 1.8
+        distribution: 'zulu'
+
+    - name: Set up Android SDK
+      uses: android-actions/setup-android@v2
+      with:
+        api-level: 30
+        build-tools: 30.0.3
 
     - name: Grant execute permission for gradlew
       run: chmod +x ./PermissionManager/gradlew
