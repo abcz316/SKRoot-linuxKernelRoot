@@ -47,13 +47,7 @@ jobs:
             #sed -i '/if (decodeRootKey/,/\t}/d' ../su/su_hide_path_utils.h
             #sed -i 's/return decodeRootKey.substr(decodeRootKey.length() - ROOT_KEY_LEN)/return decodeRootKey/g' ../su/su_hide_path_utils.h
           fi
-          if [ ! -z "${{ vars.SU_DEBUG }}" ]; then
-            echo "[+] 开启调试"
-            sed -i 's/-std=c++17/-std=c++17 -g -O0/g' app/build.gradle
-            sed -i '/APP_STL/a APP_OPTIM := debug' ../su/jni/Application.mk
-            sed -i 's/-fexceptions/-fexceptions -g -O0/g' ../su/jni/Android.mk
-            sed -i 's/-pie/-pie -g/g' ../su/jni/Android.mk
-          fi
+          
       
       - name: set up JDK 11
         uses: actions/setup-java@v3
