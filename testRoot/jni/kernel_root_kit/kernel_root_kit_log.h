@@ -11,8 +11,7 @@ namespace kernel_root {
 #ifdef __ANDROID__
 #undef ROOT_PRINTF
 #include <android/log.h>
-#define ROOT_PRINTF "JNIGlue"
-//#define ROOT_PRINTF(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
+//#define ROOT_PRINTF(...) __android_log_print(ANDROID_LOG_ERROR, "JNIkernel_root", __VA_ARGS__)
 #define ROOT_PRINTF(fmt, ...) printf(fmt, ##__VA_ARGS__)
 #else
 #define ROOT_PRINTF(fmt, ...) printf(fmt, ##__VA_ARGS__)

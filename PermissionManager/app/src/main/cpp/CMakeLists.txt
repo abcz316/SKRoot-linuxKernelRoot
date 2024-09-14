@@ -26,6 +26,7 @@ add_library( # Sets the name of the library.
         ../../../../../testRoot/jni/kernel_root_kit/kernel_root_kit_su_install_helper.cpp
         ../../../../../testRoot/jni/kernel_root_kit/kernel_root_kit_parasite_app.cpp
         ../../../../../testRoot/jni/kernel_root_kit/kernel_root_kit_parasite_patch_elf.cpp
+        cJSON.c
         root.cpp)
 
 # Searches for a specified prebuilt library and stores the path as a

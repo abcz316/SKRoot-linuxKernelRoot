@@ -46,6 +46,8 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.net.URLDecoder;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -58,6 +60,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private String lastInputCmd = "id";
     private SharedPreferences m_shareSave;
     private ProgressDialog m_loadingDlg = null;
+    private final String[] RECOMMEND_FILES = {"libc++_shared.so"};
+
     static {
         System.loadLibrary("permissionmanager");
     }
@@ -113,119 +117,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 showUserInputRootCmdDlg(true);
                 break;
             case R.id.su_env_install_btn:
-                //1.安装su工具
-                String insRet = installSu(rootKey, suBasePath);
-                appendConsoleMsg(insRet);
-                if(insRet.indexOf("installSu done.") != -1) {
-                    //2.复制su的路径到剪贴板
-                    String suFullPath = getLastInstallSuFullPath();
-                    appendConsoleMsg("lastInstallSuFullPath:" + suFullPath);
-                    showMsgDlg("温馨提示", 
-                            "安装部署su成功，su路径已复制到剪贴板。", null);
-                    copyEditText(suFullPath);
-                    appendConsoleMsg("安装部署su成功，su路径已复制到剪贴板");
-                }
+                onClickSuEnvInstallBtn();
                 break;
             case R.id.su_env_inject_btn:
-                Handler selectInjectSuAppCallback = new Handler() {
-                    @Override
-                    public void handleMessage(@NonNull Message msg) {
-
-                        SelectAppRecyclerItem appItem = (SelectAppRecyclerItem) msg.obj;
-
-                        if (m_loadingDlg == null) {
-                            m_loadingDlg = new ProgressDialog(MainActivity.this);
-                            m_loadingDlg.setCancelable(false);
-                        }
-                        m_loadingDlg.setTitle("");
-                        m_loadingDlg.setMessage("请现在手动启动APP [" + appItem.getShowName(MainActivity.this) + "]");
-                        m_loadingDlg.show();
-
-                        new Thread() {
-                            public void run() {
-                                String autoSuEnvInjectRet = autoSuEnvInject(rootKey, appItem.getPackageName());
-                                runOnUiThread(new Runnable() {
-                                    public void run() {
-                                        appendConsoleMsg(autoSuEnvInjectRet);
-                                        m_loadingDlg.cancel();
-
-                                        if(autoSuEnvInjectRet.indexOf("autoSuEnvInject done.")!= -1) {
-                                            showMsgDlg("提示",
-                                                    "已经授予ROOT权限到APP [" + appItem.getShowName(MainActivity.this) + "]",
-                                                    appItem.getDrawable(MainActivity.this));
-                                        }
-
-                                    }
-                                });
-                            }
-                        }.start();
-                        super.handleMessage(msg);
-                    }
-                };
-                showSelectAppDlg(selectInjectSuAppCallback);
+                showSelectSuInjectModeDlg();
                 break;
             case R.id.clean_su_btn:
                 appendConsoleMsg(uninstallSu(rootKey,suBasePath));
                 break;
             case R.id.implant_app_btn:
-                showMsgDlg("建议", "为实现APP的最佳隐蔽性，推荐将此工具寄生到能常驻后台的APP上", null);
-
-                Handler selectImplantAppCallback = new Handler() {
-                    @Override
-                    public void handleMessage(@NonNull Message msg) {
-                        SelectAppRecyclerItem appItem = (SelectAppRecyclerItem) msg.obj;
-                        if (m_loadingDlg == null) {
-                            m_loadingDlg = new ProgressDialog(MainActivity.this);
-                            m_loadingDlg.setCancelable(false);
-                        }
-                        m_loadingDlg.setTitle("");
-                        m_loadingDlg.setMessage("请现在手动启动APP [" + appItem.getShowName(MainActivity.this) + "]");
-                        m_loadingDlg.show();
-                        new Thread() {
-                            public void run() {
-                                String parasitePrecheckAppRet = parasitePrecheckApp(rootKey, appItem.getPackageName());
-                                runOnUiThread(new Runnable() {
-                                    public void run() {
-                                        m_loadingDlg.cancel();
-                                        List<String> fileList = parseSoFullPathInfo(parasitePrecheckAppRet);
-                                        if (fileList.size() == 0 && !parasitePrecheckAppRet.isEmpty()) {
-                                            appendConsoleMsg(parasitePrecheckAppRet);
-                                            return;
-                                        }
-                                        Handler selectFileCallback = new Handler() {
-                                            @Override
-                                            public void handleMessage(@NonNull Message msg) {
-                                                SelectFileRecyclerItem fileItem = (SelectFileRecyclerItem) msg.obj;
-                                                String parasiteImplantAppRet = parasiteImplantApp(rootKey, appItem.getPackageName(), fileItem.getFilePath());
-                                                appendConsoleMsg(parasiteImplantAppRet);
-                                                if(parasiteImplantAppRet.indexOf("parasiteImplantApp done.")!= -1) {
-                                                    showMsgDlg("提示",
-                                                            "已经寄生到APP [" + appItem.getShowName(MainActivity.this) + "]",
-                                                            appItem.getDrawable(MainActivity.this));
-                                                }
-                                                super.handleMessage(msg);
-                                            }
-                                        };
-                                        showSelectFileDlg(fileList, selectFileCallback);
-                                    }
-                                });
-                            }
-                        }.start();
-                        super.handleMessage(msg);
-                    }
-                };
-                View view = showSelectAppDlg(selectImplantAppCallback);
-                CheckBox show_system_app_ckbox = view.findViewById(R.id.show_system_app_ckbox);
-                CheckBox show_thirty_app_ckbox = view.findViewById(R.id.show_thirty_app_ckbox);
-                CheckBox show_running_app_ckbox = view.findViewById(R.id.show_running_app_ckbox);
-                show_system_app_ckbox.setChecked(false);
-                show_thirty_app_ckbox.setChecked(true);
-                show_running_app_ckbox.setChecked(true);
+                onClickImplantAppBtn();
                 break;
             case R.id.copy_info_btn:
-                EditText edit = findViewById(R.id.console_edit);
-                copyEditText(edit.getText().toString());
-                Toast.makeText(v.getContext(), "复制成功", Toast.LENGTH_SHORT).show();
+                copyConsoleMsg();
                 break;
             case R.id.clean_info_btn:
                 cleanConsoleMsg();
@@ -307,7 +211,203 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         AlertDialog dialog = builder.create();
         dialog.show();
     }
-    
+
+    public void onClickSuEnvInstallBtn() {
+        //1.安装su工具
+        String insRet = installSu(rootKey, suBasePath);
+        appendConsoleMsg(insRet);
+        if(insRet.indexOf("installSu done.") != -1) {
+            //2.复制su的路径到剪贴板
+            String suFullPath = getLastInstallSuFullPath();
+            appendConsoleMsg("lastInstallSuFullPath:" + suFullPath);
+            showMsgDlg("温馨提示",
+                    "安装部署su成功，su路径已复制到剪贴板。", null);
+            copyEditText(suFullPath);
+            appendConsoleMsg("安装部署su成功，su路径已复制到剪贴板");
+        }
+    }
+
+    private void suTempInject() {
+        Handler selectInjectSuAppCallback = new Handler() {
+            @Override
+            public void handleMessage(@NonNull Message msg) {
+
+                SelectAppRecyclerItem appItem = (SelectAppRecyclerItem) msg.obj;
+
+                if (m_loadingDlg == null) {
+                    m_loadingDlg = new ProgressDialog(MainActivity.this);
+                    m_loadingDlg.setCancelable(false);
+                }
+                m_loadingDlg.setTitle("");
+                m_loadingDlg.setMessage("请现在手动启动APP [" + appItem.getShowName(MainActivity.this) + "]");
+                m_loadingDlg.show();
+
+                new Thread() {
+                    public void run() {
+                        String autoSuEnvInjectRet = autoSuEnvInject(rootKey, appItem.getPackageName());
+                        runOnUiThread(new Runnable() {
+                            public void run() {
+                                appendConsoleMsg(autoSuEnvInjectRet);
+                                m_loadingDlg.cancel();
+
+                                if(autoSuEnvInjectRet.indexOf("autoSuEnvInject done.")!= -1) {
+                                    showMsgDlg("提示",
+                                            "已授予ROOT权限至APP [" + appItem.getShowName(MainActivity.this) + "]",
+                                            appItem.getDrawable(MainActivity.this));
+                                }
+
+                            }
+                        });
+                    }
+                }.start();
+                super.handleMessage(msg);
+            }
+        };
+        showSelectAppDlg(selectInjectSuAppCallback);
+    }
+
+    private void suForeverInject() {
+        Handler selectImplantSuEnvCallback = new Handler() {
+            @Override
+            public void handleMessage(@NonNull Message msg) {
+                SelectAppRecyclerItem appItem = (SelectAppRecyclerItem) msg.obj;
+                if (m_loadingDlg == null) {
+                    m_loadingDlg = new ProgressDialog(MainActivity.this);
+                    m_loadingDlg.setCancelable(false);
+                }
+                m_loadingDlg.setTitle("");
+                m_loadingDlg.setMessage("请现在手动启动APP [" + appItem.getShowName(MainActivity.this) + "]");
+                m_loadingDlg.show();
+                new Thread() {
+                    public void run() {
+                        String parasitePrecheckAppRet = parasitePrecheckApp(rootKey, appItem.getPackageName());
+                        runOnUiThread(new Runnable() {
+                            public void run() {
+                                m_loadingDlg.cancel();
+                                Map<String, Integer> fileList = parseSoFullPathInfo(parasitePrecheckAppRet);
+                                if (fileList.size() == 0 && !parasitePrecheckAppRet.isEmpty()) {
+                                    appendConsoleMsg(parasitePrecheckAppRet);
+                                    return;
+                                }
+                                Handler selectFileCallback = new Handler() {
+                                    @Override
+                                    public void handleMessage(@NonNull Message msg) {
+                                        SelectFileRecyclerItem fileItem = (SelectFileRecyclerItem) msg.obj;
+                                        String parasiteImplantSuEnvRet = parasiteImplantSuEnv(rootKey, appItem.getPackageName(), fileItem.getFilePath());
+                                        appendConsoleMsg(parasiteImplantSuEnvRet);
+                                        if(parasiteImplantSuEnvRet.indexOf("parasiteImplantSuEnv done.")!= -1) {
+                                            showMsgDlg("提示",
+                                                    "已永久寄生su环境至APP [" + appItem.getShowName(MainActivity.this) + "]",
+                                                    appItem.getDrawable(MainActivity.this));
+                                        }
+                                        super.handleMessage(msg);
+                                    }
+                                };
+                                showSelectFileDlg(fileList, selectFileCallback);
+                            }
+                        });
+                    }
+                }.start();
+                super.handleMessage(msg);
+            }
+        };
+        View view = showSelectAppDlg(selectImplantSuEnvCallback);
+        CheckBox show_system_app_ckbox = view.findViewById(R.id.show_system_app_ckbox);
+        CheckBox show_thirty_app_ckbox = view.findViewById(R.id.show_thirty_app_ckbox);
+        CheckBox show_running_app_ckbox = view.findViewById(R.id.show_running_app_ckbox);
+        show_system_app_ckbox.setChecked(false);
+        show_system_app_ckbox.setEnabled(false);
+
+        show_thirty_app_ckbox.setChecked(true);
+        show_thirty_app_ckbox.setEnabled(false);
+
+        show_running_app_ckbox.setChecked(true);
+        show_running_app_ckbox.setEnabled(false);
+    }
+
+    public void showSelectSuInjectModeDlg() {
+        final String[] items = {"临时授权su", "永久授权su"};
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("请选择一个选项");
+        builder.setSingleChoiceItems(items, -1, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+                if(which == 0) {
+                    suTempInject();
+                } else if(which == 1) {
+                    suForeverInject();
+                }
+            }
+        });
+        builder.setNegativeButton("取消", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+            }
+        });
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+    public void onClickImplantAppBtn() {
+        showMsgDlg("建议", "为了实现最佳隐蔽性，推荐寄生到能常驻后台且联网的APP上，如音乐类、播放器类、运动类、广播类、社交聊天类APP", null);
+        Handler selectImplantAppCallback = new Handler() {
+            @Override
+            public void handleMessage(@NonNull Message msg) {
+                SelectAppRecyclerItem appItem = (SelectAppRecyclerItem) msg.obj;
+                if (m_loadingDlg == null) {
+                    m_loadingDlg = new ProgressDialog(MainActivity.this);
+                    m_loadingDlg.setCancelable(false);
+                }
+                m_loadingDlg.setTitle("");
+                m_loadingDlg.setMessage("请现在手动启动APP [" + appItem.getShowName(MainActivity.this) + "]");
+                m_loadingDlg.show();
+                new Thread() {
+                    public void run() {
+                        String parasitePrecheckAppRet = parasitePrecheckApp(rootKey, appItem.getPackageName());
+                        runOnUiThread(new Runnable() {
+                            public void run() {
+                                m_loadingDlg.cancel();
+                                Map<String, Integer> fileList = parseSoFullPathInfo(parasitePrecheckAppRet);
+                                if (fileList.size() == 0 && !parasitePrecheckAppRet.isEmpty()) {
+                                    appendConsoleMsg(parasitePrecheckAppRet);
+                                    return;
+                                }
+                                Handler selectFileCallback = new Handler() {
+                                    @Override
+                                    public void handleMessage(@NonNull Message msg) {
+                                        SelectFileRecyclerItem fileItem = (SelectFileRecyclerItem) msg.obj;
+                                        String parasiteImplantAppRet = parasiteImplantApp(rootKey, appItem.getPackageName(), fileItem.getFilePath());
+                                        appendConsoleMsg(parasiteImplantAppRet);
+                                        if(parasiteImplantAppRet.indexOf("parasiteImplantApp done.")!= -1) {
+                                            showMsgDlg("提示",
+                                                    "已经寄生到APP [" + appItem.getShowName(MainActivity.this) + "]",
+                                                    appItem.getDrawable(MainActivity.this));
+                                        }
+                                        super.handleMessage(msg);
+                                    }
+                                };
+                                showSelectFileDlg(fileList, selectFileCallback);
+                            }
+                        });
+                    }
+                }.start();
+                super.handleMessage(msg);
+            }
+        };
+        View view = showSelectAppDlg(selectImplantAppCallback);
+        CheckBox show_system_app_ckbox = view.findViewById(R.id.show_system_app_ckbox);
+        CheckBox show_thirty_app_ckbox = view.findViewById(R.id.show_thirty_app_ckbox);
+        CheckBox show_running_app_ckbox = view.findViewById(R.id.show_running_app_ckbox);
+        show_system_app_ckbox.setChecked(false);
+        show_system_app_ckbox.setEnabled(false);
+        show_thirty_app_ckbox.setChecked(true);
+        show_thirty_app_ckbox.setEnabled(false);
+        show_running_app_ckbox.setChecked(true);
+        show_running_app_ckbox.setEnabled(false);
+    }
+
     public void appendConsoleMsg(String msg) {
         EditText console_edit = findViewById(R.id.console_edit);
         StringBuffer txt = new StringBuffer();
@@ -319,6 +419,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         txt.append("\n");
         console_edit.setText(txt.toString());
         console_edit.setSelection(txt.length());
+    }
+
+    public void copyConsoleMsg() {
+        EditText edit = findViewById(R.id.console_edit);
+        copyEditText(edit.getText().toString());
+        Toast.makeText(this, "复制成功", Toast.LENGTH_SHORT).show();
     }
 
     public void cleanConsoleMsg() {
@@ -398,13 +504,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             appendConsoleMsg(runningApp);
         }
 
-
         TextView clear_search_btn = view.findViewById(R.id.clear_search_btn);
         EditText search_edit = view.findViewById(R.id.search_edit);
         CheckBox show_system_app_ckbox = view.findViewById(R.id.show_system_app_ckbox);
         CheckBox show_thirty_app_ckbox = view.findViewById(R.id.show_thirty_app_ckbox);
         CheckBox show_running_app_ckbox = view.findViewById(R.id.show_running_app_ckbox);
-
+        show_system_app_ckbox.setEnabled(true);
+        show_thirty_app_ckbox.setEnabled(true);
+        show_running_app_ckbox.setEnabled(true);
         Map<Integer, String> finalProcessMap = processMap;
         @SuppressLint("HandlerLeak") Handler updateAppListFunc = new Handler() {
             @Override
@@ -414,14 +521,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 for(SelectAppRecyclerItem item : appList) {
                     PackageInfo pack = item.getPackageInfo();
                     if(!show_system_app_ckbox.isChecked()) {
-                        if ((pack.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0) {
-                            //系统应用
+                        if ((pack.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0) {  //系统应用
                             continue;
                         }
                     }
                     if(!show_thirty_app_ckbox.isChecked()) {
-                        if ((pack.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 0) {
-                            //第三方应用
+                        if ((pack.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 0) { //第三方应用
                             continue;
                         }
                     }
@@ -432,7 +537,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             continue;
                         }
                     }
-
                     if(item.getPackageName().indexOf(filterText) != -1 || item.getShowName(MainActivity.this).indexOf(filterText) != -1) {
                         newAppList.add(item);
                     }
@@ -444,9 +548,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         search_edit.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
             }
-
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 String text = s.toString();
@@ -457,10 +559,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
                 updateAppListFunc.sendMessage(new Message());
             }
-
             @Override
             public void afterTextChanged(Editable s) {
-
             }
         });
         clear_search_btn.setOnClickListener(new View.OnClickListener() {
@@ -492,8 +592,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return view;
     }
 
+    private boolean checkIsRecommendFile(String filePath) {
+        Path path = Paths.get(filePath);
+        String fileName = path.getFileName().toString();
+        for (String recommendFile : RECOMMEND_FILES) {
+            if (recommendFile.equals(fileName)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
-    public View showSelectFileDlg(List<String> filePath, Handler selectFileCallback) {
+    public View showSelectFileDlg(Map<String, Integer> filePath, Handler selectFileCallback) {
         final PopupWindow popupWindow = new PopupWindow(this);
 
         View view = View.inflate(this, R.layout.select_file_wnd, null);
@@ -533,8 +643,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 screenWidth, screenHeight, (int) centerWidth, (int) centerHeight));
 
         List<SelectFileRecyclerItem> fileList = new ArrayList<>();
-        for (int i = 0; i < filePath.size(); i++) {
-            fileList.add(new SelectFileRecyclerItem(filePath.get(i)));
+        for (Map.Entry<String, Integer> entry : filePath.entrySet()) {
+            String strFilePath = entry.getKey();
+            Integer status = entry.getValue();
+            if(status != 1) {
+                continue;
+            }
+            String strFileDesc = checkIsRecommendFile(strFilePath) ? "(推荐，正在运行)" :  "(正在运行)";
+            fileList.add(new SelectFileRecyclerItem(strFilePath, strFileDesc, Color.valueOf(0xFFFFFFFF)));
+        }
+        for (Map.Entry<String, Integer> entry : filePath.entrySet()) {
+            String strFilePath = entry.getKey();
+            Integer status = entry.getValue();
+            if(status != 2) {
+                continue;
+            }
+            String strFileDesc ="(未运行)";
+            fileList.add(new SelectFileRecyclerItem(strFilePath, strFileDesc, Color.valueOf(Color.GRAY)));
         }
 
         SelectFileRecyclerAdapter adapter = new SelectFileRecyclerAdapter(
@@ -547,7 +672,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         TextView clear_search_btn = view.findViewById(R.id.clear_search_btn);
         EditText search_edit = view.findViewById(R.id.search_edit);
-
 
         @SuppressLint("HandlerLeak") Handler updateFileListFunc = new Handler() {
             @Override
@@ -583,7 +707,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             @Override
             public void afterTextChanged(Editable s) {
-
             }
         });
         clear_search_btn.setOnClickListener(new View.OnClickListener() {
@@ -599,15 +722,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Map<Integer, String> parseProcessInfo(String jsonStr) {
         Map<Integer, String> processMap = new HashMap<>();
         try {
-            JSONObject obj = new JSONObject(jsonStr);
-            JSONArray dataArray = obj.getJSONArray("data");
-            for (int i = 0; i < dataArray.length(); i++) {
-                JSONObject item = dataArray.getJSONObject(i);
-                String key = item.keys().next();
-                int pid = Integer.parseInt(key);
-                String encodedValue = item.getString(key);
-                String value = URLDecoder.decode(encodedValue, "UTF-8");
-                processMap.put(pid, value);
+            JSONArray jsonArray = new JSONArray(jsonStr);
+            for (int i = 0; i < jsonArray.length(); i++) {
+                JSONObject jsonObject = jsonArray.getJSONObject(i);
+                int pid = jsonObject.getInt("pid");
+                String encodedValue = jsonObject.getString("name");
+                String name = URLDecoder.decode(encodedValue, "UTF-8");
+                processMap.put(pid, name);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -615,20 +736,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return processMap;
     }
 
-    public List<String> parseSoFullPathInfo(String jsonStr) {
-        List<String> soPathList = new ArrayList<>();
+    public Map<String, Integer> parseSoFullPathInfo(String jsonStr) {
+        Map<String, Integer> soPathMap = new HashMap<>();
         try {
-            JSONObject obj = new JSONObject(jsonStr);
-            JSONArray soPaths = obj.getJSONArray("soPaths");
-            for (int i = 0; i < soPaths.length(); i++) {
-                String path = soPaths.getString(i);
-                String value = URLDecoder.decode(path, "UTF-8");
-                soPathList.add(value);
+            JSONArray jsonArray = new JSONArray(jsonStr);
+            for (int i = 0; i < jsonArray.length(); i++) {
+                JSONObject jsonObject = jsonArray.getJSONObject(i);
+                String encodedValue = jsonObject.getString("name");
+                String name = URLDecoder.decode(encodedValue, "UTF-8");
+                int pid = jsonObject.getInt("status");
+                soPathMap.put(name,pid);
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return soPathList;
+        return soPathMap;
     }
 
     public native String testRoot(String rootKey);
@@ -647,8 +769,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     public native String getAllCmdlineProcess(String rootKey);
 
-    public native String parasitePrecheckApp(String rootKey, String targetProcessCmdlin);
+    public native String parasitePrecheckApp(String rootKey, String targetProcessCmdline);
 
     public native String parasiteImplantApp(String rootKey, String targetProcessCmdline, String targetSoFullPath);
+
+    public native String parasiteImplantSuEnv(String rootKey, String targetProcessCmdline, String targetSoFullPath);
 
 }

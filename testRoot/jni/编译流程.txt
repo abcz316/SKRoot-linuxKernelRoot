@@ -1,4 +1,5 @@
 1.首次编译Android.mk只可得su与lib_root_server.so文件，
-2.双击运行generate_source_file_kernel_root_kit_lib_root_server_data.bat
-3.双击运行generate_source_file_kernel_root_kit_su_exec_data.bat
-4.再次编译Android.mk可得testRoot文件
+2.双击运行generate_source_file_lib_root_server_data.bat
+3.双击运行generate_source_file_lib_su_env_data.bat
+4.双击运行generate_source_file_su_exec_data.bat
+5.再次编译Android.mk可得testRoot文件

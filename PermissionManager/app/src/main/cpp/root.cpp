@@ -10,6 +10,7 @@
 #include "../../../../../testRoot/jni/kernel_root_kit/kernel_root_kit_umbrella.h"
 #include "../../../../../testRoot/jni/testRoot.h"
 #include "urlEncodeUtils.h"
+#include "cJSON.h"
 using namespace std;
 
 std::string g_last_su_full_path;
@@ -235,20 +236,20 @@ Java_com_linux_permissionmanager_MainActivity_getAllCmdlineProcess(
         ss << "get_all_cmdline_process err:"<< err<< std::endl;
         return env->NewStringUTF(ss.str().c_str());
     }
-
-    ss << "{\"data\":[";
-    for (auto iter = pid_map.begin(); iter != pid_map.end(); ) {
+    cJSON *root = cJSON_CreateArray();
+    for (auto iter = pid_map.begin(); iter != pid_map.end(); iter++ ) {
+        cJSON *item = cJSON_CreateObject();
         size_t len = iter->second.length();
         size_t max_encoded_len = 3 * len + 1;
         shared_ptr<char> spData(new (std::nothrow) char[max_encoded_len], std::default_delete<char[]>());
         memset(spData.get(), 0, max_encoded_len);
         url_encode(const_cast<char*>(iter->second.c_str()), spData.get());
-        ss << "{\"" << iter->first << "\":\"" << spData.get() << "\"}";
-        if (++iter != pid_map.end()) {
-            ss << ",";
-        }
+        cJSON_AddNumberToObject(item, "pid",  iter->first);
+        cJSON_AddStringToObject(item, "name", spData.get());
+        cJSON_AddItemToArray(root, item);
     }
-    ss << "]}";
+    ss << cJSON_Print(root);
+    cJSON_Delete(root);
     return env->NewStringUTF(ss.str().c_str());
 }
 
@@ -279,34 +280,35 @@ Java_com_linux_permissionmanager_MainActivity_parasitePrecheckApp(
         return env->NewStringUTF(sstr.str().c_str());
     }
 
-    std::set<std::string> so_path_list;
+    std::map<std::string, kernel_root::app_so_status> so_path_list;
     err = kernel_root::safe_parasite_precheck_app(strRootKey.c_str(), strTargetProcessCmdline.c_str(), so_path_list);
     if (err) {
         sstr << "parasite_precheck_app ret val:" << err << std::endl;
-        if(err == -9903) {
+        if(err == -9904) {
             sstr << "此目标APP为32位应用，无法寄生" << err << std::endl;
         }
         return env->NewStringUTF(sstr.str().c_str());
     }
 
     if (!so_path_list.size()) {
-        sstr << "目标APP无法寄生：无法检测到目标APP的JNI环境，您可尝试重启目标APP后再试" << std::endl;
+        sstr << "无法检测到目标APP的JNI环境，目标APP暂不可被寄生；您可重新运行目标APP后重试；或将APP进行手动加固(加壳)，因为加固(加壳)APP后，APP会被产生JNI环境，方可寄生！" << std::endl;
         return env->NewStringUTF(sstr.str().c_str());
     }
 
-    sstr << "{\"soPaths\":[";
-    for (auto iter = so_path_list.begin(); iter != so_path_list.end(); ) {
-        size_t len = iter->length();
+    cJSON *root = cJSON_CreateArray();
+    for (auto iter = so_path_list.begin(); iter != so_path_list.end(); iter++) {
+        cJSON *item = cJSON_CreateObject();
+        size_t len = iter->first.length();
         size_t max_encoded_len = 3 * len + 1;
         std::shared_ptr<char> spData(new (std::nothrow) char[max_encoded_len], std::default_delete<char[]>());
         memset(spData.get(), 0, max_encoded_len);
-        url_encode(const_cast<char*>(iter->c_str()), spData.get());
-        sstr << "\"" << spData.get() << "\"";
-        if (++iter != so_path_list.end()) {
-            sstr << ",";
-        }
+        url_encode(const_cast<char*>(iter->first.c_str()), spData.get());
+        cJSON_AddStringToObject(item, "name", spData.get());
+        cJSON_AddNumberToObject(item, "status",  iter->second);
+        cJSON_AddItemToArray(root, item);
     }
-    sstr << "]}";
+    sstr << cJSON_Print(root);
+    cJSON_Delete(root);
     return env->NewStringUTF(sstr.str().c_str());
 
 }
@@ -338,6 +340,45 @@ Java_com_linux_permissionmanager_MainActivity_parasiteImplantApp(
         return env->NewStringUTF(sstr.str().c_str());
     }
     sstr << "parasiteImplantApp done.";
+    return env->NewStringUTF(sstr.str().c_str());
+
+}
+
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_linux_permissionmanager_MainActivity_parasiteImplantSuEnv(
+        JNIEnv* env,
+        jobject /* this */,
+        jstring rootKey,
+        jstring targetProcessCmdline,
+        jstring targetSoFullPath) {
+    if(g_last_su_full_path.empty()) {
+        return env->NewStringUTF("【错误】请先安装部署su");
+    }
+
+    const char *str1 = env->GetStringUTFChars(rootKey, 0);
+    string strRootKey= str1;
+    env->ReleaseStringUTFChars(rootKey, str1);
+
+    str1 = env->GetStringUTFChars(targetProcessCmdline, 0);
+    string strTargetProcessCmdline = str1;
+    env->ReleaseStringUTFChars(targetProcessCmdline, str1);
+
+    str1 = env->GetStringUTFChars(targetSoFullPath, 0);
+    string strTargetSoFullPath = str1;
+    env->ReleaseStringUTFChars(targetSoFullPath, str1);
+
+    std::string folder = g_last_su_full_path;
+    int n = folder.find_last_of("/");
+    folder = folder.substr(0, n);
+
+    stringstream sstr;
+    ssize_t err = kernel_root::safe_parasite_implant_su_env(strRootKey.c_str(), strTargetProcessCmdline.c_str(), strTargetSoFullPath.c_str(), folder);
+    if (err != 0) {
+        sstr << "parasite_implant_su_env err:"<< err << std::endl;
+        return env->NewStringUTF(sstr.str().c_str());
+    }
+    sstr << "parasiteImplantSuEnv done.";
     return env->NewStringUTF(sstr.str().c_str());
 
 }

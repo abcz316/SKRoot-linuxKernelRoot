@@ -14,10 +14,9 @@
 		android:orientation="horizontal"
 		>
 
-
 		<TextView
 			android:id="@+id/select_file_name"
-			android:layout_width = "match_parent"
+			android:layout_width = "wrap_content"
 			android:layout_marginLeft="10dp"
 			android:layout_height="wrap_content"
 			android:minHeight="50dp"
@@ -30,7 +29,9 @@
 			android:id="@+id/select_file_desc"
 			android:layout_width = "match_parent"
 			android:layout_height="wrap_content"
-			android:text="文件大小:111Mb"/>
+			android:layout_marginLeft="2dp"
+			style="@style/SmallText"
+			android:text=""/>
 
 	</LinearLayout>
 

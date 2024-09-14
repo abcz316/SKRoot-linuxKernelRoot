@@ -1,6 +1,7 @@
 package com.linux.permissionmanager.Adapter;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.os.Handler;
 import android.os.Message;
 import android.text.Html;
@@ -23,6 +24,7 @@ public class SelectFileRecyclerAdapter extends RecyclerView.Adapter<SelectFileRe
     public static class ViewHolder extends RecyclerView.ViewHolder {
         public View v;
         public TextView select_file_name;
+        public TextView select_file_desc;
         public ViewHolder(View v) {
             super(v);
             this.v = v;
@@ -60,6 +62,7 @@ public class SelectFileRecyclerAdapter extends RecyclerView.Adapter<SelectFileRe
         SelectFileRecyclerAdapter.ViewHolder holder = new SelectFileRecyclerAdapter.ViewHolder(v);
 
         holder.select_file_name=v.findViewById(R.id.select_file_name) ;
+        holder.select_file_desc=v.findViewById(R.id.select_file_desc) ;
         return holder;
     }
 
@@ -67,10 +70,15 @@ public class SelectFileRecyclerAdapter extends RecyclerView.Adapter<SelectFileRe
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         SelectFileRecyclerItem fileItem=objects.get(position);
         String fileName = fileItem.getFileName();
-        String  showText="<font color = \"#88CC88\">"+fileName +"</font> ";
-        holder.select_file_name.setText(Html.fromHtml(showText));
+        String fileDesc = fileItem.getFileDesc();
+        Color fileDescColor = fileItem.getFileDescColor();
+        String hexColor = String.format("#%06X", (0xFFFFFF & fileDescColor.toArgb()));
 
-        //item被点击
+        String  showText="<font color = \"#88CC88\">"+fileName +"</font> ";
+        String  showDesc="<font color = \""+ hexColor +"\">"+fileDesc +"</font> ";
+        holder.select_file_name.setText(Html.fromHtml(showText));
+        holder.select_file_desc.setText(Html.fromHtml(showDesc));
+
         holder.v.setOnClickListener(new ClickRecyclerItemListener(fileItem));
     }
 

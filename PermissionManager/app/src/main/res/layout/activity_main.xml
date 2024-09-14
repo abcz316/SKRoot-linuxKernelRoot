@@ -89,7 +89,7 @@
                 android:id="@+id/su_env_inject_btn"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="5.注入su到指定进程"
+                android:text="5.授权su到指定进程"
                 />
 
                 <Button

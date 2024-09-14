@@ -103,31 +103,26 @@ static std::set<std::string> get_all_so_paths(pid_t pid) {
     return so_paths;
 }
 
-static std::string find_app_directory_by_maps(const std::set<std::string>& all_so_paths, const char* package_name) {
-	for (const auto& full_path : all_so_paths) {
-		if(full_path.empty()) {
-			continue;
-		}
-		if(full_path.substr(0,1) != "/") {
-			continue;
-		}
-		if(full_path.find(package_name) == std::string::npos) {
-			continue;
-		}
-
-		// 从所给的路径开始，逐层向上查找，直到找到 package_name 或到达顶级目录为止
-		std::filesystem::path path(full_path);
-		std::string app_path;
-		for (const auto& component : path) {
-			app_path += component;
-			if(component.string().find(package_name) != std::string::npos) {
-				break;
-			}
-			app_path += component == "/" ? "" : "/";
-		}
-		return app_path;
+static std::string get_app_directory(const char* package_name) {
+	if(!package_name || strlen(package_name) == 0) { return {}; }
+ 	char line[4096] = { 0 };
+    char filename[1024] = { 0 };
+    snprintf(filename, sizeof(filename), "pm path %s", package_name);
+	FILE * fp = popen(filename, "r");
+    if (fp) {
+        fread(line, 1, sizeof(line), fp);
+        pclose(fp);
+    }
+	std::string app_path = line;
+	auto start = app_path.find("/");
+	if(start != std::string::npos) {
+		app_path = app_path.substr(start);
 	}
-    return {};
+	auto end = app_path.find_last_of("/");
+	if(end != std::string::npos) {
+		app_path = app_path.substr(0, end);
+	}
+    return app_path;
 }
 }
 #endif /* _KERNEL_ROOT_KIT_MAPS_HELPER_H_ */

@@ -269,6 +269,7 @@ static bool write_set_string_from_child(const fork_pipe_info & finfo, const std:
     return write_transfer_data_from_child(finfo, buffer.data(), total_size);
 }
 
+
 static bool read_set_string_from_child(fork_pipe_info &finfo, std::set<std::string> &s) {
     void* data = nullptr;
     size_t data_len = 0;
@@ -350,6 +351,61 @@ static bool read_map_i_s_from_child(fork_pipe_info & finfo, std::map<int, std::s
         ptr += len;
     }
 
+    free(data);
+    return true;
+}
+
+static bool write_map_s_i_from_child(const fork_pipe_info & finfo, const std::map<std::string, int> & map) {
+    size_t total_size = 0;
+    for (const auto &pair : map) {
+        total_size += pair.first.size();
+        total_size += sizeof(size_t);
+        total_size += sizeof(int);
+    }
+
+    std::vector<char> buffer(total_size);
+    char* ptr = buffer.data();
+
+    for (const auto &pair : map) {
+        size_t len = pair.first.size();
+        memcpy(ptr, &len, sizeof(len));
+        ptr += sizeof(len);
+
+        memcpy(ptr, pair.first.data(), len);
+        ptr += len;
+
+        memcpy(ptr, &(pair.second), sizeof(pair.second));
+        ptr += sizeof(pair.second);
+    }
+    return write_transfer_data_from_child(finfo, buffer.data(), total_size);
+}
+
+static bool read_map_s_i_from_child(fork_pipe_info & finfo, std::map<std::string, int> & map) {
+    void* data = nullptr;
+    size_t data_len = 0;
+    if (!read_transfer_data_from_child(finfo, data, data_len)) {
+        return false;
+    }
+	if(!data && data_len ==  0) {
+		return true;
+	}
+
+    char* ptr = static_cast<char*>(data);
+    char* end = ptr + data_len;
+
+    while (ptr < end) {
+        size_t len;
+        memcpy(&len, ptr, sizeof(len));
+        ptr += sizeof(len);
+
+        std::string key(ptr, len);
+        ptr += len;
+        
+        int value;
+        memcpy(&value, ptr, sizeof(value));
+        map[key] = value;
+        ptr += sizeof(value);
+    }
     free(data);
     return true;
 }
