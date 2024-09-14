@@ -25,6 +25,10 @@ KernelSymbolOffset AnalyzeKernel::get_symbol_offset() {
 	return m_kernel_sym_offset;
 }
 
+bool AnalyzeKernel::is_kernel_version_less_equal(const std::string& ver) {
+	return m_kernel_sym_parser.is_kernel_version_less_equal(ver);
+}
+
 bool AnalyzeKernel::find_symbol_offset() {
 	m_kernel_sym_offset._text_offset = m_kernel_sym_parser.kallsyms_lookup_name("_text");
 	m_kernel_sym_offset._stext_offset = m_kernel_sym_parser.kallsyms_lookup_name("_stext");

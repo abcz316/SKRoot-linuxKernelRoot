@@ -14,6 +14,7 @@ public:
 public:
 	bool init_kallsyms_lookup_name();
 	uint64_t kallsyms_lookup_name(const char* name, bool include_str_mode = false);
+	bool is_kernel_version_less_equal(const std::string& ver);
 private:
 	const std::vector<char>& m_file_buf;
 	KernelVersionParser m_kernel_ver_parser;

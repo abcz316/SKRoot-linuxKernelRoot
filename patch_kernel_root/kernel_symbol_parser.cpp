@@ -54,3 +54,11 @@ uint64_t KernelSymbolParser::kallsyms_lookup_name(const char* name, bool include
 		return 0;
 	}
 }
+
+bool KernelSymbolParser::is_kernel_version_less_equal(const std::string& ver) {
+	std::string current_version = m_kernel_ver_parser.find_kernel_versions();
+	if (!current_version.empty()) {
+		return m_kernel_ver_parser.is_version_less_equal(current_version, ver);
+	}
+	return false;
+}

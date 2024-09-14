@@ -227,18 +227,8 @@ int main(int argc, char* argv[]) {
 	}
 #endif
 
-#ifdef _DEBUG
-	//const char* file_path = R"***(C:\Users\maily\Desktop\kernel)***";
-	//const char* file_path = R"***(C:\Users\maily\Desktop\k20.img-kernel)***";
-	//const char* file_path = R"***(C:\Users\maily\Desktop\mi8v9)***";
-	//const char* file_path = R"***(C:\Users\maily\Desktop\mi8v10)***";
-	//const char* file_path = R"***(C:\Users\maily\Desktop\mi5)***";
-	//const char* file_path = R"***(C:\Users\maily\Desktop\mi6max)***";
-	//const char* file_path = R"***(C:\Users\maily\Desktop\skr_fix_6s\o.img-kernel)***";
-	//const char* file_path = R"***(C:\Users\maily\Desktop\vmlinux\vmlinux)***";
-#else
+
 	const char* file_path = argv[0];
-#endif
 	if (!check_file_path(file_path)) {
 		std::cout << "Please enter the correct Linux kernel binary file path. " << std::endl;
 		std::cout << "For example, if it is boot.img, you need to first decompress boot.img and then extract the kernel file inside." << std::endl;
@@ -309,12 +299,18 @@ int main(int argc, char* argv[]) {
 		size_t hook_start = patch_ret_cmd(file_buf, sym.__cfi_check_offset, vec_patch_bytes_data);
 		v_hook_func_start_addr.push_back(hook_start);
 	} else {
-		if (sym.panic_offset) {
-			v_hook_func_start_addr.push_back(sym.panic_offset);
+		if (analyze_kernel.is_kernel_version_less_equal("6.1.0")) {
+			v_hook_func_start_addr.push_back(0x300);
+		} else {
+			if (sym.panic_offset) {
+				v_hook_func_start_addr.push_back(sym.panic_offset);
+			}
 		}
 	}
 	if (v_hook_func_start_addr.size() == 0) {
-		v_hook_func_start_addr.push_back(0x300);
+		std::cout << "Failed to find hook start addr" << std::endl;
+		system("pause");
+		return 0;
 	}
 
 	if (sym.__cfi_check_fail_offset) {
