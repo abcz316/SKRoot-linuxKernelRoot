@@ -254,9 +254,13 @@ int main(int argc, char* argv[]) {
 	std::cout << "_text:" << sym._text_offset << std::endl;
 	std::cout << "_stext:" << sym._stext_offset << std::endl;
 	std::cout << "panic:" << sym.panic_offset << std::endl;
-	std::cout << "do_execve:" << sym.do_execve_offset << std::endl;
-	std::cout << "do_execveat:" << sym.do_execveat_offset << std::endl;
+
+	std::cout << "__do_execve_file:" << sym.__do_execve_file_offset << std::endl;
 	std::cout << "do_execveat_common:" << sym.do_execveat_common_offset << std::endl;
+	std::cout << "do_execve_common:" << sym.do_execve_common_offset << std::endl;
+	std::cout << "do_execveat:" << sym.do_execveat_offset << std::endl;
+	std::cout << "do_execve:" << sym.do_execve_offset << std::endl;
+
 	std::cout << "avc_denied:" << sym.avc_denied_offset << std::endl;
 	std::cout << "revert_creds:" << sym.revert_creds_offset << std::endl;
 	std::cout << "prctl_get_seccomp:" << sym.prctl_get_seccomp_offset << std::endl;
@@ -345,14 +349,29 @@ int main(int argc, char* argv[]) {
 
 	size_t do_execve_entry_addr = sym.do_execveat_common_offset;
 	size_t do_execve_key_reg = 1;
+
+	if (analyze_kernel.is_kernel_version_less_equal("5.9.0")) {
+		do_execve_entry_addr = sym.__do_execve_file_offset;
+		do_execve_key_reg = 1;
+	}
+	else if (analyze_kernel.is_kernel_version_less_equal("4.18.0")) {
+		do_execve_entry_addr = sym.do_execveat_common_offset;
+		do_execve_key_reg = 1;
+	}
+	else if (analyze_kernel.is_kernel_version_less_equal("3.19.0")) {
+		do_execve_entry_addr = sym.do_execve_common_offset;
+		do_execve_key_reg = 0;
+	}
+
+	if (do_execve_entry_addr == 0) {
+		do_execve_entry_addr = sym.do_execve_offset;
+		do_execve_key_reg = 0;
+	}
 	if (do_execve_entry_addr == 0) {
 		do_execve_entry_addr = sym.do_execveat_offset;
 		do_execve_key_reg = 1;
-		if (do_execve_entry_addr == 0) {
-			do_execve_entry_addr = sym.do_execve_offset;
-			do_execve_key_reg = 0;
-		}
 	}
+
 	size_t first_hook_func_addr = v_hook_func_start_addr[0];
 	size_t next_hook_func_addr = path_do_execve(file_buf, str_root_key, first_hook_func_addr, do_execve_entry_addr, do_execve_key_reg, t_mode_name, v_cred_offset, v_seccomp_offset, vec_patch_bytes_data);
 	if (v_hook_func_start_addr.size() > 1) {
