@@ -8,6 +8,11 @@ constexpr const char* k_su_base_path = "/data/local/tmp";
 constexpr const char* recommend_files[] = {"libc++_shared.so"};
 
 }
+
+void show_id() {
+	printf("%s\n", get_capability_info().c_str());
+}
+
 void test_root() {
 	// 获取ROOT权限
 	printf("%s\n", get_capability_info().c_str());
@@ -15,7 +20,6 @@ void test_root() {
 	printf("get_root ret:%zd\n", kernel_root::get_root(ROOT_KEY));
 
 	printf("%s\n", get_capability_info().c_str());
-	return;
 }
 
 void test_run_root_cmd(int argc, char* argv[]) {
@@ -288,36 +292,36 @@ int main(int argc, char* argv[]) {
 		"\tUsage: testRoot cleansu\n\n"
 
 		"9. 寄生目标APP\n"
-		"\tUsage: testRoot implantApp <process-name> [so-name]\n\n"
+		"\tUsage: testRoot implantApp <process-name> <so-name>\n\n"
 
 		"本工具特点：\n"
 		"新一代SKRoot，跟面具完全不同思路，摆脱面具被检测的弱点，完美隐藏root功能，兼容安卓APP直接JNI稳定调用。\n"
 		"======================================================\n"
 		"为了实现最佳隐蔽性，推荐使用 [寄生目标APP] 功能，寄生到能常驻后台且联网的APP上，如音乐类、播放器类、运动类、广播类、社交聊天类APP\n\n"
 		"如需帮助，请使用对应的命令，或者查看上面的菜单。\n\n");
-
 	++argv;
 	--argc;
-	if (argc == 0 || strcmp(argv[0], "id") == 0) { // 1.显示自身权限信息
-		printf("%s\n", get_capability_info().c_str());
-	} else if (strcmp(argv[0], "get") == 0) { // 2.获取ROOT权限
-		test_root();
-	} else if (argc >= 2 && strcmp(argv[0], "cmd") == 0) { // 3.执行ROOT命令
-		test_run_root_cmd(argc - 1, argv + 1);
-	} else if (argc >= 2 && strcmp(argv[0], "init") == 0) { // 4.执行原生内核命令
-		test_run_init64_cmd(argc - 1, argv + 1);
-	} else if (strcmp(argv[0], "su") == 0) { // 5.安装部署su
-		test_install_su_env();
-	} else if (argc > 1 && strcmp(argv[0], "suTemp") == 0) { // 6.临时注入su到指定进程
-		test_su_env_temp_inject(argv[1]);
-	} else if (argc > 1 && strcmp(argv[0], "suForever") == 0) { // 7.永久注入su到指定进程
-		test_su_env_forever_inject(argv[1]);
-	} else if (strcmp(argv[0], "cleansu") == 0) { // 8.完全卸载清理su
-		test_clean_su_env();
-	} else if (argc > 1 && strcmp(argv[0], "implantApp") == 0) { // 9.寄生目标APP
-		test_implant_app(argv[1]);
+	if (argc == 0) {
+		std::cout << "error param." << std::endl;
+		return 0;
+	}
+	std::map<std::string, std::function<void()>> command_map = {
+		{"id", []() { show_id(); }},
+		{"get", []() { test_root(); }},
+		{"cmd", [argc, argv]() { test_run_root_cmd(argc - 1, argv + 1); }},
+		{"init", [argc, argv]() { test_run_init64_cmd(argc - 1, argv + 1); }},
+		{"su", []() { test_install_su_env(); }},
+		{"suTemp", [argv]() { test_su_env_temp_inject(argv[1]); }},
+		{"suForever", [argv]() { test_su_env_forever_inject(argv[1]); }},
+		{"cleansu", []() { test_clean_su_env(); }},
+		{"implantApp", [argv]() { test_implant_app(argv[1]); }}
+	};
+
+	std::string cmd = argv[0];
+	if (command_map.find(cmd) != command_map.end()) {
+		command_map[cmd]();
 	} else {
-		printf("unknown command.\n");
+		std::cout << "unknown command." << std::endl;
 		return 1;
 	}
 	return 0;

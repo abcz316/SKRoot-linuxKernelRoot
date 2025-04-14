@@ -4,26 +4,26 @@
 #include <vector>
 
 struct KernelSymbolOffset {
-	size_t _text_offset = 0;
-	size_t _stext_offset = 0;
-	size_t panic_offset = 0;
+	size_t _text = 0;
+	size_t _stext = 0;
+	size_t die = 0;
 
-	size_t __do_execve_file_offset = 0;
-	size_t do_execveat_common_offset = 0;
-	size_t do_execve_common_offset = 0;
-	size_t do_execveat_offset = 0;
-	size_t do_execve_offset = 0;
+	size_t __do_execve_file = 0;
+	size_t do_execveat_common = 0;
+	size_t do_execve_common = 0;
+	size_t do_execveat = 0;
+	size_t do_execve = 0;
 
-	size_t avc_denied_offset = 0;
-	size_t revert_creds_offset = 0;
-	size_t prctl_get_seccomp_offset = 0;
-	size_t __cfi_check_offset = 0;
-	size_t __cfi_check_fail_offset = 0;
-	size_t __cfi_slowpath_diag_offset = 0;
-	size_t __cfi_slowpath_offset = 0;
-	size_t __ubsan_handle_cfi_check_fail_abort_offset = 0;
-	size_t __ubsan_handle_cfi_check_fail_offset = 0;
-	size_t report_cfi_failure_offset = 0;
+	size_t avc_denied = 0;
+	size_t revert_creds = 0;
+	size_t prctl_get_seccomp = 0;
+	size_t __cfi_check = 0;
+	size_t __cfi_check_fail = 0;
+	size_t __cfi_slowpath_diag = 0;
+	size_t __cfi_slowpath = 0;
+	size_t __ubsan_handle_cfi_check_fail_abort = 0;
+	size_t __ubsan_handle_cfi_check_fail = 0;
+	size_t report_cfi_failure = 0;
 };
 
 class AnalyzeKernel

@@ -11,7 +11,7 @@ struct patch_bytes_data {
 	size_t write_addr = 0;
 };
 
-size_t path_do_execve(const std::vector<char>& file_buf, const std::string& str_root_key, size_t hook_func_start_addr,
+size_t patch_do_execve(const std::vector<char>& file_buf, const std::string& str_root_key, size_t hook_func_start_addr,
 	size_t do_execve_entry_addr,
 	size_t do_execve_key_reg,
 	std::string &t_mode_name,
@@ -108,16 +108,14 @@ size_t path_do_execve(const std::vector<char>& file_buf, const std::string& str_
 	vec_out_patch_bytes_data.push_back({ strBytes2, do_execve_entry_addr });
 
 	hook_func_start_addr += nHookFuncSize;
-
 	return hook_func_start_addr;
 }
 
-size_t path_avc_denied(const std::vector<char>& file_buf, size_t hook_func_start_addr, size_t avc_denied_entry_addr,
+size_t patch_avc_denied(const std::vector<char>& file_buf, size_t hook_func_start_addr, size_t avc_denied_entry_addr,
 	std::string &t_mode_name,
 	std::vector<size_t>& task_struct_offset_cred,
 	std::vector<patch_bytes_data>& vec_out_patch_bytes_data) {
 	size_t avc_denied_entry_hook_jump_back_addr = avc_denied_entry_addr + 4;
-
 	auto add_t_asm_offset = (task_struct_offset_cred.size() - 1) * 4;
 	std::stringstream sstrAsm;
 	sstrAsm
@@ -196,12 +194,12 @@ size_t patch_ret_1_cmd(const std::vector<char> &file_buf, size_t start, std::vec
 	return off;
 }
 
-bool parser_cred_offset(const std::vector<char> &file_buf, size_t start, std::string& mode_name, std::vector<size_t>& v_cred_offset) {
-	 return find_current_task_next_register_offset(file_buf, start, mode_name, v_cred_offset);
+bool parser_cred_offset(const std::vector<char> &file_buf, size_t start, std::string& mode_name, std::vector<size_t>& v_cred) {
+	 return find_current_task_next_register_offset(file_buf, start, mode_name, v_cred);
 }
 
-bool parser_seccomp_offset(const std::vector<char> &file_buf, size_t start, std::string& mode_name, std::vector<size_t>& v_seccomp_offset) {
-	 return find_current_task_next_register_offset(file_buf, start, mode_name, v_seccomp_offset);
+bool parser_seccomp_offset(const std::vector<char> &file_buf, size_t start, std::string& mode_name, std::vector<size_t>& v_seccomp) {
+	 return find_current_task_next_register_offset(file_buf, start, mode_name, v_seccomp);
 }
 
 bool check_file_path(const char* file_path) {
@@ -216,7 +214,7 @@ int main(int argc, char* argv[]) {
 	++argv;
 	--argc;
 
-	std::cout << "本工具用于生成SKRoot ARM64 Linux内核ROOT提权代码 V2" << std::endl << std::endl;
+	std::cout << "本工具用于生成SKRoot ARM64 Linux内核ROOT提权代码 V3" << std::endl << std::endl;
 
 #ifdef _DEBUG
 #else
@@ -226,7 +224,6 @@ int main(int argc, char* argv[]) {
 		return 0;
 	}
 #endif
-
 
 	const char* file_path = argv[0];
 	if (!check_file_path(file_path)) {
@@ -251,47 +248,47 @@ int main(int argc, char* argv[]) {
 	}
 	KernelSymbolOffset sym = analyze_kernel.get_symbol_offset();
 
-	std::cout << "_text:" << sym._text_offset << std::endl;
-	std::cout << "_stext:" << sym._stext_offset << std::endl;
-	std::cout << "panic:" << sym.panic_offset << std::endl;
+	std::cout << "_text:" << sym._text << std::endl;
+	std::cout << "_stext:" << sym._stext << std::endl;
+	std::cout << "die:" << sym.die << std::endl;
 
-	std::cout << "__do_execve_file:" << sym.__do_execve_file_offset << std::endl;
-	std::cout << "do_execveat_common:" << sym.do_execveat_common_offset << std::endl;
-	std::cout << "do_execve_common:" << sym.do_execve_common_offset << std::endl;
-	std::cout << "do_execveat:" << sym.do_execveat_offset << std::endl;
-	std::cout << "do_execve:" << sym.do_execve_offset << std::endl;
+	std::cout << "__do_execve_file:" << sym.__do_execve_file << std::endl;
+	std::cout << "do_execveat_common:" << sym.do_execveat_common << std::endl;
+	std::cout << "do_execve_common:" << sym.do_execve_common << std::endl;
+	std::cout << "do_execveat:" << sym.do_execveat << std::endl;
+	std::cout << "do_execve:" << sym.do_execve << std::endl;
 
-	std::cout << "avc_denied:" << sym.avc_denied_offset << std::endl;
-	std::cout << "revert_creds:" << sym.revert_creds_offset << std::endl;
-	std::cout << "prctl_get_seccomp:" << sym.prctl_get_seccomp_offset << std::endl;
-	std::cout << "__cfi_check:" << sym.__cfi_check_offset << std::endl;
-	std::cout << "__cfi_check_fail:" << sym.__cfi_check_fail_offset << std::endl;
-	std::cout << "__cfi_slowpath_diag:" << sym.__cfi_slowpath_diag_offset << std::endl;
-	std::cout << "__cfi_slowpath:" << sym.__cfi_slowpath_offset << std::endl;
-	std::cout << "__ubsan_handle_cfi_check_fail_abort:" << sym.__ubsan_handle_cfi_check_fail_abort_offset << std::endl;
-	std::cout << "__ubsan_handle_cfi_check_fail:" << sym.__ubsan_handle_cfi_check_fail_offset << std::endl;
-	std::cout << "report_cfi_failure:" << sym.report_cfi_failure_offset << std::endl;
+	std::cout << "avc_denied:" << sym.avc_denied << std::endl;
+	std::cout << "revert_creds:" << sym.revert_creds << std::endl;
+	std::cout << "prctl_get_seccomp:" << sym.prctl_get_seccomp << std::endl;
+	std::cout << "__cfi_check:" << sym.__cfi_check << std::endl;
+	std::cout << "__cfi_check_fail:" << sym.__cfi_check_fail << std::endl;
+	std::cout << "__cfi_slowpath_diag:" << sym.__cfi_slowpath_diag << std::endl;
+	std::cout << "__cfi_slowpath:" << sym.__cfi_slowpath << std::endl;
+	std::cout << "__ubsan_handle_cfi_check_fail_abort:" << sym.__ubsan_handle_cfi_check_fail_abort << std::endl;
+	std::cout << "__ubsan_handle_cfi_check_fail:" << sym.__ubsan_handle_cfi_check_fail << std::endl;
+	std::cout << "report_cfi_failure:" << sym.report_cfi_failure << std::endl;
 
 	std::string t_mode_name;
-	std::vector<size_t> v_cred_offset;
-	std::vector<size_t> v_seccomp_offset;
-	if (!parser_cred_offset(file_buf, sym.revert_creds_offset, t_mode_name, v_cred_offset)) {
+	std::vector<size_t> v_cred;
+	std::vector<size_t> v_seccomp;
+	if (!parser_cred_offset(file_buf, sym.revert_creds, t_mode_name, v_cred)) {
 		std::cout << "Failed to parse cred offsert" << std::endl;
 		system("pause");
 		return 0;
 	}
-	if (!parser_seccomp_offset(file_buf, sym.prctl_get_seccomp_offset, t_mode_name, v_seccomp_offset)) {
+	if (!parser_seccomp_offset(file_buf, sym.prctl_get_seccomp, t_mode_name, v_seccomp)) {
 		std::cout << "Failed to parse seccomp offsert" << std::endl;
 		system("pause");
 		return 0;
 	}
 
-	for (auto x = 0; x < v_cred_offset.size(); x++) {
-		std::cout << "cred_offset[" << x <<"]:" << v_cred_offset[x] << std::endl;
+	for (auto x = 0; x < v_cred.size(); x++) {
+		std::cout << "cred_offset[" << x <<"]:" << v_cred[x] << std::endl;
 	}
 	
-	for (auto x = 0; x < v_seccomp_offset.size(); x++) {
-		std::cout << "seccomp_offset[" << x <<"]:" << v_seccomp_offset[x] << std::endl;
+	for (auto x = 0; x < v_seccomp.size(); x++) {
+		std::cout << "seccomp_offset[" << x <<"]:" << v_seccomp[x] << std::endl;
 	}
 
 	std::vector<patch_bytes_data> vec_patch_bytes_data;
@@ -299,41 +296,43 @@ int main(int argc, char* argv[]) {
 	//cfi bypass
 	std::vector<size_t> v_hook_func_start_addr;
 
-	if (sym.__cfi_check_offset) {
-		size_t hook_start = patch_ret_cmd(file_buf, sym.__cfi_check_offset, vec_patch_bytes_data);
-		v_hook_func_start_addr.push_back(hook_start);
-	} else {
-		if (analyze_kernel.is_kernel_version_less_equal("6.1.0")) {
-			v_hook_func_start_addr.push_back(0x300);
-		} else {
-			if (sym.panic_offset) {
-				v_hook_func_start_addr.push_back(sym.panic_offset);
-			}
+	if (analyze_kernel.is_kernel_version_less_equal("5.4.291")) {
+		v_hook_func_start_addr.push_back(0x300);
+	} else if (analyze_kernel.is_kernel_version_less_equal("5.19.17")) {
+		if (sym.__cfi_check) {
+			size_t hook_start = patch_ret_cmd(file_buf, sym.__cfi_check, vec_patch_bytes_data);
+			v_hook_func_start_addr.push_back(hook_start);
 		}
 	}
+	if (!v_hook_func_start_addr.size()) {
+		if (sym.die) {
+			v_hook_func_start_addr.push_back(sym.die);
+		}
+	}
+
 	if (v_hook_func_start_addr.size() == 0) {
 		std::cout << "Failed to find hook start addr" << std::endl;
 		system("pause");
 		return 0;
 	}
 
-	if (sym.__cfi_check_fail_offset) {
-		patch_ret_cmd(file_buf, sym.__cfi_check_fail_offset, vec_patch_bytes_data);
+	if (sym.__cfi_check_fail) {
+		patch_ret_cmd(file_buf, sym.__cfi_check_fail, vec_patch_bytes_data);
 	}
-	if (sym.__cfi_slowpath_diag_offset) {
-		patch_ret_cmd(file_buf, sym.__cfi_slowpath_diag_offset, vec_patch_bytes_data);
+	if (sym.__cfi_slowpath_diag) {
+		patch_ret_cmd(file_buf, sym.__cfi_slowpath_diag, vec_patch_bytes_data);
 	}
-	if (sym.__cfi_slowpath_offset) {
-		patch_ret_cmd(file_buf, sym.__cfi_slowpath_offset, vec_patch_bytes_data);
+	if (sym.__cfi_slowpath) {
+		patch_ret_cmd(file_buf, sym.__cfi_slowpath, vec_patch_bytes_data);
 	}
-	if (sym.__ubsan_handle_cfi_check_fail_abort_offset) {
-		patch_ret_cmd(file_buf, sym.__ubsan_handle_cfi_check_fail_abort_offset, vec_patch_bytes_data);
+	if (sym.__ubsan_handle_cfi_check_fail_abort) {
+		patch_ret_cmd(file_buf, sym.__ubsan_handle_cfi_check_fail_abort, vec_patch_bytes_data);
 	}
-	if (sym.__ubsan_handle_cfi_check_fail_offset) {
-		patch_ret_cmd(file_buf, sym.__ubsan_handle_cfi_check_fail_offset, vec_patch_bytes_data);
+	if (sym.__ubsan_handle_cfi_check_fail) {
+		patch_ret_cmd(file_buf, sym.__ubsan_handle_cfi_check_fail, vec_patch_bytes_data);
 	}
-	if (sym.report_cfi_failure_offset) {
-		patch_ret_1_cmd(file_buf, sym.report_cfi_failure_offset, vec_patch_bytes_data);
+	if (sym.report_cfi_failure) {
+		patch_ret_1_cmd(file_buf, sym.report_cfi_failure, vec_patch_bytes_data);
 	}
 
 	std::string str_root_key;
@@ -347,38 +346,40 @@ int main(int argc, char* argv[]) {
 		std::cin >> str_root_key;
 	}
 
-	size_t do_execve_entry_addr = sym.do_execveat_common_offset;
-	size_t do_execve_key_reg = 1;
+	size_t do_execve_entry_addr;
+	size_t do_execve_key_reg;
 
-	if (analyze_kernel.is_kernel_version_less_equal("5.9.0")) {
-		do_execve_entry_addr = sym.__do_execve_file_offset;
+	if (analyze_kernel.is_kernel_version_less_equal("3.19.0")) {
+		do_execve_entry_addr = sym.do_execve_common;
+		do_execve_key_reg = 0;
+	} else  if (analyze_kernel.is_kernel_version_less_equal("4.18.0")) {
+		do_execve_entry_addr = sym.do_execveat_common;
+		do_execve_key_reg = 1;
+	} else if (analyze_kernel.is_kernel_version_less_equal("5.9.0")) {
+		do_execve_entry_addr = sym.__do_execve_file;
+		do_execve_key_reg = 1;
+	} else {
+		// default linux kernel useage
+		do_execve_entry_addr = sym.do_execveat_common;
 		do_execve_key_reg = 1;
 	}
-	else if (analyze_kernel.is_kernel_version_less_equal("4.18.0")) {
-		do_execve_entry_addr = sym.do_execveat_common_offset;
-		do_execve_key_reg = 1;
-	}
-	else if (analyze_kernel.is_kernel_version_less_equal("3.19.0")) {
-		do_execve_entry_addr = sym.do_execve_common_offset;
-		do_execve_key_reg = 0;
-	}
-
+	
 	if (do_execve_entry_addr == 0) {
-		do_execve_entry_addr = sym.do_execve_offset;
+		do_execve_entry_addr = sym.do_execve;
 		do_execve_key_reg = 0;
 	}
 	if (do_execve_entry_addr == 0) {
-		do_execve_entry_addr = sym.do_execveat_offset;
+		do_execve_entry_addr = sym.do_execveat;
 		do_execve_key_reg = 1;
 	}
 
 	size_t first_hook_func_addr = v_hook_func_start_addr[0];
-	size_t next_hook_func_addr = path_do_execve(file_buf, str_root_key, first_hook_func_addr, do_execve_entry_addr, do_execve_key_reg, t_mode_name, v_cred_offset, v_seccomp_offset, vec_patch_bytes_data);
+	size_t next_hook_func_addr = patch_do_execve(file_buf, str_root_key, first_hook_func_addr, do_execve_entry_addr, do_execve_key_reg, t_mode_name, v_cred, v_seccomp, vec_patch_bytes_data);
 	if (v_hook_func_start_addr.size() > 1) {
 		next_hook_func_addr = v_hook_func_start_addr[1];
 	}
 	if (next_hook_func_addr) {
-		next_hook_func_addr = path_avc_denied(file_buf, next_hook_func_addr, sym.avc_denied_offset, t_mode_name, v_cred_offset, vec_patch_bytes_data);
+		next_hook_func_addr = patch_avc_denied(file_buf, next_hook_func_addr, sym.avc_denied, t_mode_name, v_cred, vec_patch_bytes_data);
 	}
 	if (next_hook_func_addr == 0) {
 		std::cout << "生成汇编代码失败！请检查输入的参数！" << std::endl;

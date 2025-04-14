@@ -351,7 +351,6 @@ uint64_t KallsymsLookupName_4_6_0::__kallsyms_lookup_name(const char* name, bool
 		char namebuf[KSYM_NAME_LEN] = { 0 };
 		off = kallsyms_expand_symbol(off, namebuf, sizeof(namebuf));
 
-		//std::cout << namebuf << std::endl;
 		if (strcmp(namebuf, name) == 0 || (include_str_mode && strstr(namebuf, name))) {
 			auto pos = m_kallsyms_offsets.offset + i * sizeof(int);
 			uint64_t offset = *(long*)&m_file_buf[pos];
