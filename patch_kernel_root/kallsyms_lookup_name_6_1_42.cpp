@@ -31,7 +31,7 @@ bool KallsymsLookupName_6_1_42::init() {
 		return false;
 	}
 
-	std::cout << std::hex << "kallsyms_relative_base: 0x" << m_kallsyms_relative_base << std::endl;
+	std::cout << std::hex << "kallsyms_relative_base: 0x" << m_kallsyms_relative_base << ", offset: 0x" << kallsyms_relative_base_offset << std::endl;
 
 	size_t kallsyms_relative_base_end_offset = kallsyms_relative_base_offset + sizeof(uint64_t);
 	size_t kallsyms_num_offset = 0;
@@ -156,11 +156,14 @@ bool KallsymsLookupName_6_1_42::find_kallsyms_offsets_list(size_t& start, size_t
 }
 
 uint64_t KallsymsLookupName_6_1_42::find_kallsyms_relative_base(size_t offset_list_end, size_t& kallsyms_relative_base_offset) {
-	//unsigned int val1 = *(unsigned int*)&m_file_buf[offset_list_end];
-	unsigned int val2 = *(unsigned int*)&m_file_buf[offset_list_end + sizeof(unsigned int)];
-	if (val2 == 0xFFFFFFC0) {
-		kallsyms_relative_base_offset = offset_list_end;
-		return *(uint64_t*)&m_file_buf[offset_list_end];
+	for (int i = 0; i < 5; i++) {
+		int len = sizeof(unsigned int) * i;
+		//unsigned int val1 = *(unsigned int*)&m_file_buf[offset_list_end + len];
+		unsigned int val2 = *(unsigned int*)&m_file_buf[offset_list_end + sizeof(unsigned int) + len];
+		if (val2 == 0xFFFFFFC0) {
+			kallsyms_relative_base_offset = offset_list_end + len;
+			return *(uint64_t*)&m_file_buf[kallsyms_relative_base_offset];
+		}
 	}
 	return 0;
 }

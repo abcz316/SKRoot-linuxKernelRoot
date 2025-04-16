@@ -34,7 +34,6 @@ bool AnalyzeKernel::find_symbol_offset() {
 	m_kernel_sym_offset._stext = m_kernel_sym_parser.kallsyms_lookup_name("_stext");
 	m_kernel_sym_offset.die = m_kernel_sym_parser.kallsyms_lookup_name("die");
 
-
 	m_kernel_sym_offset.__do_execve_file = m_kernel_sym_parser.kallsyms_lookup_name("__do_execve_file");
 
 	m_kernel_sym_offset.do_execveat_common = m_kernel_sym_parser.kallsyms_lookup_name("do_execveat_common");

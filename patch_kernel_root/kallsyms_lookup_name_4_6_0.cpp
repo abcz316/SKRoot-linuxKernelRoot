@@ -31,7 +31,7 @@ bool KallsymsLookupName_4_6_0::init() {
 		return false;
 	}
 
-	std::cout << std::hex << "kallsyms_num: 0x" << m_kallsyms_num << std::endl;
+	std::cout << std::hex << "kallsyms_num: 0x" << m_kallsyms_num << ", offset: 0x" << kallsyms_num_offset << std::endl;
 
 	// revise the offset list offset again
 	const int offset_list_var_len = sizeof(long);

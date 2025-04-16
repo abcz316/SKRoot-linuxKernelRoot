@@ -6,7 +6,7 @@
 #define MIN(x, y)(x < y) ? (x) : (y)
 #endif // !MIN
 
-KernelSymbolParser::KernelSymbolParser(const std::vector<char>& file_buf) : m_file_buf(file_buf), m_kernel_ver_parser(file_buf), m_kallsyms_lookup_name_6_1_42(file_buf), m_kallsyms_lookup_name_4_6_0(file_buf), m_kallsyms_lookup_name(file_buf)
+KernelSymbolParser::KernelSymbolParser(const std::vector<char>& file_buf) : m_file_buf(file_buf), m_kernel_ver_parser(file_buf), m_kallsyms_lookup_name_6_1_60(file_buf), m_kallsyms_lookup_name_6_1_42(file_buf), m_kallsyms_lookup_name_4_6_0(file_buf), m_kallsyms_lookup_name(file_buf)
 {
 }
 
@@ -24,18 +24,23 @@ bool KernelSymbolParser::init_kallsyms_lookup_name() {
 	std::cout << "Find the current Linux kernel version: " << current_version << std::endl;
 	std::cout << std::endl;
 
-	if (m_kernel_ver_parser.is_version_less_equal(current_version, "4.6.0")) {
+	if (m_kernel_ver_parser.is_version_less_equal(current_version, "4.5.7")) {
 		if (!m_kallsyms_lookup_name.init()) {
 			std::cout << "Failed to analyze kernel kallsyms lookup name information" << std::endl;
 			return false;
 		}
-	} else if (m_kernel_ver_parser.is_version_less_equal(current_version, "6.1.42")) {
+	} else if (m_kernel_ver_parser.is_version_less_equal(current_version, "6.1.41")) {
 		if (!m_kallsyms_lookup_name_4_6_0.init()) {
 			std::cout << "Failed to analyze kernel kallsyms lookup name information" << std::endl;
 			return false;
 		}
-	} else {
+	} else if (m_kernel_ver_parser.is_version_less_equal(current_version, "6.1.59")) {
 		if (!m_kallsyms_lookup_name_6_1_42.init()) {
+			std::cout << "Failed to analyze kernel kallsyms lookup name information" << std::endl;
+			return false;
+		}
+	} else {
+		if (!m_kallsyms_lookup_name_6_1_60.init()) {
 			std::cout << "Failed to analyze kernel kallsyms lookup name information" << std::endl;
 			return false;
 		}
@@ -44,7 +49,9 @@ bool KernelSymbolParser::init_kallsyms_lookup_name() {
 }
 
 uint64_t KernelSymbolParser::kallsyms_lookup_name(const char* name, bool include_str_mode) {
-	if (m_kallsyms_lookup_name_6_1_42.is_inited()) {
+	if (m_kallsyms_lookup_name_6_1_60.is_inited()) {
+		return m_kallsyms_lookup_name_6_1_60.kallsyms_lookup_name(name, include_str_mode);
+	} if (m_kallsyms_lookup_name_6_1_42.is_inited()) {
 		return m_kallsyms_lookup_name_6_1_42.kallsyms_lookup_name(name, include_str_mode);
 	} else if (m_kallsyms_lookup_name_4_6_0.is_inited()) {
 		return m_kallsyms_lookup_name_4_6_0.kallsyms_lookup_name(name, include_str_mode);

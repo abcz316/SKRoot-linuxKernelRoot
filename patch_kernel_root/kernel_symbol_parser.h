@@ -3,6 +3,7 @@
 #include "kallsyms_lookup_name.h"
 #include "kallsyms_lookup_name_4_6_0.h"
 #include "kallsyms_lookup_name_6_1_42.h"
+#include "kallsyms_lookup_name_6_1_60.h"
 #include <iostream>
 #include <vector>
 class KernelSymbolParser
@@ -21,4 +22,5 @@ private:
 	KallsymsLookupName m_kallsyms_lookup_name;
 	KallsymsLookupName_4_6_0 m_kallsyms_lookup_name_4_6_0;
 	KallsymsLookupName_6_1_42 m_kallsyms_lookup_name_6_1_42;
+	KallsymsLookupName_6_1_60 m_kallsyms_lookup_name_6_1_60;
 };

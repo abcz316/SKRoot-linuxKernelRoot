@@ -30,8 +30,7 @@ bool KallsymsLookupName::init() {
 		std::cout << "Unable to find the num of kallsyms addresses list" << std::endl;
 		return false;
 	}
-	std::cout << std::hex << "kallsyms_num: 0x" << m_kallsyms_num << std::endl;
-
+	std::cout << std::hex << "kallsyms_num: 0x" << m_kallsyms_num << ", offset: 0x" << kallsyms_num_offset << std::endl;
 
 	addresses_list_start = addresses_list_end - m_kallsyms_num * sizeof(uint64_t);
 	std::cout << std::hex << "kallsyms_addresses_start: 0x" << addresses_list_start << std::endl;
