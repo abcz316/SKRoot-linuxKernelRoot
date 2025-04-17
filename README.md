@@ -47,6 +47,13 @@
   * **5.修复Linux 5.10、5.15无法开机问题**
 
 ## 问题排查：
+如遇到Linux 6.0以上内核无法开机，请阅读：
+* **请不要使用Android.Image.Kitchen进行打包，该工具不支持Linux 6.0以上内核！**
+* **可使用magiskboot进行打包。**
+* **magiskboot的快速获取方式：使用7z解压Magisk apk，把lib文件夹里的libmagiskboot.so直接改名magiskboot即可使用。因为这是个可执行文件，并不是动态库，不要被名字带so字样所迷惑。**
+* **解包命令：./magiskboot unpack boot.img**
+* **打包命令：./magiskboot repack boot.img**
+
 如发现第三方应用程序依然有侦测行为，请按照以下步骤进行排查：
 * **内核必须保证是基于官方原版进行修改，而非自行编译或使用第三方源码编译。**
 * **如果你曾经使用过Magisk，你应该先将手机完全刷机，因为Magisk可能会残留日志文件等信息。**
