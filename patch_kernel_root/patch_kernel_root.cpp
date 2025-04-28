@@ -296,9 +296,9 @@ int main(int argc, char* argv[]) {
 	//cfi bypass
 	std::vector<size_t> v_hook_func_start_addr;
 
-	if (analyze_kernel.is_kernel_version_less_equal("5.4.291")) {
+	if (analyze_kernel.is_kernel_version_less("5.5.0")) {
 		v_hook_func_start_addr.push_back(0x300);
-	} else if (analyze_kernel.is_kernel_version_less_equal("5.19.17")) {
+	} else if (analyze_kernel.is_kernel_version_less("6.0.0")) {
 		if (sym.__cfi_check) {
 			size_t hook_start = patch_ret_cmd(file_buf, sym.__cfi_check, vec_patch_bytes_data);
 			v_hook_func_start_addr.push_back(hook_start);
@@ -349,13 +349,13 @@ int main(int argc, char* argv[]) {
 	size_t do_execve_entry_addr;
 	size_t do_execve_key_reg;
 
-	if (analyze_kernel.is_kernel_version_less_equal("3.19.0")) {
+	if (analyze_kernel.is_kernel_version_less("3.19.0")) {
 		do_execve_entry_addr = sym.do_execve_common;
 		do_execve_key_reg = 0;
-	} else  if (analyze_kernel.is_kernel_version_less_equal("4.18.0")) {
+	} else  if (analyze_kernel.is_kernel_version_less("4.18.0")) {
 		do_execve_entry_addr = sym.do_execveat_common;
 		do_execve_key_reg = 1;
-	} else if (analyze_kernel.is_kernel_version_less_equal("5.9.0")) {
+	} else if (analyze_kernel.is_kernel_version_less("5.9.0")) {
 		do_execve_entry_addr = sym.__do_execve_file;
 		do_execve_key_reg = 1;
 	} else {

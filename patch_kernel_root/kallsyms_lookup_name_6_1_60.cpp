@@ -279,7 +279,7 @@ bool KallsymsLookupName_6_1_60::find_kallsyms_seqs_of_names_list(int kallsyms_nu
 	seqs_of_names_list_start = start;
 	//TODO: Perhaps 8-byte alignment is not required here?
 	//if (markers_list_is_align8) {
-	//	seqs_of_names_list_end = seqs_of_names_list_start + kallsyms_num * 3 * 2;
+	//	seqs_of_names_list_end = seqs_of_names_list_start + kallsyms_num * 3 + 1;
 	//} else {
 		seqs_of_names_list_end = seqs_of_names_list_start + kallsyms_num * 3;
 	//}
@@ -568,8 +568,6 @@ uint64_t KallsymsLookupName_6_1_60::kallsyms_sym_address(int idx)
 uint64_t KallsymsLookupName_6_1_60::__kallsyms_lookup_name(const char* name, bool include_str_mode) {
 	int ret;
 	unsigned int i;
-	uint8_t* kallsyms_seqs_of_names = (uint8_t*)&m_file_buf[m_kallsyms_seqs_of_names.offset];
-
 	/* Skip the search for empty string. */
 	if (!*name)
 		return 0;

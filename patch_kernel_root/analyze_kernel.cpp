@@ -25,13 +25,14 @@ KernelSymbolOffset AnalyzeKernel::get_symbol_offset() {
 	return m_kernel_sym_offset;
 }
 
-bool AnalyzeKernel::is_kernel_version_less_equal(const std::string& ver) {
-	return m_kernel_sym_parser.is_kernel_version_less_equal(ver);
+bool AnalyzeKernel::is_kernel_version_less(const std::string& ver) {
+	return m_kernel_sym_parser.is_kernel_version_less(ver);
 }
 
 bool AnalyzeKernel::find_symbol_offset() {
 	m_kernel_sym_offset._text = m_kernel_sym_parser.kallsyms_lookup_name("_text");
 	m_kernel_sym_offset._stext = m_kernel_sym_parser.kallsyms_lookup_name("_stext");
+
 	m_kernel_sym_offset.die = m_kernel_sym_parser.kallsyms_lookup_name("die");
 
 	m_kernel_sym_offset.__do_execve_file = m_kernel_sym_parser.kallsyms_lookup_name("__do_execve_file");

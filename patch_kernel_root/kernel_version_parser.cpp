@@ -58,16 +58,16 @@ std::vector<int> KernelVersionParser::parse_version(const std::string& version) 
 }
 
 // Function to compare two version numbers
-bool KernelVersionParser::is_version_less_equal(const std::string& v1, const std::string& v2) {
+bool KernelVersionParser::is_version_less(const std::string& v1, const std::string& v2) {
 	auto parts1 = parse_version(v1);
 	auto parts2 = parse_version(v2);
 
 	// Compare major, minor, and patch versions
 	for (int i = 0; i < 3; ++i) {
-		if (parts1[i] < parts2[i]) return true;
-		if (parts1[i] > parts2[i]) return false;
+		if (parts1[i] < parts2[i]) return true;  // If version 1 is less than version 2, return true
+		if (parts1[i] > parts2[i]) return false; // If version 1 is greater than version 2, return false
 	}
 
-	// If all parts are equal
-	return true;
+	// If all parts are equal, return false (i.e., v1 is not less than v2)
+	return false;  // If versions are equal, return false (strictly less)
 }
