@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/capability.h>
 #include <unistd.h>
 #include <sstream>
 #include <thread>
@@ -28,24 +27,21 @@ static std::string get_capability_info() {
     <<"suid:"<< now_suid <<"," << std::endl <<"gid:"<< now_gid <<"," << std::endl
     <<"egid:"<< now_egid <<"," << std::endl <<"sgid:"<< now_sgid <<"\n";
 
-    struct __user_cap_header_struct cap_header_data;
-    cap_user_header_t cap_header = &cap_header_data;
-
-    struct __user_cap_data_struct cap_data_data;
-    cap_user_data_t cap_data = &cap_data_data;
-
-    cap_header->pid = getpid();
-    cap_header->version = _LINUX_CAPABILITY_VERSION_3; //_1、_2、_3
-
-    if (capget(cap_header, cap_data) < 0) {
-        return "FAILED capget()";
-        // perror("FAILED capget()");
-        //exit(1);
+    FILE *fp = fopen(("/proc/" + std::to_string(getpid()) + "/status").c_str(), "r");
+    if (fp) {
+        char line[256];
+        while (fgets(line, sizeof(line), fp)) {
+            if (strncmp(line, "CapInh:", 7) == 0 || strncmp(line, "CapPrm:", 7) == 0 || strncmp(line, "CapEff:", 7) == 0
+            || strncmp(line, "CapBnd:", 7) == 0 || strncmp(line, "CapAmb:", 7) == 0) {
+                sstrCapInfo << line;
+            }
+        }
+        fclose(fp);
+    } else {
+        sstrCapInfo << "Failed to read /proc/[pid]/status for CapAbility.\n";
     }
-    sstrCapInfo << "cap effective:" << std::hex <<cap_data->effective << "," << std::endl
-    <<"cap permitted:"<< std::hex << cap_data->permitted<< "," << std::endl
-    <<"cap inheritable:"<< std::hex <<cap_data->inheritable<< std::endl;
-    FILE * fp = popen("getenforce", "r");
+
+    fp = popen("getenforce", "r");
     if (fp) {
         char cmd[512] = { 0 };
         fread(cmd, 1, sizeof(cmd), fp);
