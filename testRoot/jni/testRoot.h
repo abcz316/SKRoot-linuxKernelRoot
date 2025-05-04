@@ -8,24 +8,46 @@
 #include <sstream>
 #include <thread>
 #include <vector>
+
+#include <sys/syscall.h>
+
 #include "kernel_root_kit/kernel_root_kit_umbrella.h"
 #include "su/su_hide_path_utils.h"
 
+
+static inline __uid_t my_getfsuid() {
+    return syscall(SYS_setfsuid, (uid_t)-1);
+}
+
+static inline __gid_t my_getfsgid() {
+    return syscall(SYS_setfsgid, (gid_t)-1);
+}
+
 static std::string get_capability_info() {
-    __uid_t now_uid, now_euid, now_suid;
-	__gid_t now_gid, now_egid, now_sgid;
-    if (getresuid(&now_uid, &now_euid, &now_suid)) {
+    __uid_t ruid, euid, suid;
+    if (getresuid(&ruid, &euid, &suid) != 0) {
         return "FAILED getresuid()";
     }
-    if (getresgid(&now_gid, &now_egid, &now_sgid)) {
+    __gid_t rgid, egid, sgid;
+    if (getresgid(&rgid, &egid, &sgid) != 0) {
         return "FAILED getresgid()";
     }
+    __uid_t fsuid = my_getfsuid();
+    __gid_t fsgid = my_getfsgid();
 
     std::stringstream sstrCapInfo;
-    sstrCapInfo<< "Current process information:\n";
-    sstrCapInfo<< "uid:"<<now_uid <<"," << std::endl <<"euid:"<< now_euid <<"," << std::endl
-    <<"suid:"<< now_suid <<"," << std::endl <<"gid:"<< now_gid <<"," << std::endl
-    <<"egid:"<< now_egid <<"," << std::endl <<"sgid:"<< now_sgid <<"\n";
+    sstrCapInfo << "Current process identity info:\n"
+        << "ruid: " << ruid  << "\n"
+        << "rgid: " << rgid  << "\n"
+        << "suid: " << suid  << "\n"
+        << "sgid: " << sgid  << "\n"
+        << "euid: " << euid  << "\n"
+        << "egid: " << egid  << "\n"
+        << "fsuid: " << fsuid << "\n"
+        << "fsgid: " << fsgid << "\n";
+
+    long sb = prctl(PR_GET_SECUREBITS);
+    sstrCapInfo<< "securebits: " << (void*)sb <<"\n";
 
     FILE *fp = fopen(("/proc/" + std::to_string(getpid()) + "/status").c_str(), "r");
     if (fp) {
