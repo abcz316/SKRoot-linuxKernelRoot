@@ -41,7 +41,7 @@ std::pair<size_t, size_t> PatchDoExecve::get_do_execve_param() {
 
 int PatchDoExecve::get_atomic_usage_len() {
 	int len = 8;
-	if (m_analyze_kernel.is_kernel_version_less("6.1.69")) {
+	if (m_analyze_kernel.is_kernel_version_less("6.6.0")) {
 		len = 4;
 	}
 	return len;

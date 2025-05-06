@@ -11,7 +11,7 @@ PatchAvcDenied::~PatchAvcDenied()
 
 int PatchAvcDenied::get_atomic_usage_len() {
 	int len = 8;
-	if (m_analyze_kernel.is_kernel_version_less("6.1.69")) {
+	if (m_analyze_kernel.is_kernel_version_less("6.6.0")) {
 		len = 4;
 	}
 	return len;
