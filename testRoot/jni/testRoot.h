@@ -10,6 +10,7 @@
 #include <vector>
 
 #include <sys/syscall.h>
+#include <sys/prctl.h>
 
 #include "kernel_root_kit/kernel_root_kit_umbrella.h"
 #include "su/su_hide_path_utils.h"

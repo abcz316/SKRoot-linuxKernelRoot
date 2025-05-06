@@ -81,27 +81,32 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="analyze_kernel.cpp" />
-    <ClCompile Include="kallsyms_lookup_name.cpp" />
-    <ClCompile Include="kallsyms_lookup_name_4_6_0.cpp" />
-    <ClCompile Include="kallsyms_lookup_name_6_1_42.cpp" />
-    <ClCompile Include="kallsyms_lookup_name_6_1_60.cpp" />
-    <ClCompile Include="kallsyms_lookup_name_6_6_30.cpp" />
-    <ClCompile Include="kernel_symbol_parser.cpp" />
-    <ClCompile Include="kernel_version_parser.cpp" />
+    <ClCompile Include="analyze\analyze_kernel.cpp" />
+    <ClCompile Include="analyze\kallsyms_lookup_name.cpp" />
+    <ClCompile Include="analyze\kallsyms_lookup_name_4_6_0.cpp" />
+    <ClCompile Include="analyze\kallsyms_lookup_name_6_1_42.cpp" />
+    <ClCompile Include="analyze\kallsyms_lookup_name_6_1_60.cpp" />
+    <ClCompile Include="analyze\kallsyms_lookup_name_6_6_30.cpp" />
+    <ClCompile Include="analyze\kernel_symbol_parser.cpp" />
+    <ClCompile Include="analyze\kernel_version_parser.cpp" />
+    <ClCompile Include="patch_avc_denied.cpp" />
+    <ClCompile Include="patch_do_execve.cpp" />
     <ClCompile Include="patch_kernel_root.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="analyze_kernel.h" />
-    <ClInclude Include="ARM_asm.h" />
-    <ClInclude Include="base_func.h" />
-    <ClInclude Include="kallsyms_lookup_name.h" />
-    <ClInclude Include="kallsyms_lookup_name_4_6_0.h" />
-    <ClInclude Include="kallsyms_lookup_name_6_1_42.h" />
-    <ClInclude Include="kallsyms_lookup_name_6_1_60.h" />
-    <ClInclude Include="kallsyms_lookup_name_6_6_30.h" />
-    <ClInclude Include="kernel_symbol_parser.h" />
-    <ClInclude Include="kernel_version_parser.h" />
+    <ClInclude Include="analyze\analyze_kernel.h" />
+    <ClInclude Include="analyze\ARM_asm.h" />
+    <ClInclude Include="analyze\base_func.h" />
+    <ClInclude Include="analyze\kallsyms_lookup_name.h" />
+    <ClInclude Include="analyze\kallsyms_lookup_name_4_6_0.h" />
+    <ClInclude Include="analyze\kallsyms_lookup_name_6_1_42.h" />
+    <ClInclude Include="analyze\kallsyms_lookup_name_6_1_60.h" />
+    <ClInclude Include="analyze\kallsyms_lookup_name_6_6_30.h" />
+    <ClInclude Include="analyze\kernel_symbol_parser.h" />
+    <ClInclude Include="analyze\kernel_version_parser.h" />
+    <ClInclude Include="patch_avc_denied.h" />
+    <ClInclude Include="patch_do_execve.h" />
+    <ClInclude Include="patch_kernel_root.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

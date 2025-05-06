@@ -13,66 +13,84 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="analyze">
+      <UniqueIdentifier>{d4d877e5-aab7-4ca6-8cb8-4fd65977af1e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="patch_kernel_root.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="kernel_version_parser.cpp">
+    <ClCompile Include="patch_do_execve.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="analyze_kernel.cpp">
+    <ClCompile Include="patch_avc_denied.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="kernel_symbol_parser.cpp">
-      <Filter>源文件</Filter>
+    <ClCompile Include="analyze\kallsyms_lookup_name.cpp">
+      <Filter>analyze</Filter>
     </ClCompile>
-    <ClCompile Include="kallsyms_lookup_name_4_6_0.cpp">
-      <Filter>源文件</Filter>
+    <ClCompile Include="analyze\kallsyms_lookup_name_4_6_0.cpp">
+      <Filter>analyze</Filter>
     </ClCompile>
-    <ClCompile Include="kallsyms_lookup_name.cpp">
-      <Filter>源文件</Filter>
+    <ClCompile Include="analyze\kallsyms_lookup_name_6_1_42.cpp">
+      <Filter>analyze</Filter>
     </ClCompile>
-    <ClCompile Include="kallsyms_lookup_name_6_1_42.cpp">
-      <Filter>源文件</Filter>
+    <ClCompile Include="analyze\kallsyms_lookup_name_6_1_60.cpp">
+      <Filter>analyze</Filter>
     </ClCompile>
-    <ClCompile Include="kallsyms_lookup_name_6_1_60.cpp">
-      <Filter>源文件</Filter>
+    <ClCompile Include="analyze\kallsyms_lookup_name_6_6_30.cpp">
+      <Filter>analyze</Filter>
     </ClCompile>
-    <ClCompile Include="kallsyms_lookup_name_6_6_30.cpp">
-      <Filter>源文件</Filter>
+    <ClCompile Include="analyze\kernel_symbol_parser.cpp">
+      <Filter>analyze</Filter>
+    </ClCompile>
+    <ClCompile Include="analyze\kernel_version_parser.cpp">
+      <Filter>analyze</Filter>
+    </ClCompile>
+    <ClCompile Include="analyze\analyze_kernel.cpp">
+      <Filter>analyze</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ARM_asm.h">
+    <ClInclude Include="patch_do_execve.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="base_func.h">
+    <ClInclude Include="patch_avc_denied.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="kernel_version_parser.h">
+    <ClInclude Include="patch_kernel_root.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="analyze_kernel.h">
-      <Filter>头文件</Filter>
+    <ClInclude Include="analyze\ARM_asm.h">
+      <Filter>analyze</Filter>
     </ClInclude>
-    <ClInclude Include="kernel_symbol_parser.h">
-      <Filter>头文件</Filter>
+    <ClInclude Include="analyze\base_func.h">
+      <Filter>analyze</Filter>
     </ClInclude>
-    <ClInclude Include="kallsyms_lookup_name_4_6_0.h">
-      <Filter>头文件</Filter>
+    <ClInclude Include="analyze\kallsyms_lookup_name.h">
+      <Filter>analyze</Filter>
     </ClInclude>
-    <ClInclude Include="kallsyms_lookup_name.h">
-      <Filter>头文件</Filter>
+    <ClInclude Include="analyze\kallsyms_lookup_name_4_6_0.h">
+      <Filter>analyze</Filter>
     </ClInclude>
-    <ClInclude Include="kallsyms_lookup_name_6_1_42.h">
-      <Filter>头文件</Filter>
+    <ClInclude Include="analyze\kallsyms_lookup_name_6_1_42.h">
+      <Filter>analyze</Filter>
     </ClInclude>
-    <ClInclude Include="kallsyms_lookup_name_6_1_60.h">
-      <Filter>头文件</Filter>
+    <ClInclude Include="analyze\kallsyms_lookup_name_6_1_60.h">
+      <Filter>analyze</Filter>
     </ClInclude>
-    <ClInclude Include="kallsyms_lookup_name_6_6_30.h">
-      <Filter>头文件</Filter>
+    <ClInclude Include="analyze\kallsyms_lookup_name_6_6_30.h">
+      <Filter>analyze</Filter>
+    </ClInclude>
+    <ClInclude Include="analyze\kernel_symbol_parser.h">
+      <Filter>analyze</Filter>
+    </ClInclude>
+    <ClInclude Include="analyze\kernel_version_parser.h">
+      <Filter>analyze</Filter>
+    </ClInclude>
+    <ClInclude Include="analyze\analyze_kernel.h">
+      <Filter>analyze</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
