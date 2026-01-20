@@ -1,3 +1,14 @@
+4.2.2更新内容：
+  1.移除模块root_key传参，开发更便捷。
+  2.修复skroot框架崩溃时，无法读取崩溃日志的问题。
+  3.修复Linux kernel < 4.19无法开机的问题。
+  4.修复部分机型显示发生故障。
+  5.新增"is_syscall_args_in_ptregs"接口，方便开发者对老机型兼容Hook syscall。
+  6.新增内核结构体dentry、fdtable、files_struct、file、inode、mm_struct、task_struct、vm_area_struct偏移量接口（跨内核）。
+  7.新增内核IRQ中断等函数导出（跨内核）。
+  8.新增WebUI写法：自带path、body入参。
+  9.新增WebUI工具函数头文件。
+
 4.2.0更新内容：
   1.修复部分手机日志丢失的问题。
   2.修复模块的资源文件权限、SELinux属性错误的问题。
