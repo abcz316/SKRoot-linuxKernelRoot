@@ -239,7 +239,7 @@ int main(int argc, char* argv[]) {
 	write_key.erase(write_key.size() - 1);
 	patch_data(file_buf, pr.root_key_start, (void*)write_key.c_str(), write_key.length() + 1, vec_patch_bytes_data);
 
-	std::cout << "#获取ROOT权限的密匙：" << str_root_key.c_str() << std::endl << std::endl;
+	std::cout << "#获取ROOT权限的密匙(Key): " << str_root_key.c_str() << std::endl << std::endl;
 
 	size_t need_write_modify_in_file = 0;
 	std::cout << "#是否需要立即写入修改到文件？（1需要；2不需要）：" << std::endl;

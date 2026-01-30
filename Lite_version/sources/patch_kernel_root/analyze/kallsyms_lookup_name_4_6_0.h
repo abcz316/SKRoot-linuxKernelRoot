@@ -1,7 +1,9 @@
 ﻿#pragma once
 #include <iostream>
+#include <cstdint>
 #include <vector>
 #include <unordered_map>
+
 class KallsymsLookupName_4_6_0
 {
 public:
