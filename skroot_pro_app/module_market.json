@@ -5,6 +5,7 @@
             "eng_name": "",
             "ver": "1.0.4",
             "desc": "内核级隐藏 /data 指定目录，彻底阻断文件扫描；底层拦截机制，免疫各类基于漏洞的暴力扫盘。",
+            "author": "SKRoot",
             "uuid": "ae12076c010ebabbb233affdd0239c14",
             "update_date": "2025-12-29",
             "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_hide_data_dir/module.zip"
@@ -14,6 +15,7 @@
             "eng_name": "111",
             "ver": "44",
             "desc": "111",
+			"author": "SKRoot",
             "uuid": "111",
             "update_date": "44",
             "download_url": "44"
@@ -23,6 +25,7 @@
             "eng_name": "111",
             "ver": "44",
             "desc": "111",
+			"author": "SKRoot",
             "uuid": "111",
             "update_date": "44",
             "download_url": "44"
@@ -32,6 +35,7 @@
             "eng_name": "111",
             "ver": "44",
             "desc": "111",
+			"author": "SKRoot",
             "uuid": "111",
             "update_date": "44",
             "download_url": "44"
@@ -41,24 +45,7 @@
             "eng_name": "111",
             "ver": "44",
             "desc": "111",
-            "uuid": "111",
-            "update_date": "44",
-            "download_url": "44"
-        },
-        {
-            "chn_name": "111",
-            "eng_name": "111",
-            "ver": "44",
-            "desc": "111",
-            "uuid": "111",
-            "update_date": "44",
-            "download_url": "44"
-        },
-        {
-            "chn_name": "111",
-            "eng_name": "111",
-            "ver": "44",
-            "desc": "111",
+			"author": "SKRoot",
             "uuid": "111",
             "update_date": "44",
             "download_url": "44"
