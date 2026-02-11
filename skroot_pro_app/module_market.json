@@ -8,9 +8,9 @@
             "author": "SKRoot",
             "uuid": "ae12076c010ebabbb233affdd0239c14",
             "update_date": "2025-12-29",
-            "source_url": "https://github.com/abcz316/SKRoot-linuxKernelRoot/tree/master/Pro(%E4%BC%97%E6%B5%8B%E5%BC%80%E6%94%BE%E4%B8%AD)/sources/testModule/module_hide_data_dir"
-            "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_hide_data_dir/module.zip"
-            "download_chn_alert": ""
+            "source_url": "https://github.com/abcz316/SKRoot-linuxKernelRoot/tree/master/Pro(%E4%BC%97%E6%B5%8B%E5%BC%80%E6%94%BE%E4%B8%AD)/sources/testModule/module_hide_data_dir",
+            "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_hide_data_dir/module.zip",
+            "download_chn_alert": "",
             "download_eng_alert": ""
         },
         {
@@ -21,9 +21,9 @@
             "author": "SKRoot",
             "uuid": "fb044e7a140697bb1a6d1ddb6f15b0b4",
             "update_date": "2025-12-10",
-            "source_url": "https://github.com/abcz316/SKRoot-linuxKernelRoot/tree/master/Pro(%E4%BC%97%E6%B5%8B%E5%BC%80%E6%94%BE%E4%B8%AD)/sources/testModule/module_clear_usb_trace"
-            "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_clear_usb_trace/module.zip"
-            "download_chn_alert": ""
+            "source_url": "https://github.com/abcz316/SKRoot-linuxKernelRoot/tree/master/Pro(%E4%BC%97%E6%B5%8B%E5%BC%80%E6%94%BE%E4%B8%AD)/sources/testModule/module_clear_usb_trace",
+            "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_clear_usb_trace/module.zip",
+            "download_chn_alert": "",
             "download_eng_alert": ""
         },
         {
@@ -34,9 +34,9 @@
             "author": "5ec1cff, aviraxp, Cyberenchanter and topjohnwu",
             "uuid": "c3a70f603b48380a611131d29c50aac3",
             "update_date": "2025-12-30",
-            "source_url": "https://github.com/abcz316/SKRoot-linuxKernelRoot/tree/master/Pro(%E4%BC%97%E6%B5%8B%E5%BC%80%E6%94%BE%E4%B8%AD)/sources/testModule/module_tricky_store"
-            "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_tricky_store/module.zip"
-            "download_chn_alert": ""
+            "source_url": "https://github.com/abcz316/SKRoot-linuxKernelRoot/tree/master/Pro(%E4%BC%97%E6%B5%8B%E5%BC%80%E6%94%BE%E4%B8%AD)/sources/testModule/module_tricky_store",
+            "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_tricky_store/module.zip",
+            "download_chn_alert": "",
             "download_eng_alert": ""
         },
         {
@@ -47,9 +47,9 @@
             "author": "阿灵",
             "uuid": "uE3f2cG9omHPOYsfKXTLzVvdZBrOoREM",
             "update_date": "2026-2-12",
-            "source_url": ""
-            "download_url": ""
-            "download_chn_alert": "风险警告：此模块为高风险模块，仅满足使用效果，不保证隐藏效果，若继续安装，请点击“确认”，产生一切后果请自负。"
+            "source_url": "",
+            "download_url": "",
+            "download_chn_alert": "风险警告：此模块为高风险模块，仅满足使用效果，不保证隐藏效果，若继续安装，请点击“确认”，产生一切后果请自负。",
             "download_eng_alert": ""
         },
         {
@@ -60,9 +60,9 @@
             "author": "阿灵",
             "uuid": "evq0GG8tdzT5dki8Be84aULan31w6tH6",
             "update_date": "2026-2-12",
-            "source_url": ""
-            "download_url": ""
-            "download_chn_alert": "风险警告：此模块为高风险模块，仅满足使用效果，不保证隐藏效果，若继续安装，请点击“确认”，产生一切后果请自负。"
+            "source_url": "",
+            "download_url": "",
+            "download_chn_alert": "风险警告：此模块为高风险模块，仅满足使用效果，不保证隐藏效果，若继续安装，请点击“确认”，产生一切后果请自负。",
             "download_eng_alert": ""
         },
         {
@@ -73,9 +73,9 @@
             "author": "阿灵",
             "uuid": "Pr596Oi52bfandlOpzjPIWGIHEK0YYCo",
             "update_date": "2026-2-12",
-            "source_url": ""
-            "download_url": ""
-            "download_chn_alert": "风险警告：此模块为高风险模块，仅满足使用效果，不保证隐藏效果，若继续安装，请点击“确认”，产生一切后果请自负。"
+            "source_url": "",
+            "download_url": "",
+            "download_chn_alert": "风险警告：此模块为高风险模块，仅满足使用效果，不保证隐藏效果，若继续安装，请点击“确认”，产生一切后果请自负。",
             "download_eng_alert": ""
         },
         {
@@ -86,9 +86,9 @@
             "author": "Cycle1337",
             "uuid": "rA78uQ0M0YyB27zuWmUJyg6uBciMeCRD",
             "update_date": "2026-2-12",
-            "source_url": ""
-            "download_url": ""
-            "download_chn_alert": ""
+            "source_url": "",
+            "download_url": "",
+            "download_chn_alert": "",
             "download_eng_alert": ""
         },
         {
@@ -99,9 +99,9 @@
             "author": "SKRoot",
             "uuid": "xhTxKsI5kHacgHJ04b5VhO4ffiOP4sdc",
             "update_date": "2026-2-12",
-            "source_url": "https://github.com/abcz316/SKRoot-linuxKernelRoot/tree/master/Pro(%E4%BC%97%E6%B5%8B%E5%BC%80%E6%94%BE%E4%B8%AD)/sources/testModule/module_fake_system_file"
-            "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_demo/module_fake_system_file.zip"
-            "download_chn_alert": ""
+            "source_url": "https://github.com/abcz316/SKRoot-linuxKernelRoot/tree/master/Pro(%E4%BC%97%E6%B5%8B%E5%BC%80%E6%94%BE%E4%B8%AD)/sources/testModule/module_fake_system_file",
+            "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_demo/module_fake_system_file.zip",
+            "download_chn_alert": "",
             "download_eng_alert": ""
         },
         {
@@ -112,9 +112,9 @@
             "author": "SKRoot",
             "uuid": "6080b19fb2db26c534af3051103f541f",
             "update_date": "2025-12-10",
-            "source_url": "https://github.com/abcz316/SKRoot-linuxKernelRoot/tree/master/Pro(%E4%BC%97%E6%B5%8B%E5%BC%80%E6%94%BE%E4%B8%AD)/sources/testModule/module_web_ui_example"
-            "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_demo/module_web_ui_example.zip"
-            "download_chn_alert": ""
+            "source_url": "https://github.com/abcz316/SKRoot-linuxKernelRoot/tree/master/Pro(%E4%BC%97%E6%B5%8B%E5%BC%80%E6%94%BE%E4%B8%AD)/sources/testModule/module_web_ui_example",
+            "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_demo/module_web_ui_example.zip",
+            "download_chn_alert": "",
             "download_eng_alert": ""
         },
         {
@@ -125,9 +125,9 @@
             "author": "SKRoot",
             "uuid": "62027df1409d6109da7e153d04915074",
             "update_date": "2025-12-10",
-            "source_url": "https://github.com/abcz316/SKRoot-linuxKernelRoot/tree/master/Pro(%E4%BC%97%E6%B5%8B%E5%BC%80%E6%94%BE%E4%B8%AD)/sources/testModule/module_update_demo"
-            "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_demo/module_update_demo.zip"
-            "download_chn_alert": ""
+            "source_url": "https://github.com/abcz316/SKRoot-linuxKernelRoot/tree/master/Pro(%E4%BC%97%E6%B5%8B%E5%BC%80%E6%94%BE%E4%B8%AD)/sources/testModule/module_update_demo",
+            "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_demo/module_update_demo.zip",
+            "download_chn_alert": "",
             "download_eng_alert": ""
         },
         {
@@ -138,9 +138,9 @@
             "author": "SKRoot",
             "uuid": "b7e4d333fd4689044b58b59e631a40e5",
             "update_date": "2025-12-10",
-            "source_url": "https://github.com/abcz316/SKRoot-linuxKernelRoot/tree/master/Pro(%E4%BC%97%E6%B5%8B%E5%BC%80%E6%94%BE%E4%B8%AD)/sources/testModule/module_install_uninstall_cb_demo"
-            "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_demo/module_install_uninstall_cb_demo.zip"
-            "download_chn_alert": ""
+            "source_url": "https://github.com/abcz316/SKRoot-linuxKernelRoot/tree/master/Pro(%E4%BC%97%E6%B5%8B%E5%BC%80%E6%94%BE%E4%B8%AD)/sources/testModule/module_install_uninstall_cb_demo",
+            "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_demo/module_install_uninstall_cb_demo.zip",
+            "download_chn_alert": "",
             "download_eng_alert": ""
         },
         {
@@ -151,9 +151,9 @@
             "author": "SKRoot",
             "uuid": "3608c9af28db4dcfc05c32bbc584753e",
             "update_date": "2025-12-10",
-            "source_url": "https://github.com/abcz316/SKRoot-linuxKernelRoot/tree/master/Pro(%E4%BC%97%E6%B5%8B%E5%BC%80%E6%94%BE%E4%B8%AD)/sources/testModule/module_hello_world"
-            "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_demo/module_hello_world.zip"
-            "download_chn_alert": ""
+            "source_url": "https://github.com/abcz316/SKRoot-linuxKernelRoot/tree/master/Pro(%E4%BC%97%E6%B5%8B%E5%BC%80%E6%94%BE%E4%B8%AD)/sources/testModule/module_hello_world",
+            "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_demo/module_hello_world.zip",
+            "download_chn_alert": "",
             "download_eng_alert": ""
         }
     ]
