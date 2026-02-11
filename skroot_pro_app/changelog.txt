@@ -1,3 +1,18 @@
+4.2.4更新内容：
+  1.新增WebUI工具函数。
+  2.新增保险丝开关文件，便于开发者调试。
+  3.新增原子32位/64位内核内存读写接口。
+  4.新增偏移量接口（跨内核）：inode->i_mapping, i_state, i_rwsem
+  5.新增偏移量接口（跨内核）：vm_area_struct->vm_flags
+  6.新增偏移量接口（跨内核）：file->f_op
+  7.新增偏移量接口（跨内核）：proc_ops, file_operations, miscdevice, super_block
+  8.新增内核API便捷调用写法（export_symbol.h）
+  9.新增模块市场。
+  10.新增伪装机型模块。
+  11.新增系统文件伪造 Demo。
+  12.修复卸载skroot环境时，卸载模块回调缺失。
+  13.修正错误注释。
+
 4.2.3更新内容：
   1.修复当第三方APP已卸载，但未解除su授权时会出现问题。
 
@@ -7,7 +22,7 @@
   3.修复Linux kernel < 4.19无法开机的问题。
   4.修复部分机型显示发生故障。
   5.新增"is_syscall_args_in_ptregs"接口，方便开发者对老机型兼容Hook syscall。
-  6.新增内核结构体dentry、fdtable、files_struct、file、inode、mm_struct、task_struct、vm_area_struct偏移量接口（跨内核）。
+  6.新增偏移量接口（跨内核）：dentry, fdtable, files_struct, file, inode, mm_struct, task_struct, vm_area_struct
   7.新增内核IRQ中断等函数导出（跨内核）。
   8.新增WebUI写法：自带path、body入参。
   9.新增WebUI工具函数头文件。
