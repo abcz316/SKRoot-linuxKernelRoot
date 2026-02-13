@@ -24,7 +24,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.linux.permissionmanager.R;
-import com.linux.permissionmanager.adapter.SelectAppRecyclerAdapter;
+import com.linux.permissionmanager.adapter.SelectAppAdapter;
 import com.linux.permissionmanager.model.SelectAppItem;
 import com.linux.permissionmanager.utils.ScreenInfoUtils;
 
@@ -86,8 +86,13 @@ public class SelectAppDlg {
             appList.add(new SelectAppItem(packageInfo));
         }
 
-        SelectAppRecyclerAdapter adapter = new SelectAppRecyclerAdapter(
-                activity, R.layout.select_app_recycler_item, appList, popupWindow, selectAppCallback);
+        SelectAppAdapter adapter = new SelectAppAdapter(R.layout.select_app_recycler_item, appList,
+                item -> {
+                    popupWindow.dismiss();
+                    Message msg = new Message(); msg.obj = item;
+                    selectAppCallback.sendMessage(msg);
+                }
+        );
         RecyclerView select_app_recycler_view = (RecyclerView) view.findViewById(R.id.select_app_recycler_view);
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(activity);
         linearLayoutManager.setOrientation(LinearLayoutManager.VERTICAL);
@@ -117,7 +122,7 @@ public class SelectAppDlg {
                         newAppList.add(item);
                     }
                 }
-                adapter.updateList(newAppList);
+                adapter.setData(newAppList);
                 super.handleMessage(msg);
             }
         };

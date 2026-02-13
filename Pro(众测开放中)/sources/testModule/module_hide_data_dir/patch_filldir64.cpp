@@ -43,15 +43,14 @@ KModErr PatchFilldir64::patch_filldir64(const std::set<std::string>& hide_dir_li
 	aarch64_asm_ctx asm_ctx = init_aarch64_asm();
 	auto a = asm_ctx.assembler();
 
-	std::vector<Label> label_next;
-	label_next.reserve(hide_dir_list.size());
-	for(auto &c : hide_dir_list) label_next.push_back(a->newLabel());
 	kernel_module::arm64_before_hook_start(a);
 	for (size_t i = 0; i < hide_dirs.size(); ++i) {
+		Label L_next = a->newLabel();
+
 		const auto& dir_name = hide_dirs[i];
 		aarch64_asm_mov_w(a, w11, dir_name.length());
 		a->cmp(w_namelen_arg, w11);
-		a->b(CondCode::kNE, label_next[i]); //下一个
+		a->b(CondCode::kNE, L_next); //下一个
 
 		// memcmp key
 		aarch64_asm_set_x_cstr_ptr(a, x12, dir_name);
@@ -60,7 +59,7 @@ KModErr PatchFilldir64::patch_filldir64(const std::set<std::string>& hide_dir_li
 			kernel_module::string_ops::kmemcmp(a, x_name_arg, x12, x11);
 			a->mov(x11, x0);
 		}
-		a->cbnz(x11, label_next[i]); //不相等，下一个
+		a->cbnz(x11, L_next); //不相等，下一个
 
 		// 隐藏文件夹的返回
 		if (kernel_module::is_kernel_version_less("6.1.0")) {
@@ -70,7 +69,7 @@ KModErr PatchFilldir64::patch_filldir64(const std::set<std::string>& hide_dir_li
 		}
 		kernel_module::arm64_before_hook_end(a, false); // 直接返回，不跳回原函数
 
-		a->bind(label_next[i]);
+		a->bind(L_next);
 	}
 	kernel_module::arm64_before_hook_end(a, true); // 正常返回
 	return patch_kernel_before_hook(m_filldir64, a);

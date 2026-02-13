@@ -560,6 +560,69 @@ inline void pid_task(Assembler* a, KModErr& out_err, GpX pid, PidType type) {
 }
 }
 
+inline void proc_mkdir(Assembler* a, KModErr& out_err, GpX name, GpX parent) {
+	out_err = CallHelper::callNameAuto(a, "proc_mkdir", NeedReturnX0::Yes, name, parent);
+}
+
+namespace linux_above_5_6_0 {
+inline void proc_create(Assembler* a, KModErr& out_err, GpX name, GpW mode, GpX parent, GpX proc_fops) {
+	out_err = CallHelper::callNameAuto(a, "proc_create", NeedReturnX0::Yes, name, mode, parent, proc_fops);
+}
+inline void proc_create_data(Assembler* a, KModErr& out_err, GpX name, GpW mode, GpX parent, GpX proc_ops, GpX data) {
+	out_err = CallHelper::callNameAuto(a, "proc_create_data", NeedReturnX0::Yes, name, mode, parent, proc_ops, data);
+}
+}
+
+namespace linux_older {
+inline void proc_create(Assembler* a, KModErr& out_err, GpX name, GpW mode, GpX parent, GpX proc_fops) {
+	out_err = CallHelper::callNameAuto(a, "proc_create", NeedReturnX0::Yes, name, mode, parent, proc_fops);
+}
+inline void proc_create_data(Assembler* a, KModErr& out_err, GpX name, GpW mode, GpX parent, GpX proc_ops, GpX data) {
+	out_err = CallHelper::callNameAuto(a, "proc_create_data", NeedReturnX0::Yes, name, mode, parent, proc_ops, data);
+}
+}
+
+inline void proc_remove(Assembler* a, KModErr& out_err, GpX de) {
+	out_err = CallHelper::callNameAuto(a, "proc_remove", NeedReturnX0::No, de);
+}
+
+inline void misc_register(Assembler* a, KModErr& out_err, GpX misc) {
+	out_err = CallHelper::callNameAuto(a, "misc_register", NeedReturnX0::Yes, misc);
+}
+
+inline void misc_deregister(Assembler* a, KModErr& out_err, GpX misc) {
+	out_err = CallHelper::callNameAuto(a, "misc_deregister", NeedReturnX0::No, misc);
+}
+
+inline void down_write(Assembler* a, KModErr& out_err, GpX sem) {
+	out_err = CallHelper::callNameAuto(a, "down_write", NeedReturnX0::No, sem);
+}
+
+inline void up_read(Assembler* a, KModErr& out_err, GpX sem) {
+	out_err = CallHelper::callNameAuto(a, "up_read", NeedReturnX0::No, sem);
+}
+
+inline void mutex_lock(Assembler* a, KModErr& out_err, GpX lock) {
+	out_err = CallHelper::callNameAuto(a, "mutex_lock", NeedReturnX0::No, lock);
+}
+
+inline void mutex_unlock(Assembler* a, KModErr& out_err, GpX lock) {
+	out_err = CallHelper::callNameAuto(a, "mutex_unlock", NeedReturnX0::No, lock);
+}
+
+inline void ihold(Assembler* a, KModErr& out_err, GpX inode) {
+	out_err = CallHelper::callNameAuto(a, "ihold", NeedReturnX0::No, inode);
+}
+
+inline void igrab(Assembler* a, KModErr& out_err, GpX inode) {
+	out_err = CallHelper::callNameAuto(a, "igrab", NeedReturnX0::Yes, inode);
+}
+
+inline void iput(Assembler* a, KModErr& out_err, GpX inode) {
+	out_err = CallHelper::callNameAuto(a, "iput", NeedReturnX0::No, inode);
+}
+
+
 inline void local_irq_save(Assembler* a, GpX out_store_flags_reg) {
 	aarch64_asm_mrs_daif(a, out_store_flags_reg);
 	aarch64_asm_msr_daifset(a, 2); // Disable IRQ
@@ -567,6 +630,10 @@ inline void local_irq_save(Assembler* a, GpX out_store_flags_reg) {
 
 inline void local_irq_restore(Assembler* a, GpX flags) {
 	aarch64_asm_msr_daif(a, flags);
+}
+
+inline void invalidate_inode_pages2(Assembler* a, KModErr& out_err, GpX mapping) {
+	out_err = CallHelper::callNameAuto(a, "invalidate_inode_pages2", NeedReturnX0::Yes, mapping);
 }
 
 } // namespace export_symbol

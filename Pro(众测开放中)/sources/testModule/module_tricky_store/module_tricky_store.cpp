@@ -3,9 +3,10 @@
 #include <algorithm>
 #include <sys/wait.h>
 #include <sys/syscall.h>
+#include "module_tricky_store.h"
+
 #include "kernel_module_kit_umbrella.h"
 
-#include "module_tricky_store.h"
 #include "file_utils.h"
 #include "android_packages_list_utils.h"
 #include "tricky_store_daemon.h"
@@ -113,9 +114,9 @@ int skroot_module_main(const char* root_key, const char* module_private_dir) {
     spawn_delayed_task(7, [=] {
         if (auto_third_app_toggle) {
             bool ok = write_target_txt_applist();
-            std::printf("[module_tricky_store] write target.txt applist: %s\n", ok ? "success" : "failed");
+            printf("[module_tricky_store] write target.txt applist: %s\n", ok ? "success" : "failed");
         }
-        std::printf("[module_tricky_store] run_script: %s\n", SERVICE_SH);
+        printf("[module_tricky_store] run_script: %s\n", SERVICE_SH);
         // run_script(SERVICE_SH); // DO NOT USE!
         // prevent the sh process from remaining in the background.
         start_tricky_store_daemon_loop(SERVICE_BASE);

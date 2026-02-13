@@ -133,7 +133,7 @@
                     android:layout_gravity="center_vertical"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="为避免被侦测，可使用寄生模式，或卸载管理器App，功能依然生效" />
+                    android:text="为避免被侦测，可使用寄生模式，或卸载管理器App，功能依然生效。" />
 
             </LinearLayout>
 

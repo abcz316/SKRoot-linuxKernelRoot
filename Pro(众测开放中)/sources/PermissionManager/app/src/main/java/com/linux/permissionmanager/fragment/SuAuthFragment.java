@@ -11,6 +11,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
+import android.widget.PopupMenu;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -41,9 +42,13 @@ public class SuAuthFragment extends Fragment {
     private TextView mTextEmptyTips;
     private RecyclerView mSuAuthRecyclerView;
 
-    public SuAuthFragment(Activity activity) {
+    private SuAuthAdapter mAdapter;
+
+    public SuAuthFragment(Activity activity, String rootKey) {
         mActivity = activity;
+        mRootKey = rootKey;
     }
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -58,23 +63,17 @@ public class SuAuthFragment extends Fragment {
         setupSuAuthRecyclerView();
     }
 
-    public void setRootKey(String rootKey) {
-        mRootKey = rootKey;
-    }
-
-    public void setupSuAuthRecyclerView() {
+    private void setupSuAuthRecyclerView() {
         String json = NativeBridge.getSuAuthList(mRootKey);
         List<SuAuthItem> skrModList = parseSuAuthList(json);
-        SuAuthAdapter adapter = new SuAuthAdapter(skrModList, new SuAuthAdapter.OnItemClickListener() {
+        mAdapter = new SuAuthAdapter(skrModList, new SuAuthAdapter.OnItemClickListener() {
             @Override
-            public void onRemoveSuAuthBtnClick(View v, SuAuthItem suAuth) {
-                onRemoveSuAuth(suAuth);
-            }
+            public void onRemoveSuAuthBtnClick(View v, SuAuthItem suAuth) { onRemoveSuAuth(suAuth); }
         });
+        mSuAuthRecyclerView.setAdapter(mAdapter);
         mSuAuthRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        mSuAuthRecyclerView.setAdapter(adapter);
-        mTextEmptyTips.setVisibility(skrModList.size() == 0 ? View.VISIBLE : View.GONE);
         mSuAuthRecyclerView.setVisibility(skrModList.size() == 0 ? View.GONE : View.VISIBLE);
+        mTextEmptyTips.setVisibility(skrModList.size() == 0 ? View.VISIBLE : View.GONE);
     }
 
     private String findAppName(List<PackageInfo> packages, String appPackageName) {
@@ -120,7 +119,20 @@ public class SuAuthFragment extends Fragment {
         return list;
     }
 
-    public void onShowSelectAddSuAuthList() {
+    public void showSuAuthMainPopupMenu(View v) {
+        PopupMenu popupMenu = new PopupMenu(mActivity, v);
+        popupMenu.getMenuInflater().inflate(R.menu.popup_su_auth_main_menu, popupMenu.getMenu());
+        popupMenu.setOnMenuItemClickListener(item -> {
+            int itemId = item.getItemId();
+            if (itemId == R.id.add_su_auth) onShowSelectAddSuAuthList();
+            else if (itemId == R.id.clear_su_auth) onClearSuAuth();
+            return true;
+        });
+
+        popupMenu.show();
+    }
+
+    private void onShowSelectAddSuAuthList() {
         Handler selectImplantAppCallback = new Handler() {
             @Override
             public void handleMessage(@NonNull Message msg) {
@@ -147,12 +159,8 @@ public class SuAuthFragment extends Fragment {
         String appName = suAuth.getAppName();
         String appPackageName = suAuth.getAppPackageName();
         String showName = appName != null && !appName.isEmpty() ? appName : appPackageName;
-        DialogUtils.showCustomDialog(
-                mActivity,
-                "确认",
-                "确定要移除 " + showName +" 吗？",
-                null,
-                "确定", (dialog, which) -> {
+        DialogUtils.showCustomDialog(mActivity, "确认", "确定要移除 " + showName +" 吗？", null,"确定",
+                (dialog, which) -> {
                     dialog.dismiss();
                     String tip = NativeBridge.removeSuAuth(mRootKey, appPackageName);
                     DialogUtils.showMsgDlg(mActivity, "执行结果", tip, null);
@@ -164,13 +172,9 @@ public class SuAuthFragment extends Fragment {
         );
     }
 
-    public void onClearSuAuth() {
-        DialogUtils.showCustomDialog(
-                mActivity,
-                "确认",
-                "确定要清空 SU 授权列表吗？",
-                null,
-                "确定", (dialog, which) -> {
+    private void onClearSuAuth() {
+        DialogUtils.showCustomDialog(mActivity, "确认", "确定要清空 SU 授权列表吗？", null, "确定",
+                (dialog, which) -> {
                     dialog.dismiss();
                     String tip = NativeBridge.clearSuAuthList(mRootKey);
                     DialogUtils.showMsgDlg(mActivity, "执行结果", tip, null);

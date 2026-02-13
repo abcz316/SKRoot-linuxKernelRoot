@@ -7,6 +7,9 @@ import com.linux.permissionmanager.BuildConfig;
 import com.linux.permissionmanager.model.AppUpdateInfo;
 import com.linux.permissionmanager.utils.NetUtils;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.function.Consumer;
 
 public class AppUpdateManager {
@@ -21,28 +24,19 @@ public class AppUpdateManager {
     /**
      * 主工程 App：请求更新信息（在子线程下载，回调已切回 UI 线程）
      */
-    public void requestAppUpdate(
-            Consumer<AppUpdateInfo> onSuccessUi,
-            Consumer<Exception> onErrorUi
-    ) {
+    public void requestAppUpdate(Consumer<AppUpdateInfo> onSuccessUi, Consumer<Exception> onErrorUi) {
         NetUtils.downloadText(updateJsonUrl, new NetUtils.TextDownloadCallback() {
             @Override
             public void onSuccess(String content) {
                 try {
-                    AppUpdateInfo updateInfo = AppUpdateParser.parse(content, BuildConfig.VERSION_NAME);
-                    if (onSuccessUi != null) {
-                        activity.runOnUiThread(() -> onSuccessUi.accept(updateInfo));
-                    }
-                } catch (Exception e) {
-                    onError(e);
-                }
+                    AppUpdateInfo updateInfo = parseAppUpdateJson(content, BuildConfig.VERSION_NAME);
+                    if (onSuccessUi != null) activity.runOnUiThread(() -> onSuccessUi.accept(updateInfo));
+                } catch (Exception e) { onError(e); }
             }
 
             @Override
             public void onError(Exception e) {
-                if (onErrorUi != null) {
-                    activity.runOnUiThread(() -> onErrorUi.accept(e));
-                }
+                if (onErrorUi != null) activity.runOnUiThread(() -> onErrorUi.accept(e));
             }
         });
     }
@@ -50,41 +44,39 @@ public class AppUpdateManager {
     /**
      * 主工程 App：请求更新日志内容
      */
-    public void requestAppChangelog(
-            AppUpdateInfo updateInfo,
-            Consumer<String> onSuccessUi,
-            Consumer<Exception> onErrorUi
-    ) {
+    public void requestAppChangelog(AppUpdateInfo updateInfo, Consumer<String> onSuccessUi, Consumer<Exception> onErrorUi) {
         if (updateInfo == null) {
-            if (onErrorUi != null) {
-                activity.runOnUiThread(() -> onErrorUi.accept(new IllegalStateException("updateInfo is null")));
-            }
+            if (onErrorUi != null) activity.runOnUiThread(() -> onErrorUi.accept(new IllegalStateException("updateInfo is null")));
             return;
         }
 
         String url = updateInfo.getChangelogUrl();
         if (TextUtils.isEmpty(url)) {
-            if (onErrorUi != null) {
-                activity.runOnUiThread(() -> onErrorUi.accept(new IllegalStateException("changelogUrl is empty")));
-            }
+            if (onErrorUi != null) activity.runOnUiThread(() -> onErrorUi.accept(new IllegalStateException("changelogUrl is empty")));
             return;
         }
 
         NetUtils.downloadText(url, new NetUtils.TextDownloadCallback() {
             @Override
             public void onSuccess(String content) {
-                if (onSuccessUi != null) {
-                    activity.runOnUiThread(() -> onSuccessUi.accept(content));
-                }
+                if (onSuccessUi != null) activity.runOnUiThread(() -> onSuccessUi.accept(content));
             }
 
             @Override
             public void onError(Exception e) {
-                if (onErrorUi != null) {
-                    activity.runOnUiThread(() -> onErrorUi.accept(e));
-                }
+                if (onErrorUi != null) activity.runOnUiThread(() -> onErrorUi.accept(e));
             }
         });
     }
 
+    private AppUpdateInfo parseAppUpdateJson(String jsonStr, String currentVersion) throws JSONException {
+        if (jsonStr == null || jsonStr.trim().isEmpty()) return null;
+        JSONObject obj = new JSONObject(jsonStr);
+        String latestVer    = obj.optString("version", "");
+        String downloadUrl  = obj.optString("appUrl", "");
+        String changelogUrl = obj.optString("changelog", "");
+        if (latestVer.isEmpty() || downloadUrl.isEmpty()) return null;
+        boolean hasNew = !latestVer.equals(currentVersion);
+        return new AppUpdateInfo(hasNew, latestVer, downloadUrl, changelogUrl);
+    }
 }

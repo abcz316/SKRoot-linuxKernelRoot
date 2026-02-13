@@ -54,59 +54,6 @@ static const struct mg_request_info* req_info(struct mg_connection* conn) {
 }
 
 /***************************************************************************
- * 发送二进制响应（统一封装）
- * 参数: conn            CivetWeb 连接对象
- *       status          HTTP 状态码（200/404/500...）
- *       content_type    Content-Type（可为 nullptr，默认 application/octet-stream）
- *       data            响应体数据指针（可为 nullptr）
- *       size            响应体长度（字节数）
- *       extra_headers   额外响应头（可为 nullptr）
- * 返回: true 表示已向 conn 写入响应；false 表示参数不合法或 conn 为空
- ***************************************************************************/
-static bool send_bytes(struct mg_connection* conn, int status, const char* content_type, const void* data, size_t size, const KvMap* extra_headers = nullptr) {
-    if (!conn) return false;
-    const char* reason = reason_phrase(status);
-    if (!content_type) content_type = "application/octet-stream";
-    mg_printf(conn, "HTTP/1.1 %d %s\r\n"
-              "Content-Type: %s\r\n"
-              "Content-Length: %llu\r\n"
-              "Connection: close\r\n", status, reason, content_type, (unsigned long long)size);
-    if (extra_headers) {
-        for (const auto& kv : *extra_headers) mg_printf(conn, "%s: %s\r\n", kv.first.c_str(), kv.second.c_str());
-    }
-    mg_printf(conn, "\r\n");
-    if (size > 0 && data) mg_write(conn, data, size);
-    return true;
-}
-
-/***************************************************************************
- * 发送文本响应（UTF-8）
- * 参数: conn            CivetWeb 连接对象
- *       status          HTTP 状态码
- *       text            文本内容（UTF-8）
- *       extra_headers   额外响应头（可为 nullptr）
- *       content_type    Content-Type（默认 text/plain; charset=utf-8）
- * 返回: true 表示已写入响应；false 表示失败
- ***************************************************************************/
-static bool send_text(struct mg_connection* conn, int status, const std::string& text, const KvMap* extra_headers = nullptr) {
-    return send_bytes(conn, status, "text/plain; charset=utf-8", text.data(), text.size(), extra_headers);
-}
-
-/***************************************************************************
- * 发送 JSON 响应（UTF-8）
- * 参数: conn            CivetWeb 连接对象
- *       status          HTTP 状态码
- *       json            JSON 字符串（UTF-8，调用方保证为合法 JSON）
- *       extra_headers   额外响应头（可为 nullptr）
- * 返回: true 表示已写入响应；false 表示失败
- * 说明:
- *   - Content-Type 固定为 application/json; charset=utf-8
- ***************************************************************************/
-static bool send_json(struct mg_connection* conn, int status, const std::string& json, const KvMap* extra_headers = nullptr) {
-    return send_bytes(conn, status, "application/json; charset=utf-8", json.data(), json.size(), extra_headers);
-}
-
-/***************************************************************************
  * 获取请求路径（不含 query）
  * 参数: conn        CivetWeb 连接对象
  * 返回: std::string 请求路径（例如 "/getVersion"）
@@ -166,6 +113,73 @@ static BodyReadStatus read_request_body(struct mg_connection* conn,
     }
     if (content_len > 0 && total < (size_t)content_len) return BodyReadStatus::INCOMPLETE;
     return BodyReadStatus::OK;
+}
+
+/***************************************************************************
+ * 发送二进制响应（统一封装）
+ * 参数: conn            CivetWeb 连接对象
+ *       status          HTTP 状态码（200/404/500...）
+ *       content_type    Content-Type（可为 nullptr，默认 application/octet-stream）
+ *       data            响应体数据指针（可为 nullptr）
+ *       size            响应体长度（字节数）
+ *       extra_headers   额外响应头（可为 nullptr）
+ * 返回: true 表示已向 conn 写入响应；false 表示参数不合法或 conn 为空
+ ***************************************************************************/
+static bool send_bytes(struct mg_connection* conn, int status, const char* content_type, const void* data, size_t size, const KvMap* extra_headers = nullptr) {
+    if (!conn) return false;
+    const char* reason = reason_phrase(status);
+    if (!content_type) content_type = "application/octet-stream";
+    mg_printf(conn, "HTTP/1.1 %d %s\r\n"
+              "Content-Type: %s\r\n"
+              "Content-Length: %llu\r\n"
+              "Connection: close\r\n", status, reason, content_type, (unsigned long long)size);
+    if (extra_headers) {
+        for (const auto& kv : *extra_headers) mg_printf(conn, "%s: %s\r\n", kv.first.c_str(), kv.second.c_str());
+    }
+    mg_printf(conn, "\r\n");
+    if (size > 0 && data) mg_write(conn, data, size);
+    return true;
+}
+
+/***************************************************************************
+ * 发送 HTML 响应（UTF-8）
+ * 参数: conn            CivetWeb 连接对象
+ *       status          HTTP 状态码
+ *       html            HTML 内容（UTF-8）
+ *       extra_headers   额外响应头（可为 nullptr）
+ * 返回: true 表示已写入响应；false 表示失败
+ * 说明:
+ *   - Content-Type 固定为 text/html; charset=utf-8
+ ***************************************************************************/
+static bool send_html(struct mg_connection* conn, int status, const std::string& html, const KvMap* extra_headers = nullptr) {
+    return send_bytes(conn, status, "text/html; charset=utf-8", html.data(), html.size(), extra_headers);
+}
+
+/***************************************************************************
+ * 发送文本响应（UTF-8）
+ * 参数: conn            CivetWeb 连接对象
+ *       status          HTTP 状态码
+ *       text            文本内容（UTF-8）
+ *       extra_headers   额外响应头（可为 nullptr）
+ *       content_type    Content-Type（默认 text/plain; charset=utf-8）
+ * 返回: true 表示已写入响应；false 表示失败
+ ***************************************************************************/
+static bool send_text(struct mg_connection* conn, int status, const std::string& text, const KvMap* extra_headers = nullptr) {
+    return send_bytes(conn, status, "text/plain; charset=utf-8", text.data(), text.size(), extra_headers);
+}
+
+/***************************************************************************
+ * 发送 JSON 响应（UTF-8）
+ * 参数: conn            CivetWeb 连接对象
+ *       status          HTTP 状态码
+ *       json            JSON 字符串（UTF-8，调用方保证为合法 JSON）
+ *       extra_headers   额外响应头（可为 nullptr）
+ * 返回: true 表示已写入响应；false 表示失败
+ * 说明:
+ *   - Content-Type 固定为 application/json; charset=utf-8
+ ***************************************************************************/
+static bool send_json(struct mg_connection* conn, int status, const std::string& json, const KvMap* extra_headers = nullptr) {
+    return send_bytes(conn, status, "application/json; charset=utf-8", json.data(), json.size(), extra_headers);
 }
 
 } // namespace webui

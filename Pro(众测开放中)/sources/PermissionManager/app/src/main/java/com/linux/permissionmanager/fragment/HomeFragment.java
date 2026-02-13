@@ -28,10 +28,10 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
     private String lastInputCmd = "id";
     private String lastInputRootExecPath = "";
 
-    private EditText console_edit;
-
-    public HomeFragment(Activity activity) {
+    private EditText mConsoleEdit;
+    public HomeFragment(Activity activity, String rootKey) {
         mActivity = activity;
+        mRootKey = rootKey;
     }
     @Nullable
     @Override
@@ -56,7 +56,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
         Button implant_app_btn_btn = view.findViewById(R.id.implant_app_btn);
         Button copy_info_btn = view.findViewById(R.id.copy_info_btn);
         Button clean_info_btn = view.findViewById(R.id.clean_info_btn);
-        console_edit = view.findViewById(R.id.console_edit);
+        mConsoleEdit = view.findViewById(R.id.console_edit);
 
         install_skroot_env_btn.setOnClickListener(this);
         uninstall_skroot_env_btn.setOnClickListener(this);
@@ -66,10 +66,6 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
         implant_app_btn_btn.setOnClickListener(this);
         copy_info_btn.setOnClickListener(this);
         clean_info_btn.setOnClickListener(this);
-    }
-
-    public void setRootKey(String rootKey) {
-        mRootKey = rootKey;
         showSkrootStatus();
     }
 
@@ -103,6 +99,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
                 break;
         }
     }
+
     private void showSkrootStatus() {
         String curState = NativeBridge.getSkrootEnvState(mRootKey);
         String installedVer = NativeBridge.getInstalledSkrootEnvVersion(mRootKey);
@@ -181,20 +178,20 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 
     private void appendConsoleMsg(String msg) {
         StringBuffer txt = new StringBuffer();
-        txt.append(console_edit.getText().toString());
+        txt.append(mConsoleEdit.getText().toString());
         if (txt.length() != 0) txt.append("\n");
         txt.append(msg);
         txt.append("\n");
-        console_edit.setText(txt.toString());
-        console_edit.setSelection(txt.length());
+        mConsoleEdit.setText(txt.toString());
+        mConsoleEdit.setSelection(txt.length());
     }
 
     private void copyConsoleMsg() {
-        ClipboardUtils.copyText(mActivity, console_edit.getText().toString());
+        ClipboardUtils.copyText(mActivity, mConsoleEdit.getText().toString());
         Toast.makeText(mActivity, "复制成功", Toast.LENGTH_SHORT).show();
     }
 
     private void cleanConsoleMsg() {
-        console_edit.setText("");
+        mConsoleEdit.setText("");
     }
 }

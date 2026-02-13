@@ -1,0 +1,82 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>包名管理</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="toast.css">
+</head>
+
+<body>
+<div class="wrap">
+  <div class="header">
+    <h1>包名管理</h1>
+    <div class="sub">
+      <span class="pill"><span class="dot"></span> y700四代过黑名单设备 (free)</span>
+      <span class="pill">作者：Cycle1337</span>
+    </div>
+  </div>
+
+  <div class="sticky">
+    <div class="bar">
+      <div class="left">
+        <p class="t">目标列表</p>
+        <p class="s" id="barSub">未加载</p>
+      </div>
+      <div class="right">
+        <button class="primary" id="btnPick">从列表选择</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hd">
+      <p class="title">已选择</p>
+      <p class="meta" id="countText">0</p>
+    </div>
+    <div class="card-bd">
+      <div class="list" id="pkgList"></div>
+      <div class="empty" id="emptyTips" style="display:none;">暂无包名，点上方“从列表选择”</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast" aria-live="polite" aria-atomic="true">
+  <span id="toastText">重启后生效</span>
+</div>
+
+<!-- modal: 选择候选 -->
+<div class="modal-mask" id="pickMask" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-label="选择包名">
+    <div class="modal-hd">
+      <div>
+        <h3>选择包名</h3>
+        <div class="mini" id="pickMini">加载中…</div>
+      </div>
+      <button id="btnPickClose">关闭</button>
+    </div>
+
+    <div class="modal-bd">
+      <div class="search">
+        <input id="pickSearch" placeholder="搜索包名" />
+        <button id="pickAll">全选</button>
+        <button id="pickClear">清空</button>
+      </div>
+
+      <div class="cand-list" id="candList"></div>
+    </div>
+
+    <div class="modal-ft">
+      <div class="left">已选：<b id="pickSelCount">0</b></div>
+      <button class="solid" id="pickOk">确定</button>
+    </div>
+  </div>
+</div>
+<script src="request.js"></script>
+<script src="toast.js"></script>
+<script src="main.js"></script>
+</body>
+</html>

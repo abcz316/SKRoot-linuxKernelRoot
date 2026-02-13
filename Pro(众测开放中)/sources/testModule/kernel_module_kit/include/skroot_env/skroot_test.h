@@ -43,8 +43,10 @@ KModErr test_skroot_basics(const char* root_key, BasicItem item, std::string& ou
  * 返回: OK 表示正常
 ***************************************************************************/
 enum class DeafultModuleName: uint32_t {
-    RootBridge,   // ROOT 提权模块
-    SuRedirect,   // su 重定向模块
+    RootBridgePrint,    // ROOT 提权模块（打印）
+    RootBridgeExec,     // ROOT 提权模块（执行）
+    SuRedirectPrint,    // su 重定向模块（打印）
+    SuRedirectExec,     // su 重定向模块（执行）
 };
 KModErr test_skroot_deafult_module(const char* root_key, DeafultModuleName name, std::string& out);
 

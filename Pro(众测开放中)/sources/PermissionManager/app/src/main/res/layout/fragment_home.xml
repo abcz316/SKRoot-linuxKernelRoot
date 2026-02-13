@@ -17,7 +17,7 @@
         android:layout_marginTop="5dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="新一代SKRoot(Pro)，完美隐藏Root功能，挑战全网Root检测手段，实现SELinux 0%触碰、无挂载，通杀所有内核，不需要内核源码，直接patch内核。模块特质：支持热修改Hook内核，最高支持10万个Hook位置，且无性能损耗"
+        android:text="新一代SKRoot(Pro)，完美隐藏Root功能，挑战全网Root检测手段，实现SELinux 0%触碰、无挂载，通杀所有内核，不需要内核源码，直接patch内核。模块特质：支持热修改Hook内核，最高支持10万个Hook位置，且无性能损耗。一个模块跨所有内核运行。"
         />
 
 

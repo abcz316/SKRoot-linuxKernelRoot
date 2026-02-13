@@ -403,8 +403,10 @@ Java_com_linux_permissionmanager_bridge_NativeBridge_testSkrootDefaultModule(
     string strName = jstringToStr(env, name);
 
     skroot_env::DeafultModuleName defName;
-    if(strName == "RootBridge") defName = skroot_env::DeafultModuleName::RootBridge;
-    else if(strName == "SuRedirect") defName = skroot_env::DeafultModuleName::SuRedirect;
+    if(strName == "RootBridgePrint") defName = skroot_env::DeafultModuleName::RootBridgePrint;
+    else if(strName == "RootBridgeExec") defName = skroot_env::DeafultModuleName::RootBridgeExec;
+    else if(strName == "SuRedirectPrint") defName = skroot_env::DeafultModuleName::SuRedirectPrint;
+    else if(strName == "SuRedirectExec") defName = skroot_env::DeafultModuleName::SuRedirectExec;
     else return env->NewStringUTF(strName.c_str());
 
     stringstream sstr;

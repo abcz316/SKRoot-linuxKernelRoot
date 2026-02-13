@@ -20,11 +20,16 @@
         printf("----- End of Test%d -----\n\n", _test_idx);                \
     } while (0)
 
+#define REQUIRE_ROOT_OR_RETURN()                                      \
+    do {                                                              \
+        if (getuid() != 0) {                                          \
+            printf("[ERROR] please run with ROOT permission.\n");      \
+            return KModErr::ERR_MODULE_PARAM;                         \
+        }                                                             \
+    } while (0)
 
 static std::string get_comm_prctl() {
     char name[16] = {0};
-    if (prctl(PR_GET_NAME, name) == 0) {
-        return std::string(name);
-    }
+    if (prctl(PR_GET_NAME, name) == 0) return std::string(name);
     return "";
 }

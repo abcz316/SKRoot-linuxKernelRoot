@@ -38,11 +38,12 @@ KModErr get_task_struct_real_parent_offset(uint32_t & offset);
 KModErr get_task_struct_comm_offset(uint32_t & offset);
 
 /***************************************************************************
- * 获取 task_struct 结构体中 real_cred 字段的偏移量
- * 参数: offset     输出参数，返回 real_cred 字段相对于 task_struct 起始的偏移量（字节）
+ * 获取 task_struct 结构体中 real_cred/cred 字段的偏移量
+ * 参数: offset     输出参数，返回 real_cred/cred 字段相对于 task_struct 起始的偏移量（字节）
  * 返回: OK 表示成功；其它值为错误码
  ***************************************************************************/
 KModErr get_task_struct_real_cred_offset(uint32_t & offset);
+KModErr get_task_struct_cred_offset(uint32_t & offset);
 
 /***************************************************************************
  * 获取 task_struct 结构体中 seccomp 字段的偏移量

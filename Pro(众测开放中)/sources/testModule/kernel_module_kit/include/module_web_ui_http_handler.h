@@ -46,15 +46,18 @@ public:
 
 protected:
     virtual bool handleGet(CivetServer* server, mg_connection* conn) override {
-        return handleGet(server, conn, webui::get_request_path(conn), webui::get_request_query_string(conn));
+        std::string path = webui::get_request_path(conn);
+        std::string query = webui::get_request_query_string(conn);
+        return handleGet(server, conn, path, query);
     }
 
     virtual bool handlePost(CivetServer* server, mg_connection* conn) override {
+        std::string path = webui::get_request_path(conn);
         std::string body;
         auto st = webui::read_request_body(conn, body);
         if (st == webui::BodyReadStatus::TOO_LARGE) return webui::send_text(conn, 413, "payload too large"), true;
         if (st != webui::BodyReadStatus::OK) return webui::send_text(conn, 400, "bad request body"), true;
-        return handlePost(server, conn, webui::get_request_path(conn), body);
+        return handlePost(server, conn, path, body);
     }
 };
 

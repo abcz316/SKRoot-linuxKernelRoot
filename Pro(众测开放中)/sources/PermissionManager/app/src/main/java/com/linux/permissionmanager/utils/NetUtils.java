@@ -95,9 +95,7 @@ public final class NetUtils {
                         throw new IOException("Text download cancelled");
                     }
 
-                    if (callback != null) {
-                        callback.onSuccess(sb.toString());
-                    }
+                    if (callback != null) callback.onSuccess(sb.toString());
                 } catch (Exception e) {
                     if (callback != null) {
                         if (handle.isCancelled()) {

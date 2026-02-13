@@ -49,9 +49,11 @@ public class SettingsFragment extends Fragment {
     private TextView mTvUpdateDownload;
     private AppUpdateManager mUpdateManager;
 
-    public SettingsFragment(Activity activity) {
+    public SettingsFragment(Activity activity, String rootKey) {
         mActivity = activity;
+        mRootKey = rootKey;
     }
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -77,10 +79,6 @@ public class SettingsFragment extends Fragment {
         mTvUpdateChangelog = view.findViewById(R.id.core_update_changelog_tv);
         mTvUpdateDownload = view.findViewById(R.id.core_update_download_tv);
         initSettingsControl();
-    }
-
-    public void setRootKey(String rootKey) {
-        mRootKey = rootKey;
     }
 
     private void initSettingsControl() {
@@ -128,35 +126,32 @@ public class SettingsFragment extends Fragment {
         });
         builder.setNegativeButton("取消", new DialogInterface.OnClickListener() {
             @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
-            }
+            public void onClick(DialogInterface dialog, int which) { dialog.dismiss(); }
         });
         AlertDialog dialog = builder.create();
         dialog.show();
     }
 
     private void showSelectTestDefaultModuleDlg() {
-        final String[] items = {"1.ROOT 权限模块", "2.SU 重定向模块"};
+        final String[] items = {"1.ROOT 权限模块 (打印)", "2.ROOT 权限模块 (执行)", "3.SU 重定向模块 (打印)", "4.SU 重定向模块 (执行)"};
         AlertDialog.Builder builder = new AlertDialog.Builder(mActivity);
-        builder.setTitle("请选择一个选项");
+        builder.setTitle("选择一个选项");
         builder.setSingleChoiceItems(items, -1, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 dialog.dismiss();
                 String defName = "";
-                if(which == 0) defName = "RootBridge";
-                else if(which == 1) defName = "SuRedirect";
-
+                if(which == 0) defName = "RootBridgePrint";
+                else if(which == 1) defName = "RootBridgeExec";
+                else if(which == 2) defName = "SuRedirectPrint";
+                else if(which == 3) defName = "SuRedirectExec";
                 String log = NativeBridge.testSkrootDefaultModule(mRootKey, defName);
                 DialogUtils.showLogDialog(mActivity, log);
             }
         });
         builder.setNegativeButton("取消", new DialogInterface.OnClickListener() {
             @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
-            }
+            public void onClick(DialogInterface dialog, int which) { dialog.dismiss(); }
         });
         AlertDialog dialog = builder.create();
         dialog.show();
@@ -196,12 +191,8 @@ public class SettingsFragment extends Fragment {
                     if (info == null || !info.isHasNewVersion()) return;
                     mTvUpdateBlock.setVisibility(View.VISIBLE);
                     mTvUpdateFound.setText("发现新版本：" + info.getLatestVer());
-                    mTvUpdateChangelog.setOnClickListener(v -> {
-                        onDownloadChangeLogApp(info);
-                    });
-                    mTvUpdateDownload.setOnClickListener(v -> {
-                        UrlIntentUtils.openUrl(mActivity, info.getDownloadUrl());
-                    });
+                    mTvUpdateChangelog.setOnClickListener(v -> onDownloadChangeLogApp(info));
+                    mTvUpdateDownload.setOnClickListener(v -> UrlIntentUtils.openUrl(mActivity, info.getDownloadUrl()));
                     DialogUtils.showCustomDialog(
                             mActivity, "提示", "发现新版本：" + info.getLatestVer(),null,"确定",
                             (dialog, which) -> {

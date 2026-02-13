@@ -11,8 +11,10 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.linux.permissionmanager.R;
+import com.linux.permissionmanager.model.SkrModMarketItem;
 import com.linux.permissionmanager.model.SuAuthItem;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class SuAuthAdapter extends RecyclerView.Adapter<SuAuthAdapter.ViewHolder> {

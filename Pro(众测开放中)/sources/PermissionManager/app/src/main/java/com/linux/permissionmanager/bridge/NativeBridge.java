@@ -1,8 +1,5 @@
 package com.linux.permissionmanager.bridge;
 
-import com.linux.permissionmanager.model.SkrModItem;
-import com.linux.permissionmanager.model.SuAuthItem;
-
 public final class NativeBridge {
     static { System.loadLibrary("permissionmanager"); }
 

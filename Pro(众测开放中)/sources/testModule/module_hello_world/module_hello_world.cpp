@@ -20,14 +20,11 @@ KModErr run_kernel_shellcode(uint64_t & result) {
 
 /***************************************************************************
  * SKRoot 模块入口函数（必须提供）
- * 调用时机：将在 zygote64 进程启动前被执行
- * 
+ * 被执行时机：在 zygote64 进程启动前。
  * 参数：
  *   root_key           ROOT 密钥文本。
  *   module_private_dir	模块私有目录（受隐藏保护；需隐藏的文件请放在此目录）。
- * 
  * 返回值：默认 0；任意返回值仅记录到日志，便于排查。
- * 
  * 说明：skroot_module_main 返回后，代表本模块执行结束。如需继续运行请fork();
  ***************************************************************************/
 int skroot_module_main(const char* root_key, const char* module_private_dir) {
@@ -46,7 +43,7 @@ int skroot_module_main(const char* root_key, const char* module_private_dir) {
 
 // SKRoot 模块名片
 SKROOT_MODULE_NAME("演示模块名称")	// 在此填写模块名称
-SKROOT_MODULE_VERSION("1.0.0")			// 在此填写模块版本号
-SKROOT_MODULE_DESC("演示模块描述")		// 在此填写模块描述文本
+SKROOT_MODULE_VERSION("1.0.0")		// 在此填写模块版本号
+SKROOT_MODULE_DESC("演示模块描述")	// 在此填写模块描述文本
 SKROOT_MODULE_AUTHOR("演示作者名字") // 在此填写模块作者
 SKROOT_MODULE_UUID32("3608c9af28db4dcfc05c32bbc584753e") // 在此填写模块UUID，32个随机字符 [0-9a-zA-Z]

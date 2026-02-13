@@ -1,6 +1,0 @@
-<selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- 选中状态 -->
-    <item android:drawable="@drawable/tab_selected_bg" android:state_checked="true"/>
-    <!-- 默认未选中状态 -->
-    <item android:drawable="@drawable/tab_unselected_bg"/>
-</selector>

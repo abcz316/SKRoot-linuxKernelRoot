@@ -9,10 +9,10 @@ int skroot_module_main(const char* root_key, const char* module_private_dir) {
 }
 
 // SKRoot 模块名片
-SKROOT_MODULE_NAME("更新 URL 配置示例模块")
+SKROOT_MODULE_NAME("URL 配置更新 Demo")
 SKROOT_MODULE_VERSION("0.0.1")
 SKROOT_MODULE_DESC("演示配置更新 JSON")
-SKROOT_MODULE_AUTHOR("SKRoot官方教程")
+SKROOT_MODULE_AUTHOR("SKRoot")
 SKROOT_MODULE_UUID32("62027df1409d6109da7e153d04915074")
 
 /*

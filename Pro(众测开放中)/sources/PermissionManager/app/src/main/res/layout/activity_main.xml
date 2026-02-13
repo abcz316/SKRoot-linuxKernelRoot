@@ -1,87 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:background="#FFFFFF"
     tools:context=".MainActivity">
 
     <FrameLayout
         android:id="@+id/frame_layout"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"/>
+        android:layout_weight="1" />
 
-    <RadioGroup
-        android:id="@+id/rg_navigation"
+    <!-- 底部导航容器 -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:background="@color/white"
-        android:padding="8dp"
-        android:elevation="4dp">
+        android:background="#FFFFFF"
+        android:elevation="8dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="10dp">
 
-        <RadioButton
-            android:id="@+id/rb_home"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="wrap_content"
-            android:minHeight="48dp"
-            android:text="主页"
-            android:textSize="16sp"
-            android:textColor="@color/tab_text_color"
-            android:gravity="center"
-            android:background="@drawable/tab_selector"
-            android:padding="12dp"
-            android:button="@android:color/transparent"
-            android:checked="true"/>
+        <!-- 胶囊Tab：底部导航 -->
+        <com.google.android.material.tabs.TabLayout
+            android:id="@+id/bottom_tab"
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:layout_marginLeft="12dp"
+            android:layout_marginRight="12dp"
+            android:background="@drawable/bg_tab_container_light"
+            android:overScrollMode="never"
 
-        <RadioButton
-            android:id="@+id/rb_su_auth"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="wrap_content"
-            android:minHeight="48dp"
-            android:layout_marginLeft="4dp"
-            android:text="授权"
-            android:textSize="16sp"
-            android:textColor="@color/tab_text_color"
-            android:gravity="center"
-            android:background="@drawable/tab_selector"
-            android:padding="12dp"
-            android:button="@android:color/transparent"/>
+            app:tabMode="fixed"
+            app:tabGravity="fill"
 
-        <RadioButton
-            android:id="@+id/rb_skr_mod"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="wrap_content"
-            android:minHeight="48dp"
-            android:layout_marginLeft="4dp"
-            android:text="模块"
-            android:textSize="16sp"
-            android:textColor="@color/tab_text_color"
-            android:gravity="center"
-            android:background="@drawable/tab_selector"
-            android:padding="12dp"
-            android:button="@android:color/transparent"/>
+            app:tabIndicator="@drawable/bg_tab_indicator_light"
+            app:tabIndicatorFullWidth="true"
+            app:tabIndicatorGravity="center"
+            app:tabIndicatorHeight="38dp"
+            app:tabIndicatorAnimationDuration="0"
 
+            app:tabTextColor="#606266"
+            app:tabSelectedTextColor="#FFFFFF"
+            app:tabRippleColor="@android:color/transparent" />
 
-        <RadioButton
-            android:id="@+id/rb_settings"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="wrap_content"
-            android:minHeight="48dp"
-            android:layout_marginLeft="4dp"
-            android:text="设置"
-            android:textSize="16sp"
-            android:textColor="@color/tab_text_color"
-            android:gravity="center"
-            android:background="@drawable/tab_selector"
-            android:padding="12dp"
-            android:button="@android:color/transparent"/>
-
-    </RadioGroup>
+    </LinearLayout>
 
 </LinearLayout>

@@ -39,29 +39,35 @@ KModErr free_kernel_mem(uint64_t kaddr);
 KModErr read_kernel_mem(uint64_t kaddr, void* buf, uint32_t size);
 
 /***************************************************************************
+ * 原子读取内核内存 (32位/64位)
+ ***************************************************************************/
+KModErr read_kernel_mem_atomic32(uint64_t kaddr, uint32_t& out_val);
+KModErr read_kernel_mem_atomic64(uint64_t kaddr, uint64_t& out_val);
+
+/***************************************************************************
  * 写入内核内存
  * 参数: kaddr          目标内核地址
  *       buf            本地数据缓冲区指针
  *       size           写入长度（字节数）
- *       prot           目标区域类型：
- *                      KMP_RW 写入可读写区域
- *                      KMP_X  写入仅执行区域
+ *       prot           目标区域类型：[KMP_RW 可读写区域]; [KMP_X 仅执行区域]
  * 备注: 当 prot 为 KMP_X（仅执行区域）且需要保证写入原子性时，len 必须 ≤ 4 字节。
- * 
  * 返回: OK 表示成功；其它值为错误码
  ***************************************************************************/
 KModErr write_kernel_mem(uint64_t kaddr, const void* buf, uint32_t size, KernMemProt prot = KernMemProt::KMP_RW);
 
 /***************************************************************************
+ * 原子写入内核 RW 内存 (32位/64位)
+ * [警告] 仅限 RW 区域；严禁修改仅执行(X)的代码段(.text)。
+ ***************************************************************************/
+KModErr write_kernel_rw_mem_atomic32(uint64_t kaddr, uint32_t val);
+KModErr write_kernel_rw_mem_atomic64(uint64_t kaddr, uint64_t val);
+
+/***************************************************************************
  * 填充00到内核内存
  * 参数: kaddr          目标内核地址
- *       buf            本地数据缓冲区指针
  *       size           写入长度（字节数）
- *       prot           目标区域类型：
- *                      KMP_RW 写入可读写区域
- *                      KMP_X  写入仅执行区域
+ *       prot           目标区域类型：[KMP_RW 可读写区域]; [KMP_X 仅执行区域]
  * 备注: 当 prot 为 KMP_X（仅执行区域）且需要保证写入原子性时，size 必须 ≤ 4 字节。
- * 
  * 返回: OK 表示成功；其它值为错误码
  ***************************************************************************/
 KModErr fill00_kernel_mem(uint64_t kaddr, uint32_t size, KernMemProt prot = KernMemProt::KMP_RW);

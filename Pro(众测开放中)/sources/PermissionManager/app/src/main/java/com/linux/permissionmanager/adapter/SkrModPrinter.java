@@ -2,10 +2,10 @@ package com.linux.permissionmanager.adapter;
 
 import android.text.TextUtils;
 
-import com.linux.permissionmanager.model.SkrModItem;
+import com.linux.permissionmanager.model.SkrModInstalledItem;
 
 public final class SkrModPrinter {
-    public static String buildModuleMeta(SkrModItem m) {
+    public static String buildModuleMeta(SkrModInstalledItem m) {
         StringBuilder sb = new StringBuilder(256);
         sb.append("----- SKRoot 模块详情 -----\n");
         sb.append("名称：").append(nvl(m.getName())).append('\n');
@@ -27,7 +27,7 @@ public final class SkrModPrinter {
         return sb.toString();
     }
 
-    public static String buildModuleMetaWithStatus(SkrModItem m) {
+    public static String buildModuleMetaWithStatus(SkrModInstalledItem m) {
         String text = buildModuleMeta(m);
         return text + "运行状态：" + (m.isRunning() ? "运行中" : "未运行") + "\n";
     }

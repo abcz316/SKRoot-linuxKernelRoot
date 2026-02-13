@@ -102,10 +102,7 @@ KModErr Test_write_x_kernel_mem() {
 }
 
 KModErr Test_disk_storage() {
-	if(getuid() != 0) {
-		printf("[ERROR] Test this place, please run with ROOT permission.");
-		return KModErr::ERR_MODULE_PARAM;
-	}
+	REQUIRE_ROOT_OR_RETURN();
 
 	KModErr err = KModErr::ERR_MODULE_ASM;
 	std::string str_value1;
@@ -176,9 +173,8 @@ KModErr Test_install_kernel_function_after_hook() {
 
 int main(int argc, char *argv[]) {
  	//TODO: 在此修改你的Root key值。
-	//fake_skroot_module_main("vzXtDKDAltAGxHtMGRZZfVouy90dgNqFsLM6UGeqb6OgH0VX");
-	fake_skroot_module_main("GKAKERFc5as7v8IpNDtsx4vrdbWGuMqNjptIn9CwUikVA7yA");
-
+	fake_skroot_module_main("vzXtDKDAltAGxHtMGRZZfVouy90dgNqFsLM6UGeqb6OgH0VX");
+	
  	// 单元测试：内核模块基础能力
 	int idx = 1;
  	TEST(idx++, Test_execute_kernel_asm_func);				// 执行shellcode并获取返回值
@@ -230,11 +226,20 @@ int main(int argc, char *argv[]) {
  	TEST(idx++, Test_get_dentry_d_iname_offset);			// 获取 dentry 结构体中 d_iname 字段的偏移量
  	TEST(idx++, Test_get_file_f_path_offset);				// 获取 file 结构体中 f_path 字段的偏移量
  	TEST(idx++, Test_get_file_f_inode_offset);				// 获取 file 结构体中 f_inode 字段的偏移量
+ 	TEST(idx++, Test_get_file_f_op_offset);					// 获取 file 结构体中 f_op 字段的偏移量
  	TEST(idx++, Test_get_vm_area_struct_vm_offset);			// 获取 vm_area_struct 结构体中 vm 字段的偏移量
- 	TEST(idx++, Test_get_vm_area_struct_vm_file_offset);	// 获取 vm_area_struct 结构体中 vm_file 字段的偏移量
+ 	TEST(idx++, Test_get_vm_area_struct_vm_flags_offset);	// 获取 vm_area_struct 结构体中 vm_flags 字段的偏移量
+	TEST(idx++, Test_get_vm_area_struct_vm_file_offset);	// 获取 vm_area_struct 结构体中 vm_file 字段的偏移量
+ 	TEST(idx++, Test_get_inode_i_sb_offset);				// 获取 inode 结构体中 i_sb 字段的偏移量
+ 	TEST(idx++, Test_get_inode_i_mapping_offset);			// 获取 inode 结构体中 i_mapping 字段的偏移量
  	TEST(idx++, Test_get_inode_i_ino_offset);				// 获取 inode 结构体中 i_ino 字段的偏移量
  	TEST(idx++, Test_get_inode_i_size_offset);				// 获取 inode 结构体中 i_size 字段的偏移量
 	TEST(idx++, Test_get_inode_time_offset);				// 获取 inode 结构体中 i_atime/i_mtime/i_ctime 字段的偏移量
+	TEST(idx++, Test_get_inode_i_state_offset);				// 获取 inode 结构体中 i_state 字段的偏移量
+	TEST(idx++, Test_get_super_block_s_uuid_offset);		// 获取 super_block 结构体中 s_uuid 字段的偏移量
+	TEST(idx++, Test_get_proc_ops_offsets);					// 获取 proc_ops 结构体的偏移量
+	TEST(idx++, Test_get_file_operations_offsets);			// 获取 file_operations 结构体的偏移量
+	TEST(idx++, Test_get_miscdevice_offsets);				// 获取 miscdevice 结构体的偏移量
  	TEST(idx++, Test_set_current_caps);						// 设置进程能力集
  	TEST(idx++, Test_set_current_process_name);				// 设置进程名
 

@@ -6,11 +6,6 @@
 
 #include "../module_err_def.h"
 namespace kernel_module {
-inline KModErr alloc_kernel_mem(const std::vector<uint8_t>& initial_bytes, uint64_t& out_kaddr) {
-    KModErr alloc_kernel_mem_and_fill(const uint8_t*buf, uint32_t size, uint64_t& out_kaddr);
-    return alloc_kernel_mem_and_fill(initial_bytes.data(), initial_bytes.size(), out_kaddr);
-}
-
 inline KModErr execute_kernel_asm_func(const std::vector<uint8_t>& func_bytes, uint64_t& output_result) {
     KModErr execute_kernel_asm_func_with_buf(const uint8_t*shellcode, uint32_t size, uint64_t& out_kaddr);
     return execute_kernel_asm_func_with_buf(func_bytes.data(), func_bytes.size(), output_result);

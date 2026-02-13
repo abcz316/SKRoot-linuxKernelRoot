@@ -222,11 +222,60 @@ void pid_task(Assembler* a, KModErr& out_err, GpX pid, GpW type);
 void pid_task(Assembler* a, KModErr& out_err, GpX pid, PidType type);
 }
 
-// 原型：void local_irq_save(uint64_t & out_flags); 无返回值
-void local_irq_save(Assembler* a, GpX out_store_flags_reg);
+// 原型：struct proc_dir_entry *proc_mkdir(const char *name, struct proc_dir_entry *parent); 返回值为 X0 寄存器
+void proc_mkdir(Assembler* a, KModErr& out_err, GpX name, GpX parent);
 
+
+namespace linux_above_5_6_0 {
+// 原型：struct proc_dir_entry *proc_create(const char *name, umode_t mode, struct proc_dir_entry *parent, const struct proc_ops *proc_ops); 返回值为 X0 寄存器
+void proc_create(Assembler* a, KModErr& out_err, GpX name, GpW mode, GpX parent, GpX proc_fops);
+
+// 原型：struct proc_dir_entry *proc_create_data(const char *name, umode_t mode, struct proc_dir_entry *parent, const struct proc_ops *proc_ops, void *data); 返回值为 X0 寄存器
+void proc_create_data(Assembler* a, KModErr& out_err, GpX name, GpW mode, GpX parent, GpX proc_ops, GpX data);
+}
+
+namespace linux_older {
+// 原型：struct proc_dir_entry *proc_create(const char *name, umode_t mode, struct proc_dir_entry *parent, const struct file_operations *proc_fops); 返回值为 X0 寄存器
+void proc_create(Assembler* a, KModErr& out_err, GpX name, GpW mode, GpX parent, GpX proc_fops);
+
+// 原型：struct proc_dir_entry *proc_create_data(const char *name, umode_t mode, struct proc_dir_entry *parent, const struct file_operations *proc_fops, void *data); 返回值为 X0 寄存器
+void proc_create_data(Assembler* a, KModErr& out_err, GpX name, GpW mode, GpX parent, GpX proc_ops, GpX data);
+}
+
+// 原型：void proc_remove(struct proc_dir_entry *de); 无返回值
+void proc_remove(Assembler* a, KModErr& out_err, GpX de);
+
+// 原型：int misc_register(struct miscdevice *misc); 返回值为 W0 寄存器
+// 原型：void misc_deregister(struct miscdevice *misc); 无返回值
+void misc_register(Assembler* a, KModErr& out_err, GpX misc);
+void misc_deregister(Assembler* a, KModErr& out_err, GpX misc);
+
+// 原型：void down_write(struct rw_semaphore *sem); 无返回值
+// 原型：void up_read(struct rw_semaphore *sem); 无返回值
+void down_write(Assembler* a, KModErr& out_err, GpX sem);
+void up_read(Assembler* a, KModErr& out_err, GpX sem);
+
+// 原型：void mutex_lock(struct mutex *lock); 无返回值
+// 原型：void mutex_unlock(struct mutex *lock); 无返回值
+void mutex_lock(Assembler* a, KModErr& out_err, GpX lock);
+void mutex_unlock(Assembler* a, KModErr& out_err, GpX lock);
+
+// 原型：void ihold(struct inode *inode); 无返回值
+void ihold(Assembler* a, KModErr& out_err, GpX inode);
+
+// 原型：struct inode *igrab(struct inode *inode); 返回值为 X0 寄存器
+void igrab(Assembler* a, KModErr& out_err, GpX inode);
+
+// 原型：void iput(struct inode *inode); 无返回值
+void iput(Assembler* a, KModErr& out_err, GpX inode);
+
+// 原型：void local_irq_save(uint64_t & out_flags); 无返回值
 // 原型：void local_irq_restore(uint64_t flags); 无返回值
+void local_irq_save(Assembler* a, GpX out_store_flags_reg);
 void local_irq_restore(Assembler* a, GpX flags);
+
+// 原型：int invalidate_inode_pages2(struct address_space *mapping); 返回值为 W0 寄存器
+void invalidate_inode_pages2(Assembler* a, KModErr& out_err, GpX mapping);
 
 } // namespace export_symbol
 } // namespace kernel_module

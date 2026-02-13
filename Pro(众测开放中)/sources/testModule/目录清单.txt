@@ -5,14 +5,16 @@ testModule 模块目录清单：
 
 模块示例：
 ──────────────────────────────
-• Hello World 示例模块（源码）............ module_hello_world
-• 内置 WebUI 示例模块（源码）............. module_web_ui_example
-• 安装/卸载回调示例模块（源码）.......... module_install_uninstall_cb_demo
-• 更新 URL 配置示例模块（源码）.......... module_update_demo
+• Hello World Demo (源码)............... module_hello_world
+• 内置 WebUI Demo (源码)................ module_web_ui_example
+• 安装/卸载回调 Demo (源码)............. module_install_uninstall_cb_demo
+• URL 配置更新 Demo (源码).............. module_update_demo
+• 系统文件伪造 Demo (源码).............. module_fake_system_file
 
 功能模块：
 ──────────────────────────────
 • 隐藏 /data 路径功能模块（源码）........ module_hide_data_dir
 • 清理 USB 调试痕迹模块（源码）.......... module_clear_usb_trace
-• TrickyStore 集成模块（源码）........... module_tricky_store
+• TrickyStore 集成模块（源码）.............. module_tricky_store
+• 伪装机型模块（源码）........................... module_fake_device
 ──────────────────────────────

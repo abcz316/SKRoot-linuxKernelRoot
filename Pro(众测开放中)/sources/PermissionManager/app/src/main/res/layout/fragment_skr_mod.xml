@@ -1,33 +1,55 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
-    android:paddingTop="10dp"
+    android:paddingTop="4dp"
     android:paddingLeft="10dp"
     android:paddingRight="10dp"
     android:paddingBottom="10dp">
 
-    <!-- 提示文本（默认隐藏） -->
-    <TextView
-        android:id="@+id/empty_tips_tv"
+    <!-- 顶部横向Tab条 -->
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/tab_layout"
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="12dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="8dp"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="点击右上角“+”添加模块"
-        android:textSize="16sp"
-        android:textColor="#E0E0E0"
-        android:gravity="center"
-        android:padding="20dp"
-        android:textStyle="bold"/>
+        android:layout_height="44dp"
+        android:layout_margin="12dp"
+        android:background="@drawable/bg_tab_container_light"
+        android:overScrollMode="never"
 
-    <!-- RecyclerView -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/skr_mod_recycler_view"
+        app:tabMode="fixed"
+        app:tabGravity="fill"
+
+        app:tabIndicator="@drawable/bg_tab_indicator_light"
+        app:tabIndicatorFullWidth="true"
+        app:tabIndicatorGravity="center"
+        app:tabIndicatorHeight="38dp"
+        app:tabIndicatorAnimationDuration="180"
+
+        app:tabTextColor="#606266"
+        app:tabSelectedTextColor="#FFFFFF"
+        app:tabRippleColor="@android:color/transparent"/>
+
+    <!-- 内容区域：两页切换 -->
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:scrollbars="vertical"
-        android:visibility="gone"
-        android:layout_weight="1"/>
+        android:layout_weight="1">
+
+        <include
+            android:id="@+id/page_installed"
+            layout="@layout/page_skr_mod_installed"/>
+
+        <include
+            android:visibility="gone"
+            android:id="@+id/page_market"
+            layout="@layout/page_skr_mod_market"/>
+
+    </FrameLayout>
 
 </LinearLayout>

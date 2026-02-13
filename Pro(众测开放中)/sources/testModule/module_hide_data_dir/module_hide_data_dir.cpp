@@ -1,9 +1,10 @@
-﻿#include "module_hide_data_dir.h"
+﻿#include <set>
+
+#include "module_hide_data_dir.h"
+#include "kernel_module_kit_umbrella.h"
+
 #include "patch_filldir64.h"
 #include "cJSON.h"
-#include <set>
-
-#include "kernel_module_kit_umbrella.h"
 
 #define MOD_VER "1.0.4"
 
@@ -49,11 +50,9 @@ int skroot_module_main(const char* root_key, const char* module_private_dir) {
     std::string json;
     kernel_module::read_string_disk_storage("hide_dir_json", json);
     std::set<std::string> hide_dir_list = parse_json(json);
-    if(hide_dir_list.empty()) {
-        printf("hide dir list is empty.\n");
-        return 0;
-    }
     printf("hide dir list (%zd total) :\n", hide_dir_list.size());
+    if(hide_dir_list.empty()) return 0;
+    
     for (const auto& item : hide_dir_list) printf("hide dir: %s\n", item.c_str());
 
     KModErr err = patch_kernel_handler(hide_dir_list);
