@@ -92,10 +92,10 @@
             "download_eng_alert": ""
         },
         {
-            "chn_name": "【教程】系统文件伪装 Demo",
+            "chn_name": "【教程】系统文件伪造 Demo",
             "eng_name": "",
             "ver": "1.0.0",
-            "desc": "内核级伪装 /system 只读文件，实现内容无痕替换；底层 i_mapping 劫持，完美欺骗 mmap 与 O_DIRECT 深度读取。",
+            "desc": "内核级伪造 /system 只读文件，实现内容无痕篡改；无视任何文件校验，完美过所有侦测手段。",
             "author": "SKRoot",
             "uuid": "xhTxKsI5kHacgHJ04b5VhO4ffiOP4sdc",
             "update_date": "2026-2-12",
