@@ -96,7 +96,7 @@ int skroot_module_main(const char* root_key, const char* module_private_dir) {
     
     fs::path base_dir = module_private_dir;
 
-    // 演示替换 /system/etc/hosts，重启后 ping www.aaa316.com，显示 123.123.123.123 即生效。
+    // 演示替换 /system/etc/hosts，重启后 ping www.aaa316.com，显示 123.123.123.123 即成功伪造。
     std::vector<FakeFile> vec_fake_file = {
         // 格式: { 目标系统路径, 你的伪造文件路径 }
         { "/system/etc/hosts",      base_dir / "hosts" },
@@ -115,8 +115,8 @@ int skroot_module_main(const char* root_key, const char* module_private_dir) {
     return 0;
 }
 
-SKROOT_MODULE_NAME("系统文件伪装 Demo")
+SKROOT_MODULE_NAME("系统文件伪造 Demo")
 SKROOT_MODULE_VERSION("1.0.0")
-SKROOT_MODULE_DESC("内核级伪装 /system 只读文件，实现内容无痕替换；底层 i_mapping 劫持，完美欺骗 mmap 与 O_DIRECT 深度读取。")
+SKROOT_MODULE_DESC("内核级伪造 /system 只读文件，实现内容无痕篡改；无视任何文件校验，完美过所有侦测手段。")
 SKROOT_MODULE_AUTHOR("SKRoot")
 SKROOT_MODULE_UUID32("xhTxKsI5kHacgHJ04b5VhO4ffiOP4sdc")
