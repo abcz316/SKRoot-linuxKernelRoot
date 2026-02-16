@@ -27,6 +27,19 @@
             "download_eng_alert": ""
         },
         {
+            "chn_name": "温控解除",
+            "eng_name": "",
+            "ver": "1.0.0",
+            "desc": "内核级伪装处理器温度曲线，实现去除温控降频，安全可靠。",
+            "author": "SKRoot",
+            "uuid": "kO8hT9tT2fB0hY9hV2bB4eJ6aY2nQ6kL",
+            "update_date": "2026-2-16",
+            "source_url": "https://github.com/abcz316/SKRoot-linuxKernelRoot/tree/master/Pro(%E4%BC%97%E6%B5%8B%E5%BC%80%E6%94%BE%E4%B8%AD)/sources/testModule/module_fake_thermal",
+            "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_fake_thermal/module.zip",
+            "download_chn_alert": "",
+            "download_eng_alert": ""
+        },
+        {
             "chn_name": "Tricky Store",
             "eng_name": "",
             "ver": "1.4.1-r5",
