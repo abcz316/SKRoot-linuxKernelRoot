@@ -32,7 +32,6 @@ void arm64_before_hook_end(asmjit::a64::Assembler* a, bool continue_original);
  *   hook_handler_code	 Hook 处理函数的机器码（shellcode）。
  *                       （注意：Hook处理函数开头必须调用 arm64_before_hook_start，结尾必须调用 arm64_before_hook_end，否则不合法。）
  * 返回: OK 表示成功，其他值为错误码。
- * 
  * 工作原理：仅将 kaddr 位置的 1 条指令（4 字节）替换为单条 B 跳转指令，无任何性能损耗。
  * 
  * Hook处理函数示例：
@@ -62,7 +61,6 @@ void arm64_after_hook_end(asmjit::a64::Assembler* a);
  *   hook_handler_code   Hook 处理函数的机器码（shellcode）。
  *                       （注意：Hook处理函数开头必须调用 arm64_after_hook_start，结尾必须调用 arm64_after_hook_end，否则不合法。）
  * 返回: OK 表示成功，其他值为错误码
- * 
  * 工作原理：仅将 kaddr 位置的 1 条指令（4 字节）替换为单条 B 跳转指令，无任何性能损耗。
  *  
  * Hook处理函数示例：
@@ -89,13 +87,22 @@ KModErr install_kernel_function_after_hook(uint64_t target_func_kaddr, const std
  * 用法示例1：
  *   arm64_before_hook_start(a);
  *   arm64hook_emit_load_original_func(a, x16);
- *   a->blr(x16); // blr 会按 AAPCS64 调用约定破坏寄存器；如需保留寄存器，请在 blr 前保存寄存器（可使用 RegProtectGuard 等方式）。
+ *   a->blr(x16);
+ *   arm64_before_hook_end(a, false);
+ *
+ * 用法示例2：
+ *   arm64_before_hook_start(a);
+ *   arm64hook_emit_load_original_func(a, x16);
+ *   {
+ *     RegProtectGuard g1(a, x0, x1, x2); // 提前保存自己需要的参数，因为blr后会破坏寄存器值。
+ *     a->blr(x16);
+ *   }
  *   arm64_before_hook_end(a, false);
  *
  * 用法示例2：
  *   arm64_after_hook_start(a);
  *   arm64hook_emit_load_original_func(a, x16);
- *   a->blr(x16); // blr 会按 AAPCS64 调用约定破坏寄存器；如需保留寄存器，请在 blr 前保存寄存器（可使用 RegProtectGuard 等方式）。
+ *   a->blr(x16);
  *   arm64_after_hook_end(a, false);
  ***************************************************************************/
 void arm64hook_emit_load_original_func(asmjit::a64::Assembler* a, asmjit::a64::GpX xReg);

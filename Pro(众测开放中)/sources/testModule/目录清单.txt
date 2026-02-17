@@ -17,4 +17,5 @@ testModule 模块目录清单：
 • 清理 USB 调试痕迹模块（源码）.......... module_clear_usb_trace
 • TrickyStore 集成模块（源码）.............. module_tricky_store
 • 伪装机型模块（源码）........................... module_fake_device
+• 温控解除模块（源码）........................... module_fake_thermal
 ──────────────────────────────

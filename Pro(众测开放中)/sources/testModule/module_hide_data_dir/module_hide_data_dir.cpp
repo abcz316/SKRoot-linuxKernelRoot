@@ -1,9 +1,9 @@
 ﻿#include <set>
 
 #include "module_hide_data_dir.h"
+#include "patch_filldir64.h"
 #include "kernel_module_kit_umbrella.h"
 
-#include "patch_filldir64.h"
 #include "cJSON.h"
 
 #define MOD_VER "1.0.4"
