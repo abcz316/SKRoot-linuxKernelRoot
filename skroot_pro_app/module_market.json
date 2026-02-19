@@ -27,6 +27,19 @@
             "download_eng_alert": ""
         },
         {
+            "chn_name": "隐蔽执行sh",
+            "eng_name": "",
+            "ver": "1.0.0",
+            "desc": "提供独立隐蔽的 sh 执行通道，彻底替代终端类 App，避免终端类 App 带来的特征暴露。",
+            "author": "SKRoot",
+            "uuid": "zse9vkTjLjWXbafvx8Mlh1MTf8SMTUEL",
+            "update_date": "2026-2-19",
+            "source_url": "https://github.com/abcz316/SKRoot-linuxKernelRoot/tree/master/Pro(%E4%BC%97%E6%B5%8B%E5%BC%80%E6%94%BE%E4%B8%AD)/sources/testModule/module_hide_sh_exec",
+            "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_hide_sh_exec/module.zip",
+            "download_chn_alert": "",
+            "download_eng_alert": ""
+        },
+        {
             "chn_name": "温控解除",
             "eng_name": "",
             "ver": "1.0.0",
