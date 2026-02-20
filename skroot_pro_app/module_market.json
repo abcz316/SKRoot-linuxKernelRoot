@@ -27,10 +27,10 @@
             "download_eng_alert": ""
         },
         {
-            "chn_name": "隐蔽执行sh",
+            "chn_name": "隐蔽的系统终端",
             "eng_name": "",
             "ver": "1.0.0",
-            "desc": "提供独立隐蔽的 sh 执行通道，彻底替代终端类 App，避免终端类 App 带来的特征暴露。",
+            "desc": "提供隐蔽的 sh 执行通道，彻底替代终端类 App，避免终端类 App 带来的特征暴露。",
             "author": "SKRoot",
             "uuid": "zse9vkTjLjWXbafvx8Mlh1MTf8SMTUEL",
             "update_date": "2026-2-19",
