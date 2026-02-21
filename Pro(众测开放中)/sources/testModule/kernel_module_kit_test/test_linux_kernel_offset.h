@@ -125,6 +125,7 @@ KModErr Test_get_dentry_d_iname_offset() {
 }
 
 KModErr Test_get_file_f_path_offset() {
+    REQUIRE_ROOT_OR_RETURN();
     uint32_t offset = 0;
     RETURN_IF_ERROR(kernel_module::get_file_f_path_offset(offset));
     printf("Output offset: 0x%x\n", offset);
@@ -132,6 +133,7 @@ KModErr Test_get_file_f_path_offset() {
 }
 
 KModErr Test_get_file_f_inode_offset() {
+    REQUIRE_ROOT_OR_RETURN();
     uint32_t offset = 0;
     RETURN_IF_ERROR(kernel_module::get_file_f_inode_offset(offset));
     printf("Output offset: 0x%x\n", offset);
@@ -139,8 +141,25 @@ KModErr Test_get_file_f_inode_offset() {
 }
 
 KModErr Test_get_file_f_op_offset() {
+    REQUIRE_ROOT_OR_RETURN();
     uint32_t offset = 0;
     RETURN_IF_ERROR(kernel_module::get_file_f_op_offset(offset));
+    printf("Output offset: 0x%x\n", offset);
+    return KModErr::OK;
+}
+
+KModErr Test_get_file_f_cred_offset() {
+    REQUIRE_ROOT_OR_RETURN();
+    uint32_t offset = 0;
+    RETURN_IF_ERROR(kernel_module::get_file_f_cred_offset(offset));
+    printf("Output offset: 0x%x\n", offset);
+    return KModErr::OK;
+}
+
+KModErr Test_get_file_private_data_offset() {
+    REQUIRE_ROOT_OR_RETURN();
+    uint32_t offset = 0;
+    RETURN_IF_ERROR(kernel_module::get_file_private_data_offset(offset));
     printf("Output offset: 0x%x\n", offset);
     return KModErr::OK;
 }

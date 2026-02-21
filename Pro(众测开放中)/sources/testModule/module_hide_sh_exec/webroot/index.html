@@ -1,0 +1,50 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>隐蔽的系统终端</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+
+    <div class="head">
+      <div class="title">系统终端</div>
+      <div class="conn" title="回显拉取状态">
+        <span id="connDot" class="dot connecting" aria-hidden="true"></span>
+        <span id="connText">连接中</span>
+      </div>
+    </div>
+
+    <div class="terminal">
+      <div id="out" class="out" role="log" aria-live="polite"></div>
+
+      <div class="composer">
+        <div class="row">
+          <div class="input">
+            <div class="prompt">#</div>
+            <input id="cmd" type="text" autocomplete="off" spellcheck="false"
+                   placeholder="输入命令，例如：id / getprop / ls -al" />
+          </div>
+
+          <button class="btn" id="sendBtn" type="button" title="发送命令到系统终端">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M3.5 11.2 20.4 4.7c.9-.35 1.75.5 1.4 1.4l-6.5 16.9c-.36.93-1.7.9-2.02-.05l-2.1-6.2-6.2-2.1c-.95-.32-.98-1.66-.05-2.02Z"
+                    stroke="white" stroke-width="1.6" stroke-linejoin="round"/>
+              <path d="M10.7 14.1 21 5.2" stroke="white" stroke-width="1.6" stroke-linecap="round"/>
+            </svg>
+            <span>发送</span>
+          </button>
+        </div>
+        <div class="tip">提示：如执行后台运行的脚本，建议执行后关闭本网页，脚本依然能后台运行，且隐蔽性更高。</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+<script src="request.js"></script>
+<script src="main.js"></script>
+</body>
+</html>

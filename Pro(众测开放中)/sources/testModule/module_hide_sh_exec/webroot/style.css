@@ -1,0 +1,192 @@
+﻿
+:root{
+  --bg:#f6f8fc;
+  --card:#ffffff;
+  --text:#0f172a;
+  --muted:#64748b;
+  --line:#e6eaf2;
+  --shadow: 0 18px 60px rgba(15, 23, 42, .10);
+  --accent:#2563eb;
+  --accent2:#4f46e5;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Noto Sans";
+}
+*{ box-sizing:border-box; }
+html, body { height: 100%; overflow: hidden; }
+body{
+  margin:0;
+  font-family: var(--sans);
+  color: var(--text);
+  background:
+    radial-gradient(1100px 650px at 15% 10%, #eef3ff, transparent 70%),
+    linear-gradient(180deg, var(--bg), #ffffff);
+}
+.wrap{
+  min-height:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding: 16px 12px;
+}
+.card{
+  width:min(980px, 96vw);
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+  overflow:hidden;
+  max-height: 92vh;
+  display:flex;
+  flex-direction:column;
+}
+
+/* ====== Head (Title + Connection Status) ====== */
+.head{
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+  background: linear-gradient(180deg, #ffffff, #fbfcff);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+.title{
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing:.2px;
+}
+.conn{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  font-size:12px;
+  color: var(--muted);
+  user-select:none;
+}
+.dot{
+  width:10px;
+  height:10px;
+  border-radius:999px;
+  background:#f59e0b; /* 默认连接中 */
+  box-shadow: 0 0 0 4px rgba(245,158,11,.12);
+}
+.dot.ok{
+  background:#16a34a;
+  box-shadow: 0 0 0 4px rgba(22,163,74,.12);
+}
+.dot.bad{
+  background:#ef4444;
+  box-shadow: 0 0 0 4px rgba(239,68,68,.12);
+}
+.dot.connecting{
+  background:#f59e0b;
+  box-shadow: 0 0 0 4px rgba(245,158,11,.12);
+}
+
+/* ====== Terminal ====== */
+.terminal{
+  height: 86vh;
+  flex: 1;
+  max-height: 0;
+  min-height: 520px;
+  display:flex;
+  flex-direction:column;
+}
+.out{
+  flex:1;
+  padding: 10px 14px 0 14px;
+  font-size: 12px;
+  line-height: 1.55;
+  min-height: 0;
+  overflow: auto;
+  font-family: var(--mono);
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: radial-gradient(900px 420px at 10% 0%, rgba(37,99,235,.06), transparent 60%), #ffffff;
+}
+.line{
+  display:flex;
+  gap:10px;
+  padding: 2px 0;
+  align-items:flex-start;
+}
+.ts{
+  flex:0 0 auto;
+  color:#94a3b8;
+  font-size:11px;
+  margin-top:1px;
+}
+.txt{ flex:1 1 auto; }
+
+/* ====== Composer (fixed to terminal bottom, not screen bottom) ====== */
+.composer{
+  position:sticky;
+  bottom:0;
+  padding: 12px;
+  border-top: 1px solid var(--line);
+  background: rgba(255,255,255,.92);
+  backdrop-filter: blur(10px);
+}
+.row{
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
+.input{
+  flex:1;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: #ffffff;
+  box-shadow: 0 8px 18px rgba(15,23,42,.06);
+}
+.prompt{
+  font-family: var(--mono);
+  font-size: 12px;
+  color:#64748b;
+  user-select:none;
+}
+input[type="text"]{
+  flex:1;
+  border:0;
+  outline:none;
+  font-family: var(--mono);
+  font-size: 12px; /* 扁一点，强调单行命令 */
+  background: transparent;
+  color: var(--text);
+  padding:0;
+  min-width: 0;
+}
+.btn{
+  border:0;
+  cursor:pointer;
+  border-radius: 14px;
+  padding: 10px 12px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color:white;
+  box-shadow: 0 14px 28px rgba(37,99,235,.18);
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  font-weight: 650;
+  letter-spacing: .2px;
+  user-select:none;
+  flex:0 0 auto;
+}
+.btn:active{ transform: translateY(1px); }
+.btn[disabled]{ opacity:.6; cursor:not-allowed; transform:none; box-shadow:none; }
+
+.tip{
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+@media (max-width: 520px){
+  .title{ font-size: 13px; }
+  .btn span{ display:none; }
+}

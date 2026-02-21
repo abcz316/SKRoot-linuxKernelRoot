@@ -174,7 +174,6 @@ KModErr Test_install_kernel_function_after_hook() {
 int main(int argc, char *argv[]) {
  	//TODO: 在此修改你的Root key值。
 	fake_skroot_module_main("vzXtDKDAltAGxHtMGRZZfVouy90dgNqFsLM6UGeqb6OgH0VX");
-	
  	// 单元测试：内核模块基础能力
 	int idx = 1;
  	TEST(idx++, Test_execute_kernel_asm_func);				// 执行shellcode并获取返回值
@@ -227,6 +226,8 @@ int main(int argc, char *argv[]) {
  	TEST(idx++, Test_get_file_f_path_offset);				// 获取 file 结构体中 f_path 字段的偏移量
  	TEST(idx++, Test_get_file_f_inode_offset);				// 获取 file 结构体中 f_inode 字段的偏移量
  	TEST(idx++, Test_get_file_f_op_offset);					// 获取 file 结构体中 f_op 字段的偏移量
+ 	TEST(idx++, Test_get_file_f_cred_offset);				// 获取 file 结构体中 f_cred 字段的偏移量
+ 	TEST(idx++, Test_get_file_private_data_offset);			// 获取 file 结构体中 private_data 字段的偏移量
  	TEST(idx++, Test_get_vm_area_struct_vm_offset);			// 获取 vm_area_struct 结构体中 vm 字段的偏移量
  	TEST(idx++, Test_get_vm_area_struct_vm_flags_offset);	// 获取 vm_area_struct 结构体中 vm_flags 字段的偏移量
 	TEST(idx++, Test_get_vm_area_struct_vm_file_offset);	// 获取 vm_area_struct 结构体中 vm_file 字段的偏移量
