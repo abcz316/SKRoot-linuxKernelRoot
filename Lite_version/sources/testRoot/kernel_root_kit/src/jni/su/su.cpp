@@ -156,6 +156,12 @@ int su_client_main(int argc, char* argv[]) {
 	};
 	// If you need it, you can unblock this line of code yourself
 	//set_identity(su_req.uid);
+	
+	if (setsid() < 0) {
+		setpgid(0, 0); 
+	}
+	signal(SIGPIPE, SIG_IGN);
+
 	execvp(su_req.shell.c_str(), (char* const*)new_argv);
 	exit(0);
 	return 0;

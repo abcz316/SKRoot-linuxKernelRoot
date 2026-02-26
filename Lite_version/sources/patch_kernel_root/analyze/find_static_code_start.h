@@ -17,7 +17,7 @@ static bool __is_really_empty(const std::vector<char>& file_buf, size_t start_po
 }
 
 static bool __is_really_work(const std::vector<char>& file_buf, size_t start_pos) {
-	const size_t must_work_cnt = 40;
+	const size_t must_work_cnt = 80;
 	for (size_t i = start_pos; i < start_pos + must_work_cnt * 4; i += 4) {
 		uint32_t w = rd32_le(file_buf, i);
 		if (w == 0) return false;
@@ -33,7 +33,7 @@ static bool __is_really_work(const std::vector<char>& file_buf, size_t start_pos
 static size_t find_static_code_start(const std::vector<char>& file_buf) {
 	if (file_buf.size() < 0x200) return 0;
 
-	const size_t start_pos = 0x100;
+	const size_t start_pos = 0x200;
 	static_assert((start_pos & 0x3u) == 0, "start_pos 必须 4 字节对齐");
 
 	size_t x = start_pos;

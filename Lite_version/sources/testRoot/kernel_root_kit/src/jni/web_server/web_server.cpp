@@ -11,6 +11,8 @@
 #include <set>
 #include <mutex>
 #include <filesystem>
+#include <cmath>
+#include <limits>
 
 #include "web_server.h"
 #include "web_server_inline.h"
@@ -18,6 +20,7 @@
 #include "index_html_gz_data.h"
 #include "rootkit_umbrella.h"
 #include "src/jni/common/android_open_url.h"
+#include "json_helper.h"
 
 #define MAX_HEARTBEAT_TIME_SEC 20
 constexpr const char* recommend_files[] = {"libc++_shared.so"};
@@ -57,88 +60,6 @@ private:
     std::mutex m_msgLock;
 } g_inject_su_info;
 
-std::string convert_2_json(const std::string & str, const std::map<std::string, std::string> & appendParam = {}) {
-    std::string strJson;
-    cJSON *json = cJSON_CreateObject();
-    if(json) {
-        cJSON_AddStringToObject(json, "content", str.c_str());
-        for(const auto & param: appendParam) {
-            cJSON_AddStringToObject(json, param.first.c_str(), param.second.c_str());
-        }
-        char *jsonString = cJSON_Print(json);
-        if(jsonString) {
-            strJson = jsonString;
-            free(jsonString);
-        }
-        cJSON_Delete(json);
-    }
-    return strJson;
-}
-
-std::string convert_2_json_m(const std::string & str, const std::map<std::string, std::string> & appendParam = {}) {
-    std::string strJson;
-    cJSON *json = cJSON_CreateObject();
-    if(json) {
-        cJSON_AddStringToObject(json, "content", str.c_str());
-        cJSON *jsonArray = cJSON_CreateArray();
-        for(const auto & param: appendParam) {
-            cJSON *jsonMap = cJSON_CreateObject();
-            cJSON_AddStringToObject(jsonMap, param.first.c_str(), param.second.c_str());
-            cJSON_AddItemToArray(jsonArray, jsonMap);
-        }
-        cJSON_AddItemToObject(json, "arr_map", jsonArray);
-
-        char *jsonString = cJSON_Print(json);
-        if(jsonString) {
-            strJson = jsonString;
-            free(jsonString);
-        }
-        cJSON_Delete(json);
-    }
-    return strJson;
-}
-
-std::string convert_2_json_v(const std::vector<std::string> &v, const std::map<std::string, std::string> & appendParam = {}) {
-    std::string strJson;
-    cJSON *json = cJSON_CreateObject();
-    if (json) {
-        cJSON *jsonArray = cJSON_CreateArray();
-        for (const std::string &str : v) {
-            cJSON_AddItemToArray(jsonArray, cJSON_CreateString(str.c_str()));
-        }
-        cJSON_AddItemToObject(json, "content", jsonArray);
-        for(const auto & param: appendParam) {
-            cJSON_AddStringToObject(json, param.first.c_str(), param.second.c_str());
-        }
-        char *jsonString = cJSON_Print(json);
-        if (jsonString) {
-            strJson = jsonString;
-            free(jsonString);
-        }
-
-        cJSON_Delete(json);
-    }
-    return strJson;
-}
-
-std::string get_json_str(const std::string& json, const char* key) {
-    cJSON* root = cJSON_Parse(json.c_str());
-    if (!root) return {};
-    cJSON* j_str = cJSON_GetObjectItem(root, key);
-    std::string result = j_str ? j_str->valuestring : "";
-    cJSON_Delete(root); 
-    return result;
-}
-
-int get_json_int(const std::string& json, const char* key) {
-    cJSON* root = cJSON_Parse(json.c_str());
-    if (!root) return {};
-    cJSON* j_int = cJSON_GetObjectItem(root, key);
-    int n = j_int ? j_int->valueint : 0;
-    cJSON_Delete(root); 
-    return n;
-}
-
 std::tuple<std::string, bool> handle_index() {
 	std::string gzip_html;
 	gzip_html.assign(reinterpret_cast<const char*>(web_server::index_html_gz_data), web_server::index_html_gz_size);
@@ -166,7 +87,7 @@ std::string handle_run_root_cmd(const std::string & json) {
     return convert_2_json(sstr.str());
 }
 
-std::string handle_root_exec_process(const std::string & json) {
+std::string handle_run_exec_process(const std::string & json) {
     std::string path = get_json_str(json, "path");
     KRootErr err = kernel_root::root_exec_process(ROOT_KEY, path.c_str());
 
@@ -461,7 +382,7 @@ public:
         if(path == "/heartbeat") resp = handle_heartbeat(body);
         else if(path == "/testRoot") resp = handle_test_root();
         else if(path == "/runRootCmd") resp = handle_run_root_cmd(body);
-        else if(path == "/rootExecProc") resp = handle_root_exec_process(body);
+        else if(path == "/runExecProc") resp = handle_run_exec_process(body);
         else if(path == "/installSu") resp = handle_install_su();
         else if(path == "/uninstallSu") resp = handle_uninstall_su();
         else if(path == "/getAppList") resp = handle_get_app_list(body);

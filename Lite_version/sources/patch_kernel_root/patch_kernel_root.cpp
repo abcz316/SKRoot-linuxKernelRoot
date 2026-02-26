@@ -99,19 +99,19 @@ PatchKernelResult patch_kernel_handler(const std::vector<char>& file_buf, size_t
 	bool patched = true;
 	PatchKernelResult r;
 	if (kernel_ver.is_kernel_version_less("6.1.0")) {
-		SymbolRegion next_hook_start_region = { 0x200, 0x300 };
-		if (sym.__cfi_check.offset) next_hook_start_region = sym.__cfi_check;
-		auto start_b_location = next_hook_start_region.offset;
-		PATCH_AND_CONSUME(next_hook_start_region, 4);
-		r.root_key_start = next_hook_start_region.offset;
-		PATCH_AND_CONSUME(next_hook_start_region, patchDoExecve.patch_do_execve(next_hook_start_region, cred_offset, seccomp_offset, vec_patch_bytes_data));
-		PATCH_AND_CONSUME(next_hook_start_region, patchFilldir64.patch_filldir64_root_key_guide(r.root_key_start, next_hook_start_region, vec_patch_bytes_data));
-		PATCH_AND_CONSUME(next_hook_start_region, patchFilldir64.patch_filldir64_core(next_hook_start_region, vec_patch_bytes_data));
-		auto current_avc_check_bl_func = next_hook_start_region.offset;
-		PATCH_AND_CONSUME(next_hook_start_region, patchCurrentAvcCheck.patch_current_avc_check_bl_func(next_hook_start_region, cred_offset, vec_patch_bytes_data));
-		PATCH_AND_CONSUME(next_hook_start_region, patchAvcDenied.patch_avc_denied(next_hook_start_region, current_avc_check_bl_func, vec_patch_bytes_data));
-		PATCH_AND_CONSUME(next_hook_start_region, patchAuditLogStart.patch_audit_log_start(next_hook_start_region, current_avc_check_bl_func, vec_patch_bytes_data));
-		auto end_b_location = next_hook_start_region.offset;
+		SymbolRegion next_empty_region = { 0x200, 0x300 };
+		if (sym.__cfi_check.offset) next_empty_region = sym.__cfi_check;
+		auto start_b_location = next_empty_region.offset;
+		PATCH_AND_CONSUME(next_empty_region, 4);
+		r.root_key_start = next_empty_region.offset;
+		PATCH_AND_CONSUME(next_empty_region, patchDoExecve.patch_do_execve(next_empty_region, cred_offset, seccomp_offset, vec_patch_bytes_data));
+		PATCH_AND_CONSUME(next_empty_region, patchFilldir64.patch_filldir64_root_key_guide(r.root_key_start, next_empty_region, vec_patch_bytes_data));
+		PATCH_AND_CONSUME(next_empty_region, patchFilldir64.patch_filldir64_core(next_empty_region, vec_patch_bytes_data));
+		auto current_avc_check_bl_func = next_empty_region.offset;
+		PATCH_AND_CONSUME(next_empty_region, patchCurrentAvcCheck.patch_current_avc_check_bl_func(next_empty_region, cred_offset, vec_patch_bytes_data));
+		PATCH_AND_CONSUME(next_empty_region, patchAvcDenied.patch_avc_denied(next_empty_region, current_avc_check_bl_func, vec_patch_bytes_data));
+		PATCH_AND_CONSUME(next_empty_region, patchAuditLogStart.patch_audit_log_start(next_empty_region, current_avc_check_bl_func, vec_patch_bytes_data));
+		auto end_b_location = next_empty_region.offset;
 		patchBase.patch_jump(start_b_location, end_b_location, vec_patch_bytes_data);
 	} else if (sym.die.offset && sym.arm64_notify_die.offset && sym.__drm_printfn_coredump.offset) {
 		r.root_key_start = sym.die.offset;

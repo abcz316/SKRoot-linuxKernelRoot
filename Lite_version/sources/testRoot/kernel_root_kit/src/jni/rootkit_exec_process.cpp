@@ -18,7 +18,7 @@
 
 namespace kernel_root {
 	static KRootErr unsafe_root_exec_process(const char* str_root_key, const char *file_path) {
-		if (file_path == NULL || strlen(file_path) == 0) { return KRootErr::ERR_PARAM; }
+		if (file_path == NULL || strlen(file_path) == 0) return KRootErr::ERR_PARAM;
 
 		RETURN_ON_ERROR(get_root(str_root_key));
 
@@ -50,7 +50,7 @@ namespace kernel_root {
 	static KRootErr safe_root_exec_process(
 		const char* str_root_key,
 		const char *file_path) {
-		if (file_path == NULL || strlen(file_path) == 0) { return KRootErr::ERR_PARAM; }
+		if (file_path == NULL || strlen(file_path) == 0) return KRootErr::ERR_PARAM;
 		
 		fork_pipe_info finfo;
 		if (fork_pipe_child_process(finfo)) {

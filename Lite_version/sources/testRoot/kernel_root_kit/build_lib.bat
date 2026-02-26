@@ -23,7 +23,7 @@ call generate_source_lib_su_env_data.bat
 
 cd %root_path%\src\jni
 call "%ndk_path%" clean
-call "%ndk_path%" -j16
+call "%ndk_path%" -j8
 mkdir %root_path%\lib
 move /Y %root_path%\src\obj\local\arm64-v8a\libkernel_root_kit_static.a %root_path%\lib\
 
@@ -36,7 +36,7 @@ call generate_source_su_exec_data.bat
 
 cd %root_path%\src\jni
 call "%ndk_path%" clean
-call "%ndk_path%" -j16
+call "%ndk_path%" -j8
 move /Y %root_path%\src\obj\local\arm64-v8a\libkernel_root_kit_static.a %root_path%\lib\
 
 cd %root_path%\src\jni\web_server
@@ -49,7 +49,7 @@ call generate_source_web_server_exec_data.bat
 
 cd %root_path%\src\jni
 call "%ndk_path%" clean
-call "%ndk_path%" -j16
+call "%ndk_path%" -j8
 move /Y %root_path%\src\obj\local\arm64-v8a\libkernel_root_kit_static.a %root_path%\lib\
 
 
@@ -61,7 +61,7 @@ call generate_source_lib_web_server_loader_data.bat
 
 cd %root_path%\src\jni
 call "%ndk_path%" clean
-call "%ndk_path%" -j16
+call "%ndk_path%" -j8
 move /Y %root_path%\src\obj\local\arm64-v8a\libkernel_root_kit_static.a %root_path%\lib\
 
 echo All builds completed!

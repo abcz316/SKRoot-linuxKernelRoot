@@ -23,7 +23,7 @@ bool fork_pipe_child_process(fork_pipe_info & finfo) {
         ::close(p2c[0]); ::close(p2c[1]);
         return false;
     }
-	fflush(nullptr);
+
     pid_t pid = fork();
     if (pid < 0) {
         ::close(p2c[0]); ::close(p2c[1]);
