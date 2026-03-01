@@ -61,7 +61,7 @@ public class SelectAppDlg {
         final double centerHeight = ((double) screenHeight) * 0.90;
 
         LinearLayout center_layout = (LinearLayout) view.findViewById(R.id.center_layout);
-        android.view.ViewGroup.LayoutParams lp = center_layout.getLayoutParams();
+        ViewGroup.LayoutParams lp = center_layout.getLayoutParams();
         lp.width = (int) centerWidth;
         lp.height = (int) centerHeight;
         center_layout.setLayoutParams(lp);

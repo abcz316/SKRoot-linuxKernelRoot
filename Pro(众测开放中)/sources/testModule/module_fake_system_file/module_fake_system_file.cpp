@@ -99,8 +99,13 @@ int skroot_module_main(const char* root_key, const char* module_private_dir) {
     // 演示替换 /system/etc/hosts，重启后 ping www.aaa316.com，显示 123.123.123.123 即成功伪造。
     std::vector<FakeFile> vec_fake_file = {
         // 格式: { 目标系统路径, 你的伪造文件路径 }
-        { "/system/etc/hosts",      base_dir / "hosts" },
-        //{ "/system/build.prop",     base_dir / "build.prop" }
+        { "/system/etc/hosts", base_dir / "hosts" },
+        //{ "/system/framework/framework.jar", base_dir / "framework.jar" },
+        //{ "/system/framework/services.jar", base_dir / "services.jar" },
+        
+        // 如果需要修改build.prop里的属性，则还需要同时使用resetprop进行修改，两个一起修改就可以做到无痕。
+        // 这里伪造build.prop文件的目的是为了防止App利用漏洞提权到system权限，导致暴露身份; 
+        //{ "/system/build.prop", base_dir / "build.prop" },
     };
 
     printf("[SKRoot] Loading file redirection rules...\n");
