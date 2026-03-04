@@ -5,7 +5,6 @@
 #include "module_web_ui_http_utils.h"
 
 namespace kernel_module {
-
 /***************************************************************************
  * WebUI页面 HTTP 请求处理的基类
  * 作用: 支持模块在 CivetWeb 服务器中自定义行为
@@ -43,6 +42,17 @@ public:
      *      false 表示未生成响应，由 CivetWeb 默认机制继续处理
      ***************************************************************************/
     virtual bool handlePost(CivetServer* server, mg_connection* conn, const std::string& path, const std::string& body) { return false; }
+    
+    enum class ServerExitAction : uint32_t {
+        Exit = 0,       // 正常退出当前进程
+        KeepRunning,    // 保持运行（不立即退出进程）
+    };
+    /***************************************************************************
+     * WebUI 服务器退出前回调
+     * 作用: 在 WebUI 服务器准备结束时，决定当前进程后续行为
+     * 返回: 当前进程后续处理动作
+     ***************************************************************************/
+    virtual ServerExitAction onBeforeServerExit() { return ServerExitAction::Exit; }
 
 protected:
     virtual bool handleGet(CivetServer* server, mg_connection* conn) override {
@@ -59,6 +69,7 @@ protected:
         if (st != webui::BodyReadStatus::OK) return webui::send_text(conn, 400, "bad request body"), true;
         return handlePost(server, conn, path, body);
     }
+    
 };
 
 } // namespace kernel_module

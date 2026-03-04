@@ -27,11 +27,6 @@ public final class SkrModPrinter {
         return sb.toString();
     }
 
-    public static String buildModuleMetaWithStatus(SkrModInstalledItem m) {
-        String text = buildModuleMeta(m);
-        return text + "运行状态：" + (m.isRunning() ? "运行中" : "未运行") + "\n";
-    }
-
     private static String nvl(String s) {
         return (s == null || s.isEmpty()) ? "（空）" : s;
     }

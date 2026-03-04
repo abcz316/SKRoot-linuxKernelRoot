@@ -48,14 +48,14 @@
             android:overScrollMode="never"/>
 
         <TextView
-            android:id="@+id/empty_tips_tv"
+            android:id="@+id/loading_tips_tv"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:text="模块市场暂无内容"
+            android:text="网络请求中..."
             android:gravity="center"
             android:textColor="#9AA0A6"
             android:textStyle="bold"
-            android:visibility="gone"/>
+            />
 
         <!-- 网络错误 + 刷新按钮（默认隐藏） -->
         <LinearLayout

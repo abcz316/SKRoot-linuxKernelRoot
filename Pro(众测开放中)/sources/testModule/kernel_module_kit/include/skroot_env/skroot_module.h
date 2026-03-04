@@ -17,16 +17,17 @@ struct module_desc {
 } __attribute__((packed));
 
 enum class ModuleListMode : uint8_t {
-    All = 0,      // 默认：全部已安装模块
-    RunningOnly,  // 仅当前正在运行的模块
+    All = 0,       // 默认：所有已安装模块
+    RunningOnly,   // 当前运行中的模块
+    AbnormalOnly,  // 运行异常的模块
 };
+
 /***************************************************************************
- * 获取已安装的所有模块列表
+ * 获取已安装模块列表
  * 参数: root_key        ROOT权限密钥文本
- *       out_list       输出模块列表信息
- *       mode           列表模式：全部/仅运行中
+ *       out_list        输出模块列表信息
+ *       mode            列表模式：全部 / 运行中 / 运行异常
  * 返回: OK 表示成功；其它值为错误码
- * 
  ***************************************************************************/
 KModErr get_all_modules_list(const char* root_key, std::vector<module_desc>& out_list, ModuleListMode mode);
 

@@ -1,5 +1,4 @@
-﻿
-:root{
+﻿:root{
   --bg:#f6f8fc;
   --card:#ffffff;
   --text:#0f172a;
@@ -11,182 +10,538 @@
   --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Noto Sans";
 }
+
 *{ box-sizing:border-box; }
-html, body { height: 100%; overflow: hidden; }
+
+html, body{
+  height:100%;
+  overflow:hidden;
+}
+
 body{
   margin:0;
-  font-family: var(--sans);
-  color: var(--text);
+  font-family:var(--sans);
+  color:var(--text);
   background:
     radial-gradient(1100px 650px at 15% 10%, #eef3ff, transparent 70%),
     linear-gradient(180deg, var(--bg), #ffffff);
 }
+
 .wrap{
   min-height:100%;
   display:flex;
   align-items:center;
   justify-content:center;
-  padding: 16px 12px;
+  padding:16px 12px;
 }
+
 .card{
   width:min(980px, 96vw);
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  box-shadow: var(--shadow);
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:18px;
+  box-shadow:var(--shadow);
   overflow:hidden;
-  max-height: 92vh;
+  max-height:92vh;
   display:flex;
   flex-direction:column;
 }
 
-/* ====== Head (Title + Connection Status) ====== */
+/* ====== Head ====== */
 .head{
-  padding: 12px 14px;
-  border-bottom: 1px solid var(--line);
-  background: linear-gradient(180deg, #ffffff, #fbfcff);
+  padding:12px 14px;
+  border-bottom:1px solid var(--line);
+  background:linear-gradient(180deg, #ffffff, #fbfcff);
   display:flex;
   align-items:center;
   justify-content:space-between;
   gap:12px;
 }
+
 .title{
-  font-size: 14px;
-  font-weight: 700;
+  font-size:14px;
+  font-weight:700;
   letter-spacing:.2px;
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
 }
+
 .conn{
   display:inline-flex;
   align-items:center;
   gap:8px;
   font-size:12px;
-  color: var(--muted);
+  color:var(--muted);
   user-select:none;
+  white-space:nowrap;
+  flex:0 0 auto;
 }
+
 .dot{
   width:10px;
   height:10px;
   border-radius:999px;
-  background:#f59e0b; /* 默认连接中 */
-  box-shadow: 0 0 0 4px rgba(245,158,11,.12);
+  background:#f59e0b;
+  box-shadow:0 0 0 4px rgba(245,158,11,.12);
 }
+
 .dot.ok{
   background:#16a34a;
-  box-shadow: 0 0 0 4px rgba(22,163,74,.12);
+  box-shadow:0 0 0 4px rgba(22,163,74,.12);
 }
+
 .dot.bad{
   background:#ef4444;
-  box-shadow: 0 0 0 4px rgba(239,68,68,.12);
+  box-shadow:0 0 0 4px rgba(239,68,68,.12);
 }
+
 .dot.connecting{
   background:#f59e0b;
-  box-shadow: 0 0 0 4px rgba(245,158,11,.12);
+  box-shadow:0 0 0 4px rgba(245,158,11,.12);
 }
 
 /* ====== Terminal ====== */
 .terminal{
-  height: 86vh;
-  flex: 1;
-  max-height: 0;
-  min-height: 520px;
+  height:86vh;
+  flex:1;
+  max-height:0;
+  min-height:420px;
   display:flex;
   flex-direction:column;
 }
+
 .out{
   flex:1;
-  padding: 10px 14px 0 14px;
-  font-size: 12px;
-  line-height: 1.55;
-  min-height: 0;
-  overflow: auto;
-  font-family: var(--mono);
-  white-space: pre-wrap;
-  word-break: break-word;
-  background: radial-gradient(900px 420px at 10% 0%, rgba(37,99,235,.06), transparent 60%), #ffffff;
+  min-height:0;
+  overflow:auto;
+  -webkit-overflow-scrolling:touch;
+  padding:10px 14px 0 14px;
+  font-size:12px;
+  line-height:1.55;
+  font-family:var(--mono);
+  white-space:pre-wrap;
+  word-break:break-word;
+  background:
+    radial-gradient(900px 420px at 10% 0%, rgba(37,99,235,.06), transparent 60%),
+    #ffffff;
 }
+
 .line{
   display:flex;
   gap:10px;
-  padding: 2px 0;
+  padding:2px 0;
   align-items:flex-start;
 }
+
 .ts{
   flex:0 0 auto;
   color:#94a3b8;
   font-size:11px;
   margin-top:1px;
 }
-.txt{ flex:1 1 auto; }
 
-/* ====== Composer (fixed to terminal bottom, not screen bottom) ====== */
+.txt{
+  flex:1 1 auto;
+  min-width:0;
+}
+
+/* ====== Composer ====== */
 .composer{
   position:sticky;
   bottom:0;
-  padding: 12px;
-  border-top: 1px solid var(--line);
-  background: rgba(255,255,255,.92);
-  backdrop-filter: blur(10px);
+  flex:0 0 auto;
+  padding:12px;
+  border-top:1px solid var(--line);
+  background:rgba(255,255,255,.92);
+  backdrop-filter:blur(10px);
 }
+
 .row{
   display:flex;
   gap:10px;
   align-items:center;
 }
+
 .input{
   flex:1;
+  min-width:0;
   display:flex;
   align-items:center;
   gap:10px;
-  padding: 10px 12px;
-  border-radius: 14px;
-  border: 1px solid var(--line);
-  background: #ffffff;
-  box-shadow: 0 8px 18px rgba(15,23,42,.06);
+  padding:10px 12px;
+  border-radius:14px;
+  border:1px solid var(--line);
+  background:#ffffff;
+  box-shadow:0 8px 18px rgba(15,23,42,.06);
 }
+
 .prompt{
-  font-family: var(--mono);
-  font-size: 12px;
+  flex:0 0 auto;
+  font-family:var(--mono);
+  font-size:12px;
   color:#64748b;
   user-select:none;
 }
+
 input[type="text"]{
   flex:1;
+  min-width:0;
   border:0;
   outline:none;
-  font-family: var(--mono);
-  font-size: 12px; /* 扁一点，强调单行命令 */
-  background: transparent;
-  color: var(--text);
+  font-family:var(--mono);
+  font-size:12px;
+  background:transparent;
+  color:var(--text);
   padding:0;
-  min-width: 0;
 }
+
 .btn{
   border:0;
   cursor:pointer;
-  border-radius: 14px;
-  padding: 10px 12px;
-  background: linear-gradient(135deg, var(--accent), var(--accent2));
-  color:white;
-  box-shadow: 0 14px 28px rgba(37,99,235,.18);
+  border-radius:14px;
+  padding:10px 12px;
+  background:linear-gradient(135deg, var(--accent), var(--accent2));
+  color:#ffffff;
+  box-shadow:0 14px 28px rgba(37,99,235,.18);
   display:inline-flex;
   align-items:center;
+  justify-content:center;
   gap:8px;
-  font-weight: 650;
-  letter-spacing: .2px;
+  font-weight:650;
+  letter-spacing:.2px;
   user-select:none;
   flex:0 0 auto;
+  white-space:nowrap;
 }
-.btn:active{ transform: translateY(1px); }
-.btn[disabled]{ opacity:.6; cursor:not-allowed; transform:none; box-shadow:none; }
 
+.btn:active{
+  transform:translateY(1px);
+}
+
+.btn[disabled]{
+  opacity:.6;
+  cursor:not-allowed;
+  transform:none;
+  box-shadow:none;
+}
+
+/* ====== Tips ====== */
 .tip{
-  margin-top: 8px;
-  font-size: 11px;
-  color: var(--muted);
-  line-height: 1.35;
+  margin-top:8px;
+  font-size:11px;
+  color:var(--muted);
+  line-height:1.45;
 }
 
+.tip-main{
+  color:var(--muted);
+}
+
+.tip-more{
+  margin-top:6px;
+}
+
+.tip-more summary{
+  cursor:pointer;
+  user-select:none;
+  list-style:none;
+  color:#475569;
+  font-size:11px;
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+}
+
+.tip-more summary::-webkit-details-marker{
+  display:none;
+}
+
+.tip-more summary::before{
+  content:"ⓘ";
+  font-size:12px;
+  color:#64748b;
+  line-height:1;
+}
+
+.tip-more summary::after{
+  content:"展开说明";
+}
+
+.tip-more[open] summary::after{
+  content:"收起说明";
+}
+
+.tip-sub{
+  margin-top:6px;
+  padding-top:6px;
+  border-top:1px dashed rgba(100,116,139,.22);
+  color:#55657d;
+  line-height:1.55;
+}
+
+.tip code{
+  font-family:var(--mono);
+  font-size:11px;
+  background:rgba(148,163,184,.12);
+  border:1px solid rgba(148,163,184,.18);
+  padding:1px 5px;
+  border-radius:6px;
+}
+
+.tip strong{
+  font-weight:700;
+  color:#334155;
+}
+
+/* ====== Tablet ====== */
+@media (max-width: 768px){
+  .wrap{
+    padding:10px 8px;
+  }
+
+  .card{
+    width:min(100vw, 100%);
+    max-height:96vh;
+    border-radius:14px;
+  }
+
+  .terminal{
+    min-height:360px;
+  }
+
+  .out{
+    padding:8px 10px 0 10px;
+    font-size:12px;
+  }
+
+  .composer{
+    padding:10px;
+  }
+
+  .row{
+    gap:8px;
+  }
+
+  .input{
+    padding:9px 10px;
+    border-radius:12px;
+  }
+
+  .prompt{
+    font-size:12px;
+  }
+
+  input[type="text"]{
+    font-size:12px;
+  }
+
+  .btn{
+    padding:9px 10px;
+    border-radius:12px;
+  }
+
+  .tip{
+    font-size:11px;
+  }
+
+  .tip-more summary{
+    font-size:11px;
+  }
+
+  .tip-sub{
+    font-size:11px;
+  }
+}
+
+/* ====== Mobile ====== */
 @media (max-width: 520px){
-  .title{ font-size: 13px; }
-  .btn span{ display:none; }
+  .wrap{
+    padding:8px;
+    align-items:stretch;
+  }
+
+  .card{
+    width:100%;
+    height:calc(100vh - 16px);
+    max-height:calc(100vh - 16px);
+    border-radius:14px;
+    box-shadow:0 10px 28px rgba(15,23,42,.08);
+  }
+
+  .head{
+    padding:10px;
+    gap:8px;
+  }
+
+  .title{
+    font-size:14px;
+  }
+
+  .conn{
+    gap:6px;
+    font-size:12px;
+  }
+
+  .dot{
+    width:8px;
+    height:8px;
+    box-shadow:none;
+  }
+
+  .terminal{
+    height:auto;
+    min-height:0;
+    max-height:none;
+    flex:1;
+  }
+
+  .out{
+    padding:8px 10px 0 10px;
+    font-size:11px;
+    line-height:1.5;
+  }
+
+  .line{
+    gap:6px;
+    padding:1px 0;
+  }
+
+  .ts{
+    font-size:10px;
+  }
+
+  .composer{
+    padding:8px;
+  }
+
+  .row{
+    gap:8px;
+  }
+
+  .input{
+    gap:8px;
+    padding:8px 10px;
+    border-radius:12px;
+    box-shadow:0 6px 14px rgba(15,23,42,.05);
+  }
+
+  .prompt{
+    font-size:12px;
+  }
+
+  input[type="text"]{
+    font-size:12px;
+  }
+
+  .btn{
+    min-width:44px;
+    padding:8px 10px;
+    border-radius:12px;
+    box-shadow:0 10px 20px rgba(37,99,235,.16);
+  }
+
+  .btn span{
+    display:none;
+  }
+
+  .btn svg{
+    width:16px;
+    height:16px;
+  }
+
+  .tip{
+    margin-top:6px;
+    font-size:12px;
+    line-height:1.45;
+  }
+
+  .tip-main{
+    font-size:12px;
+  }
+
+  .tip-more{
+    margin-top:4px;
+  }
+
+  .tip-more summary{
+    font-size:12px;
+  }
+
+  .tip-more summary::before{
+    font-size:12px;
+  }
+
+  .tip-sub{
+    font-size:12px;
+    line-height:1.5;
+  }
+
+  .tip code{
+    font-size:11px;
+    padding:0 4px;
+    border-radius:5px;
+  }
+}
+
+/* ====== Very small mobile ====== */
+@media (max-width: 380px){
+  .head{
+    padding:8px;
+  }
+
+  .title{
+    font-size:13px;
+  }
+
+  .conn{
+    font-size:11px;
+  }
+
+  .out{
+    font-size:11px;
+  }
+
+  .ts{
+    font-size:10px;
+  }
+
+  .input{
+    padding:7px 9px;
+  }
+
+  .prompt{
+    font-size:11px;
+  }
+
+  input[type="text"]{
+    font-size:11px;
+  }
+
+  .btn{
+    padding:7px 9px;
+  }
+
+  .tip{
+    font-size:11px;
+    line-height:1.4;
+  }
+
+  .tip-main{
+    font-size:11px;
+  }
+
+  .tip-more summary{
+    font-size:11px;
+  }
+
+  .tip-sub{
+    font-size:11px;
+    line-height:1.45;
+  }
+
+  .tip code{
+    font-size:10px;
+  }
 }

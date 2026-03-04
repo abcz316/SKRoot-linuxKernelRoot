@@ -113,13 +113,13 @@
 
 	async function tick(){
 	  try{
-		await pollLogsOnce();
-		failCount = 0;
-		setConn(true, "在线");
+      await pollLogsOnce();
+      failCount = 0;
+      setConn(true, "在线");
 	  } catch(e){
-		failCount++;
-		if (failCount >= 2) setConn(false, "异常");
-		else setConn(null, "连接中");
+      failCount++;
+      if (failCount >= 2) setConn(false, "异常");
+      else setConn(null, "连接中");
 	  }
 	}
 

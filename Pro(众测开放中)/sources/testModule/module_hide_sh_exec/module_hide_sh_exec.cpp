@@ -34,7 +34,7 @@ public:
     }
 
     bool handlePost(CivetServer* server, struct mg_connection* conn, const std::string& path, const std::string& body) override {
-        //printf("[module_hide_data_dir] POST request\nPath: %s\nBody: %s\n", path.c_str(), body.c_str());
+        //printf("[module_hide_sh_exec] POST request\nPath: %s\nBody: %s\n", path.c_str(), body.c_str());
         std::string resp;
         if(path == "/sendCommand") {
             m_idle_killer.touch();
@@ -47,6 +47,9 @@ public:
         kernel_module::webui::send_text(conn, 200, resp);
         return true;
     }
+
+    ServerExitAction onBeforeServerExit() override { return ServerExitAction::KeepRunning; }
+
 private:
     void fork_sh_process_daemon() {
         pid_t shell_pid = m_su_interactive.get_shell_pid();
@@ -71,8 +74,8 @@ private:
 
 // SKRoot 模块名片
 SKROOT_MODULE_NAME("隐蔽的系统终端")
-SKROOT_MODULE_VERSION("1.0.0")
-SKROOT_MODULE_DESC("提供隐蔽的 sh 执行通道，彻底替代终端类 App，避免终端类 App 带来的特征暴露。")
+SKROOT_MODULE_VERSION("2.0.0")
+SKROOT_MODULE_DESC("提供独立隐蔽的 sh 执行通道，彻底替代终端类 App，避免终端类 App 带来的特征暴露。")
 SKROOT_MODULE_AUTHOR("SKRoot")
 SKROOT_MODULE_UUID32("zse9vkTjLjWXbafvx8Mlh1MTf8SMTUEL")
 SKROOT_MODULE_WEB_UI(MyWebHttpHandler)

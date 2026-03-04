@@ -284,12 +284,16 @@ Java_com_linux_permissionmanager_bridge_NativeBridge_getSkrootModuleList(
         JNIEnv* env,
         jclass /* this */,
         jstring rootKey,
-        jboolean runningOnly) {
+        jboolean runningOnly,
+        jboolean abnormalOnly) {
     string strRootKey = jstringToStr(env, rootKey);
 
     stringstream ss;
     vector<skroot_env::module_desc> list;
-    KModErr err = skroot_env::get_all_modules_list(strRootKey.c_str(), list, runningOnly ? skroot_env::ModuleListMode::RunningOnly : skroot_env::ModuleListMode::All);
+    KModErr err = skroot_env::get_all_modules_list(strRootKey.c_str(), list,
+                                                   runningOnly ? skroot_env::ModuleListMode::RunningOnly :
+                                                   abnormalOnly ? skroot_env::ModuleListMode::AbnormalOnly :
+                                                   skroot_env::ModuleListMode::All);
     if(is_failed(err)) {
         ss << "get_all_modules_list: " << to_string(err).c_str();
         return env->NewStringUTF(ss.str().c_str());

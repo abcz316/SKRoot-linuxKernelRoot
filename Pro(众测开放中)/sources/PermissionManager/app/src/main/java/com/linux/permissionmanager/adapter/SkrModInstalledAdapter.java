@@ -14,14 +14,16 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.linux.permissionmanager.R;
 import com.linux.permissionmanager.model.SkrModInstalledItem;
 import com.linux.permissionmanager.model.SkrModMarketItem;
+import com.linux.permissionmanager.model.SkrModRunState;
 import com.linux.permissionmanager.model.SkrModUpdateInfo;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class SkrModInstalledAdapter extends RecyclerView.Adapter<SkrModInstalledAdapter.ViewHolder> {
-    private final int SkrModRunningColor = Color.rgb(0x22,0xB1, 0x4C);
-    private final int SkrModNotRunningColor = Color.rgb(0xED,0x1C, 0x24);
+    private final int SkrModRunningColor = Color.parseColor("#16A34A");
+    private final int SkrModNotRunningColor = Color.parseColor("#F59E0B");
+    private final int SkrModAbnormalColor = Color.parseColor("#EF4444");
 
     private List<SkrModInstalledItem> skrmods;
     private OnItemClickListener listener;
@@ -59,10 +61,17 @@ public class SkrModInstalledAdapter extends RecyclerView.Adapter<SkrModInstalled
         setTextOrGone(holder.tvDesc, skrmod.getDesc());
         holder.tvVer.setText(skrmod.getVer());
         holder.tvAuthor.setText(skrmod.getAuthor());
-
-        holder.tvStatus.setText(skrmod.isRunning() ? "运行中" : "未运行");
-        holder.tvStatus.setTextColor(skrmod.isRunning() ? SkrModRunningColor : SkrModNotRunningColor);
-
+        SkrModRunState state = skrmod.getRunState();
+        holder.tvStatus.setText(
+                state == SkrModRunState.RUNNING ? "运行中" :
+                        state == SkrModRunState.ABNORMAL ? "运行异常" :
+                                "未启动"
+        );
+        holder.tvStatus.setTextColor(
+                state == SkrModRunState.RUNNING ? SkrModRunningColor :
+                        state == SkrModRunState.ABNORMAL ? SkrModAbnormalColor :
+                                SkrModNotRunningColor
+        );
         holder.btnWebUI.setVisibility(skrmod.isWebUi() ? View.VISIBLE : View.GONE);
         holder.btnWebUI.setOnClickListener(v -> {
             if (listener != null) listener.onOpenWebUIBtnClick(v, skrmod);

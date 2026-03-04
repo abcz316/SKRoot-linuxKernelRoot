@@ -15,16 +15,6 @@ static void android_open_url(const std::string& url) {
     if(fp) pclose(fp);
 }
 
-static void run_script(const char* script) {
-    const char* sh = "/system/bin/sh";
-    char* const argv[] = {
-        (char*)sh,
-        (char*)script,
-        nullptr
-    };
-    execve(sh, argv, environ);
-}
-
 template <class Fn>
 static pid_t spawn_delayed_task(unsigned delay_sec, Fn&& fn) {
     using F = std::decay_t<Fn>;
@@ -71,4 +61,23 @@ static bool is_pkg_running(const std::string& pkg) {
         if (cmd0.rfind(pkg, 0) == 0 && cmd0.size() > pkg.size() && cmd0[pkg.size()] == ':') return true;
     }
     return false;
+}
+
+bool write_text_file(const std::string& path, const std::string& value) {
+    std::ofstream ofs(path);
+    if (!ofs.is_open()) {
+        printf("open failed: %s\n", path.c_str());
+        return false;
+    }
+    ofs << value;
+    return ofs.good();
+}
+
+// 删除文件或目录（等价于：rm -rf path）
+void remove_force(const std::string& path) {
+    std::error_code ec;
+    fs::remove_all(path, ec);  // 不抛异常，简单稳一点
+    if (ec) {
+        printf("remove failed: %s , %s\n", path.c_str(), ec.message().c_str());
+    }
 }

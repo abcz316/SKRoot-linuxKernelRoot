@@ -22,6 +22,7 @@ import com.linux.permissionmanager.adapter.SkrModInstalledAdapter;
 import com.linux.permissionmanager.adapter.SkrModPrinter;
 import com.linux.permissionmanager.bridge.NativeBridge;
 import com.linux.permissionmanager.model.SkrModInstalledItem;
+import com.linux.permissionmanager.model.SkrModRunState;
 import com.linux.permissionmanager.model.SkrModUpdateInfo;
 import com.linux.permissionmanager.update.SkrModDownloader;
 import com.linux.permissionmanager.update.SkrModInstaller;
@@ -67,21 +68,26 @@ public class SkrModInstalledPage {
 
     public void refreshPage() { setupSkrModRecyclerView(); }
 
+    private Set<String> queryModuleUuidSet(boolean runningOnly, boolean abnormalOnly) {
+        String json = NativeBridge.getSkrootModuleList(mRootKey, runningOnly, abnormalOnly);
+        List<SkrModInstalledItem> list = parseSkrModList(json);
+        if (list == null || list.isEmpty()) return Collections.emptySet();
+        return list.stream().map(SkrModInstalledItem::getUuid).filter(Objects::nonNull).collect(Collectors.toSet());
+    }
+
     private void setupSkrModRecyclerView() {
-        String jsonAll = NativeBridge.getSkrootModuleList(mRootKey, false);
+        String jsonAll = NativeBridge.getSkrootModuleList(mRootKey, false, false);
         List<SkrModInstalledItem> listAll = parseSkrModList(jsonAll);
-        if(!listAll.isEmpty()) {
-            String jsonRunning = NativeBridge.getSkrootModuleList(mRootKey, true);
-            List<SkrModInstalledItem> listRunning = parseSkrModList(jsonRunning);
-            Set<String> runningUuids = (listRunning == null) ?
-                    Collections.emptySet() :
-                    listRunning.stream()
-                            .map(SkrModInstalledItem::getUuid)
-                            .filter(Objects::nonNull)
-                            .collect(Collectors.toSet());
-            listAll.forEach(it -> it.setRunning(
-                    it.getUuid() != null && runningUuids.contains(it.getUuid())
-            ));
+
+        if (listAll != null && !listAll.isEmpty()) {
+            Set<String> runningUuids = queryModuleUuidSet(true, false);
+            Set<String> abnormalUuids = queryModuleUuidSet(false, true);
+            for (SkrModInstalledItem it : listAll) {
+                String uuid = it.getUuid();
+                if (uuid == null) continue;
+                if (abnormalUuids.contains(uuid)) it.setRunState(SkrModRunState.ABNORMAL);
+                else if (runningUuids.contains(uuid)) it.setRunState(SkrModRunState.RUNNING);
+            }
         }
         mAdapter = new SkrModInstalledAdapter(listAll, new SkrModInstalledAdapter.OnItemClickListener() {
             @Override
@@ -114,7 +120,7 @@ public class SkrModInstalledPage {
                 String update_json = URLDecoder.decode(jsonObject.getString("update_json"), "UTF-8");
                 boolean web_ui = jsonObject.getBoolean("web_ui");
                 String min_sdk_ver = URLDecoder.decode(jsonObject.getString("min_sdk_ver"), "UTF-8");
-                SkrModInstalledItem e = new SkrModInstalledItem(name, desc, ver, uuid, author, update_json, min_sdk_ver, web_ui, false);
+                SkrModInstalledItem e = new SkrModInstalledItem(name, desc, ver, uuid, author, update_json, min_sdk_ver, web_ui, null);
                 list.add(e);
             }
         } catch (Exception e) {

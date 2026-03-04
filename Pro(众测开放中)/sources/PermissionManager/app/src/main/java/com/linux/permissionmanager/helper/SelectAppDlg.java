@@ -34,10 +34,8 @@ import java.util.List;
 public class SelectAppDlg {
     public static View showSelectAppDlg(Activity activity, String rootKey, Handler selectAppCallback) {
         final PopupWindow popupWindow = new PopupWindow(activity);
-
         View view = View.inflate(activity, R.layout.select_app_wnd, null);
         popupWindow.setContentView(view);
-
         popupWindow.setHeight(ViewGroup.LayoutParams.MATCH_PARENT);
         popupWindow.setWidth(ViewGroup.LayoutParams.MATCH_PARENT);
         popupWindow.setBackgroundDrawable(new ColorDrawable(0x9B000000));
@@ -50,8 +48,7 @@ public class SelectAppDlg {
         popupWindow.showAtLocation(parent, Gravity.NO_GRAVITY, 0, 0);
         popupWindow.setOnDismissListener(new PopupWindow.OnDismissListener() {
             @Override
-            public void onDismiss() {
-            }
+            public void onDismiss() {}
         });
 
         final int screenWidth = ScreenInfoUtils.getRealWidth(activity);
@@ -76,13 +73,10 @@ public class SelectAppDlg {
 
         List<SelectAppItem> appList = new ArrayList<>();
         List<PackageInfo> packages = activity.getPackageManager().getInstalledPackages(0);
-
         for (int i = 0; i < packages.size(); i++) {
             PackageInfo packageInfo = packages.get(i);
             String packageName = packageInfo.applicationInfo.packageName;
-            if(packageName.equals(activity.getPackageName())){
-                continue;
-            }
+            if(packageName.equals(activity.getPackageName())) continue;
             appList.add(new SelectAppItem(packageInfo));
         }
 
@@ -98,7 +92,6 @@ public class SelectAppDlg {
         linearLayoutManager.setOrientation(LinearLayoutManager.VERTICAL);
         select_app_recycler_view.setLayoutManager(linearLayoutManager);
         select_app_recycler_view.setAdapter(adapter);
-
         TextView clear_search_btn = view.findViewById(R.id.clear_search_btn);
         EditText search_edit = view.findViewById(R.id.search_edit);
         CheckBox show_system_app_ckbox = view.findViewById(R.id.show_system_app_ckbox);
@@ -118,9 +111,7 @@ public class SelectAppDlg {
                     if(!show_thirty_app_ckbox.isChecked()) {
                         if ((pack.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 0) continue; // 第三方应用
                     }
-                    if(item.getPackageName().indexOf(filterText) != -1 || item.getShowName(activity).indexOf(filterText) != -1) {
-                        newAppList.add(item);
-                    }
+                    if(item.getPackageName().indexOf(filterText) != -1 || item.getShowName(activity).indexOf(filterText) != -1) newAppList.add(item);
                 }
                 adapter.setData(newAppList);
                 super.handleMessage(msg);
@@ -128,35 +119,27 @@ public class SelectAppDlg {
         };
         search_edit.addTextChangedListener(new TextWatcher() {
             @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-            }
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 clear_search_btn.setVisibility(s.toString().length() > 0 ? View.VISIBLE : View.GONE);
                 updateAppListFunc.sendMessage(new Message());
             }
             @Override
-            public void afterTextChanged(Editable s) {
-            }
+            public void afterTextChanged(Editable s) {}
         });
         clear_search_btn.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
-                search_edit.setText("");
-            }
+            public void onClick(View v) { search_edit.setText(""); }
         });
 
         show_system_app_ckbox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                updateAppListFunc.sendMessage(new Message());
-            }
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) { updateAppListFunc.sendMessage(new Message()); }
         });
         show_thirty_app_ckbox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                updateAppListFunc.sendMessage(new Message());
-            }
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) { updateAppListFunc.sendMessage(new Message()); }
         });
         updateAppListFunc.sendMessage(new Message());
         return view;

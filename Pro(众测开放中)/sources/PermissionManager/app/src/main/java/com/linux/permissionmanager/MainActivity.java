@@ -1,34 +1,24 @@
 package com.linux.permissionmanager;
 
-import android.app.Activity;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
-import android.widget.PopupMenu;
-import android.widget.RadioGroup;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.app.AppCompatDelegate;
 import androidx.fragment.app.Fragment;
 
 import com.google.android.material.tabs.TabLayout;
-import com.linux.permissionmanager.bridge.NativeBridge;
 import com.linux.permissionmanager.fragment.SuAuthFragment;
 import com.linux.permissionmanager.fragment.HomeFragment;
 import com.linux.permissionmanager.fragment.SettingsFragment;
 import com.linux.permissionmanager.fragment.SkrModFragment;
 import com.linux.permissionmanager.utils.DialogUtils;
-import com.linux.permissionmanager.utils.FileUtils;
 import com.linux.permissionmanager.utils.GetAppListPermissionHelper;
-import com.linux.permissionmanager.utils.GetSdcardPermissionsHelper;
 
 
 public class MainActivity extends AppCompatActivity {

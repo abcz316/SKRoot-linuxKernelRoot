@@ -20,7 +20,7 @@ public final class NativeBridge {
 
     public static native String installSkrootModule(String rootKey, String zipFilePath);
     public static native String uninstallSkrootModule(String rootKey, String modUuid);
-    public static native String getSkrootModuleList(String rootKey, boolean runningOnly);
+    public static native String getSkrootModuleList(String rootKey, boolean runningOnly, boolean abnormalOnly);
     public static native String parseSkrootModuleDesc(String rootKey, String zipFilePath);
     public static native String openSkrootModuleWebUI(String rootKey, String modUuid);
 

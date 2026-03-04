@@ -1,13 +1,10 @@
 ﻿#include <set>
 #include <unordered_map>
 
-#include "y700_fake.h"
+#include "main.h"
 #include "cJSON.h"
 #include "android_packages_list_utils.h"
 #include "persist_data_perm_helper.h"
-
-
-#define SYSTEM_PROP_SH "system_prop.sh"
 
 // 把 ["aa","bb","cc"] 解析成 std::set<std::string>
 static std::set<std::string> parse_json(const std::string& json) {
@@ -115,6 +112,36 @@ static bool remove_ano_tmp_for_pkg(const std::string& pkg) {
     return hit_any;
 }
 
+static void cleanup() {
+    // 等价于：
+    // echo 16384 > /proc/sys/fs/inotify/max_queued_events
+    // echo 128 > /proc/sys/fs/inotify/max_user_instances
+    // echo 8192 > /proc/sys/fs/inotify/max_user_watches
+    write_text_file("/proc/sys/fs/inotify/max_queued_events", "16384\n");
+    write_text_file("/proc/sys/fs/inotify/max_user_instances", "128\n");
+    write_text_file("/proc/sys/fs/inotify/max_user_watches", "8192\n");
+
+    // 等价于：
+    // rm -rf /data/system/dropbox/*
+    // rm -rf /data/system/usagestats/*
+    // rm -rf /data/system/appops.xml
+    // rm -rf /data/system/ifw/*
+    // rm -rf /data/system/ndebugsocket/*
+    // rm -rf /data/anr/*
+    // rm -rf /data/tombstones/*
+    // rm -rf /data/misc/logd/*
+    // rm -rf /data/misc/update_engine/log/*
+    remove_force("/data/system/dropbox");
+    remove_force("/data/system/usagestats");
+    remove_force("/data/system/appops.xml");
+    remove_force("/data/system/ifw");
+    remove_force("/data/system/ndebugsocket");
+    remove_force("/data/anr");
+    remove_force("/data/tombstones");
+    remove_force("/data/misc/logd");
+    remove_force("/data/misc/update_engine/log");
+}
+
 static void monitor_pkgs_loop(const std::set<std::string>& pkgs) {
     using namespace std::chrono_literals;
     std::unordered_map<std::string, bool> last; // pkg -> last running
@@ -128,7 +155,10 @@ static void monitor_pkgs_loop(const std::set<std::string>& pkgs) {
             last[pkg] = cur;
             if (cur) any_running = true;
             // 进程“消失”就清理一次
-            if (prev && !cur) remove_ano_tmp_for_pkg(pkg);
+            if (prev && !cur) {
+                remove_ano_tmp_for_pkg(pkg);
+                cleanup();
+            }
         }
         // 任意一个启动：只触发一次 lockdown
         if (!last_any_running && any_running) persist_data_on_install_lockdown_permissions();
@@ -153,6 +183,7 @@ static void daemon_loop() {
         for (const auto& pkg : target_pkg_list) {
             printf("target pkg: %s\n", pkg.c_str());
             remove_ano_tmp_for_pkg(pkg);
+            cleanup();
         }
     });
     monitor_pkgs_loop(target_pkg_list);
@@ -162,13 +193,6 @@ static void daemon_loop() {
 int skroot_module_main(const char* root_key, const char* module_private_dir) {
     printf("start modify system prop\n");
     persist_data_on_uninstall_restore_permissions();
-    pid_t pid = ::fork();
-    if (pid == 0) {
-        run_script(SYSTEM_PROP_SH);
-        _exit(127);
-    }
-    int status; waitpid(pid, &status, 0);
-
     spawn_delayed_task(5, [=] {
         daemon_loop();
     });
@@ -221,12 +245,12 @@ private:
 };
 
 // SKRoot 模块名片
-SKROOT_MODULE_NAME("y700四代过黑名单设备 (free)")
-SKROOT_MODULE_VERSION("1.0.0")
+SKROOT_MODULE_NAME("防设备标记&自动清理")
+SKROOT_MODULE_VERSION("4.0.0")
 SKROOT_MODULE_DESC("需要手动添加包名")
-SKROOT_MODULE_AUTHOR("Cycle1337")
-SKROOT_MODULE_UUID32("rA78uQ0M0YyB27zuWmUJyg6uBciMeCRD")
+SKROOT_MODULE_AUTHOR("Cycle1337 & 6飞起来6")
+SKROOT_MODULE_UUID32("Vk0EFJTuG2aBLQqc6WLHVPHnhfiZ8VKG")
 SKROOT_MODULE_ON_INSTALL(module_on_install)
 SKROOT_MODULE_ON_UNINSTALL(module_on_uninstall)
 SKROOT_MODULE_WEB_UI(MyWebHttpHandler)
-SKROOT_MODULE_UPDATE_JSON("https://abcz316.github.io/SKRoot-linuxKernelRoot/module_fake_device/Cycle1337_y700_bypass_update.json")
+SKROOT_MODULE_UPDATE_JSON("https://abcz316.github.io/SKRoot-linuxKernelRoot/module_fake_device/cycle1337_bypass_device_flag_update.json")

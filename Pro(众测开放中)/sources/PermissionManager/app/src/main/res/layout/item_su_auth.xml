@@ -46,7 +46,7 @@
                     android:layout_height="wrap_content"
                     android:minHeight="50dp"
                     android:text="维护正义"
-                    android:textSize="16sp"
+                    android:textSize="15sp"
                     android:textStyle="bold"
                     android:gravity="center_vertical"
                     />

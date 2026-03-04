@@ -18,7 +18,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="插件名称"
-            android:textSize="16sp"
+            android:textSize="15sp"
             android:textStyle="bold"/>
 
         <LinearLayout

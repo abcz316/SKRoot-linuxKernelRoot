@@ -49,15 +49,13 @@ public class SkrModMarketPage {
 
     private EditText mSearchEdit;
     private RecyclerView mSkrModMarketRecyclerView;
-    private TextView mTextEmptyTips;
+    private TextView mTextLoadingTips;
     private LinearLayout mErrorContainer;
     private Button mBtnRetry;
 
     private List<SkrModMarketItem> mModList = new ArrayList<>();
 
     private SkrModMarketAdapter mAdapter;
-
-    private boolean mInErrorState = false;
 
     public SkrModMarketPage(Activity activity, String rootKey) {
         mActivity = activity;
@@ -76,11 +74,10 @@ public class SkrModMarketPage {
         });
 
         mSkrModMarketRecyclerView = view.findViewById(R.id.skr_mod_market_recycler_view);
-        mTextEmptyTips = view.findViewById(R.id.empty_tips_tv);
+        mTextLoadingTips = view.findViewById(R.id.loading_tips_tv);
         mErrorContainer = view.findViewById(R.id.error_container);
         mBtnRetry = view.findViewById(R.id.btn_retry);
         mBtnRetry.setOnClickListener(v -> initMarketList());
-
         initMarketList();
     }
 
@@ -94,8 +91,6 @@ public class SkrModMarketPage {
         mSkrModMarketRecyclerView.setAdapter(mAdapter);
         mSkrModMarketRecyclerView.setLayoutManager(new LinearLayoutManager(mActivity));
         mSkrModMarketRecyclerView.setVisibility(list.size() == 0 ? View.GONE : View.VISIBLE);
-        mTextEmptyTips.setVisibility(list.size() == 0 && mInErrorState == false ? View.VISIBLE : View.GONE);
-        mErrorContainer.setVisibility(mInErrorState ? View.VISIBLE : View.GONE);
         RecyclerView.ItemAnimator animator = mSkrModMarketRecyclerView.getItemAnimator();
         if (animator instanceof SimpleItemAnimator) ((SimpleItemAnimator) animator).setSupportsChangeAnimations(false);
     }
@@ -172,15 +167,16 @@ public class SkrModMarketPage {
     }
 
     private void initMarketList() {
+        mTextLoadingTips.setVisibility(View.VISIBLE);
+        mErrorContainer.setVisibility(View.GONE);
         requestMarketJson(
                 (modArr) -> {
-                    mInErrorState = false;
-                    if (modArr == null || modArr.size() == 0) return;
-                    mModList = modArr;
+                    mTextLoadingTips.setVisibility(View.GONE);
+                    if (modArr != null && modArr.size() > 0) mModList = modArr;
                     setupSkrModRecyclerView(mModList);
-                },
-                (e) -> {
-                    mInErrorState = true;
+                }, (e) -> {
+                    mTextLoadingTips.setVisibility(View.GONE);
+                    mErrorContainer.setVisibility(View.VISIBLE);
                     setupSkrModRecyclerView(mModList);
                 }
         );
@@ -252,11 +248,6 @@ public class SkrModMarketPage {
             }
         }
         mAdapter.setData(out);
-        boolean empty = out.isEmpty();
-        mSkrModMarketRecyclerView.setVisibility(empty ? View.GONE : View.VISIBLE);
-        mErrorContainer.setVisibility(View.GONE);
-        mTextEmptyTips.setVisibility(empty ? View.VISIBLE : View.GONE);
-        mTextEmptyTips.setText(k.isEmpty() ? "模块市场暂无内容" : "无匹配结果");
     }
 
     private boolean match(SkrModMarketItem it, String k) {

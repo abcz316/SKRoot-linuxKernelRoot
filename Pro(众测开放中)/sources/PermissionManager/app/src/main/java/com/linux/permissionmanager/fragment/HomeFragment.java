@@ -52,7 +52,6 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
         Button uninstall_skroot_env_btn = view.findViewById(R.id.uninstall_skroot_env_btn);
         Button test_root_btn = view.findViewById(R.id.test_root_btn);
         Button run_root_cmd_btn = view.findViewById(R.id.run_root_cmd_btn);
-        Button root_exec_process_btn = view.findViewById(R.id.root_exec_process_btn);
         Button implant_app_btn_btn = view.findViewById(R.id.implant_app_btn);
         Button copy_info_btn = view.findViewById(R.id.copy_info_btn);
         Button clean_info_btn = view.findViewById(R.id.clean_info_btn);
@@ -62,7 +61,6 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
         uninstall_skroot_env_btn.setOnClickListener(this);
         test_root_btn.setOnClickListener(this);
         run_root_cmd_btn.setOnClickListener(this);
-        root_exec_process_btn.setOnClickListener(this);
         implant_app_btn_btn.setOnClickListener(this);
         copy_info_btn.setOnClickListener(this);
         clean_info_btn.setOnClickListener(this);
@@ -85,9 +83,6 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
                 showInputRootCmdDlg();
                 break;
             case R.id.implant_app_btn:
-                break;
-            case R.id.root_exec_process_btn:
-                showInputRootExecProcessPathDlg();
                 break;
             case R.id.copy_info_btn:
                 copyConsoleMsg();
@@ -151,29 +146,6 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
                     dialog.dismiss();
                 }
         );
-    }
-
-    private void showInputRootExecProcessPathDlg() {
-        Handler inputCallback = new Handler() {
-            @Override
-            public void handleMessage(@NonNull Message msg) {
-                String text = (String)msg.obj;
-
-                lastInputRootExecPath = text;
-                AppSettings.setString("lastInputRootExecPath", lastInputRootExecPath);
-                appendConsoleMsg(text + "\n" + NativeBridge.rootExecProcessCmd(mRootKey, text));
-                super.handleMessage(msg);
-            }
-        };
-        Handler helperCallback = new Handler() {
-            @Override
-            public void handleMessage(@NonNull Message msg) {
-                DialogUtils.showMsgDlg(mActivity,"帮助", "请将JNI可执行文件放入/data内任意目录并且赋予777权限，如/data/app/com.xx，然后输入文件路径，即可直接执行，如：\n/data/com.xx/aaa\n", null);
-                super.handleMessage(msg);
-            }
-        };
-        DialogUtils.showInputDlg(mActivity, lastInputRootExecPath, "请输入Linux可运行文件的位置", "指导", inputCallback, helperCallback);
-        DialogUtils.showMsgDlg(mActivity,"提示", "本功能是以ROOT身份直接运行程序，可避免产生su、sh等多余驻留后台进程，能最大程度上避免侦测", null);
     }
 
     private void appendConsoleMsg(String msg) {

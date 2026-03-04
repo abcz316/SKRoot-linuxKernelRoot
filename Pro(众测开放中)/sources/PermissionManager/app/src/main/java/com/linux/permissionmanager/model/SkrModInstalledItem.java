@@ -11,11 +11,19 @@ public class SkrModInstalledItem {
     private String updateJson;
     private String miniSdk;
     private boolean webUi;
-    private boolean isRunning;
+    private SkrModRunState runState;
 
     private SkrModUpdateInfo updateInfo;
 
-    public SkrModInstalledItem(String name, String desc, String ver, String uuid, String author, String updateJson, String miniSdk, boolean webUi, boolean isRunning) {
+    public SkrModInstalledItem(String name,
+                               String desc,
+                               String ver,
+                               String uuid,
+                               String author,
+                               String updateJson,
+                               String miniSdk,
+                               boolean webUi,
+                               SkrModRunState runState) {
         this.name = name;
         this.desc = desc;
         this.ver = ver;
@@ -24,8 +32,8 @@ public class SkrModInstalledItem {
         this.updateJson = updateJson;
         this.miniSdk = miniSdk;
         this.webUi = webUi;
-        this.isRunning = isRunning;
-        this.updateInfo = null;   // 默认无更新信息
+        this.runState = runState == null ? SkrModRunState.NOT_RUNNING : runState;
+        this.updateInfo = null;
     }
 
     public String getName() {
@@ -72,7 +80,9 @@ public class SkrModInstalledItem {
         return updateJson;
     }
 
-    public void setUpdateJson(String updateJson) { this.updateJson = updateJson; }
+    public void setUpdateJson(String updateJson) {
+        this.updateJson = updateJson;
+    }
 
     public String getMiniSdk() {
         return miniSdk;
@@ -90,12 +100,12 @@ public class SkrModInstalledItem {
         this.webUi = webUi;
     }
 
-    public boolean isRunning() {
-        return isRunning;
+    public SkrModRunState getRunState() {
+        return runState;
     }
 
-    public void setRunning(boolean running) {
-        isRunning = running;
+    public void setRunState(SkrModRunState runState) {
+        this.runState = runState;
     }
 
     public SkrModUpdateInfo getUpdateInfo() {

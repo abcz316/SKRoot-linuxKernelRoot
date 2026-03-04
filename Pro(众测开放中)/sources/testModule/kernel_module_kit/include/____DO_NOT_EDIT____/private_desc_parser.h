@@ -145,6 +145,7 @@ inline char skroot_module_on_uninstall_enable_flag_ngln4z5zaku6lil4vrz2jtpoecb64
 
 #define ____INTERNEL_SKROOT_MODULE_WEB_UI_MAIN __skroot_module_web_ui_main_ceb6f0bbebe5c8978eb2168799aa0ca4
 #define ____INTERNEL_SKROOT_MODULE_LAST_WEB_UI_SERVER_PORT __skroot_module_last_web_ui_server_port_db2a2bebe2b190482ad0ac73996c7b86
+#define ____INTERNEL_SKROOT_MODULE_BEFORE_SERVER_EXIT_ACTION __skroot_module_before_server_exit_action_81a98535f12c96a0b3e457727705e44c
 extern "C" __attribute__((visibility("default"))) __attribute__((used, weak)) void ____INTERNEL_SKROOT_MODULE_WEB_UI_MAIN(const char* root_key, const char* module_private_dir, const char* module_webroot_dir, const char* mod_uuid, int port, KModErr& err) {
     if(strlen(skroot_web_ui_enable_flag_e0c73f6473a0e653be67875a3cf23a53) == 0) printf("");
     KModErr unsafe_module_start_web_ui_server(const char* root_key, const char* module_private_dir, const char* module_webroot_dir, const char* mod_uuid, kernel_module::WebUIHttpHandler* handler, int port);
@@ -155,6 +156,12 @@ extern "C" __attribute__((visibility("default"))) __attribute__((used, weak)) vo
     if(strlen(skroot_web_ui_enable_flag_e0c73f6473a0e653be67875a3cf23a53) == 0) printf("");
     KModErr unsafe_module_get_last_web_ui_server_port(int& out_port);
     err = unsafe_module_get_last_web_ui_server_port(out_port);
+}
+
+extern "C" __attribute__((visibility("default"))) __attribute__((used, weak)) void ____INTERNEL_SKROOT_MODULE_BEFORE_SERVER_EXIT_ACTION(kernel_module::WebUIHttpHandler::ServerExitAction& out_action, KModErr& err) {
+    if(strlen(skroot_web_ui_enable_flag_e0c73f6473a0e653be67875a3cf23a53) == 0) printf("");
+    KModErr unsafe_module_get_before_server_exit_action(kernel_module::WebUIHttpHandler::ServerExitAction& out_action);
+    err = unsafe_module_get_before_server_exit_action(out_action);
 }
 
 #ifdef KERNEL_MODULE_KIT_TEST

@@ -11,7 +11,7 @@
   <div class="card">
 
     <div class="head">
-      <div class="title">系统终端</div>
+      <div class="title">隐蔽的系统终端</div>
       <div class="conn" title="回显拉取状态">
         <span id="connDot" class="dot connecting" aria-hidden="true"></span>
         <span id="connText">连接中</span>
@@ -25,8 +25,13 @@
         <div class="row">
           <div class="input">
             <div class="prompt">#</div>
-            <input id="cmd" type="text" autocomplete="off" spellcheck="false"
-                   placeholder="输入命令，例如：id / getprop / ls -al" />
+            <input
+              id="cmd"
+              type="text"
+              autocomplete="off"
+              spellcheck="false"
+              placeholder="输入命令，例如：id / getprop / ls -al"
+            />
           </div>
 
           <button class="btn" id="sendBtn" type="button" title="发送命令到系统终端">
@@ -38,12 +43,29 @@
             <span>发送</span>
           </button>
         </div>
-        <div class="tip">提示：如执行后台运行的脚本，建议执行后关闭本网页，脚本依然能后台运行，且隐蔽性更高。</div>
+
+        <div class="tip">
+          <div class="tip-main">
+            提示：执行后台脚本时，建议命令下发后关闭本页面；脚本仍可继续在后台运行，同时隐蔽性更高。
+          </div>
+
+          <details class="tip-more">
+            <summary>查看使用说明</summary>
+            <div class="tip-sub">
+              本功能并非普通系统终端，而是一个 <strong>极其隐蔽</strong> 的系统终端。
+              为避免被侦测，交互方式会受到一定限制，部分需要持续交互的命令，
+              可能无法像常规终端那样直接操作。若需更稳定的交互，建议自行编写
+              <code>sh</code> 脚本进行一层封装后再执行。
+              这是隐蔽性与交互性之间的必要取舍。
+            </div>
+          </details>
+        </div>
       </div>
     </div>
 
   </div>
 </div>
+
 <script src="request.js"></script>
 <script src="main.js"></script>
 </body>
