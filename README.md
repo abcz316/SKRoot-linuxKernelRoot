@@ -42,7 +42,7 @@
 2. 其中【**注入su到指定进程**】**只支持授权su到64位的APP**，老式32位App不再进行支持。
 
 ## SkRoot(Lite) 使用流程：
-1.下载源码编译或**下载编译产物**： [patch_kernel_root.exe](https://github.com/abcz316/SKRoot-linuxKernelRoot/blob/master/Lite_version/build/patch_kernel_root(2026-2-25).exe)、 [PermissionManager.apk](https://github.com/abcz316/SKRoot-linuxKernelRoot/blob/master/Lite_version/build/PermissionManager(2026-2-25).apk)
+1.下载源码编译或**下载编译产物**： [patch_kernel_root.exe](https://github.com/abcz316/SKRoot-linuxKernelRoot/blob/master/Lite_version/patch_kernel_root(2026-3-8).exe)、 [PermissionManager.apk](https://github.com/abcz316/SKRoot-linuxKernelRoot/blob/master/Lite_version/SKRoot-Lite-(2026-3-8).apk)
 
 2.将内核kernel文件拖拽置`patch_kernel_root.exe`即可一键自动化流程补丁内核，同时会自动生成Root密匙。
 
@@ -54,6 +54,11 @@
 *目前正在众测中。如想加入测试组织，请关注TG频道：https://t.me/skrootabc*
 
 ## 更新日志：
+2026-3：
+  * 1.修复部分Linux6.12无法解析的问题。
+  * 2.修复Linux 5.15会睡死的问题。
+  * 3.增强寄生App功能的稳定性。
+  
 2026-2：
   * 1.修复su无法独立后台运行的问题。
   * 2.修复Linux 4.4无法解析的问题。

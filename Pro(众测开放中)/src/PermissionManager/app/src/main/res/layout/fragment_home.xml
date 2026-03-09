@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="10px"
+    tools:context=".MainActivity">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Linux内核级完美隐藏ROOT演示"
+        android:textSize="18dp" />
+
+    <TextView
+        android:layout_marginTop="5dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="新一代 SkRoot(Pro)，完美隐藏Root功能，挑战全网Root检测手段，实现真正的SELinux零触碰、无挂载，通杀所有内核，不需要内核源码，直接 Patch 内核。模块特质：支持内核热修改，最高 10万Hook点位、0性能损耗，单模块跨内核通用运行。"
+        />
+
+
+    <View
+        android:layout_marginTop="10dp"
+        android:layout_width="match_parent"
+        android:layout_height="2dp"
+        android:background="#ff00ff"
+        />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal"
+        >
+
+        <ScrollView
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="match_parent"
+            android:fadeScrollbars="false">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                >
+
+                <TextView
+                    android:layout_marginTop="5dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="SKRoot  基础环境："
+                    android:textColor="@color/black"
+                    />
+
+
+                <Button
+                    android:layout_marginTop="5dp"
+                    android:id="@+id/install_skroot_env_btn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="安装SKRoot环境"
+                    android:textAllCaps="false"
+                    />
+
+                <Button
+                    android:layout_marginTop="5dp"
+                    android:id="@+id/uninstall_skroot_env_btn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="卸载SKRoot环境"
+                    android:textAllCaps="false"
+                    />
+
+
+                <View
+                    android:layout_marginTop="10dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="2dp"
+                    android:background="#ff00ff"
+                    />
+                <TextView
+                    android:layout_marginTop="10dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="基本功能菜单："
+                    android:textColor="@color/black"
+                    />
+
+                <Button
+                    android:layout_marginTop="5dp"
+                    android:id="@+id/test_root_btn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="1.测试Root权限"
+
+                    />
+
+                <Button
+                    android:layout_marginTop="5dp"
+                    android:id="@+id/run_root_cmd_btn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="2.执行ROOT命令"
+                    />
+
+                <Button
+                    android:id="@+id/implant_app_btn"
+                    android:layout_marginTop="5dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:visibility="gone"
+                    android:text="3.寄生到目标APP"
+                    />
+            </LinearLayout>
+
+        </ScrollView>
+        <View
+            android:layout_width="2dp"
+            android:layout_height="match_parent"
+            android:layout_marginLeft="5dp"
+            android:layout_marginRight="5dp"
+            android:background="#ff00ff"
+            />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            >
+            <TextView
+                android:layout_marginTop="5dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="输出信息:"
+                android:textColor="@color/black"
+                />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+
+                >
+                <Button
+                    android:id="@+id/copy_info_btn"
+                    android:layout_width="70dp"
+                    android:layout_height="wrap_content"
+                    android:text="复制"
+                    />
+                <Button
+                    android:id="@+id/clean_info_btn"
+                    android:layout_width="70dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="5dp"
+                    android:text="清空"
+                    />
+            </LinearLayout>
+
+
+            <EditText
+                android:id="@+id/console_edit"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:text=""
+                android:inputType="textMultiLine"
+                android:gravity="start|top"
+                android:textIsSelectable="true"
+                android:scrollbars="vertical"
+                android:textSize="13dp"
+                />
+
+        </LinearLayout>
+    </LinearLayout>
+
+</LinearLayout>
