@@ -380,6 +380,7 @@ bool KallsymsLookupName_6_1_60::find_kallsyms_names_list(int kallsyms_num, size_
 	name_list_end = 0;
 	size_t x = kallsyms_num_end_offset;
 	auto _min = MIN(m_file_buf.size(), x + MAX_FIND_RANGE);
+
 	for (; (x + sizeof(char)) < _min; x++) {
 		char val = *(char*)&m_file_buf[x];
 		if (val == '\0') {
@@ -388,10 +389,24 @@ bool KallsymsLookupName_6_1_60::find_kallsyms_names_list(int kallsyms_num, size_
 		name_list_start = x;
 		break;
 	}
+
 	size_t off = name_list_start;
 	for (int i = 0; i < kallsyms_num; i++) {
+		if (off >= m_file_buf.size()) return false;
+
+		unsigned int sym_len = 0;
 		unsigned char ch = (unsigned char)m_file_buf[off++];
-		off += ch;
+		if (ch <= 0x7F) {
+			sym_len = ch;
+		} else {
+			if (off >= m_file_buf.size()) return false;
+			unsigned char ch2 = (unsigned char)m_file_buf[off++];
+			sym_len = (ch & 0x7F) | (ch2 << 7);
+		}
+		if (sym_len == 0) {
+			break;
+		}
+		off += sym_len;
 	}
 	name_list_end = off;
 	return true;
