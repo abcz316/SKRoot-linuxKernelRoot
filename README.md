@@ -1,6 +1,6 @@
 # SkRoot - Linux 内核级完美隐藏 Root 方案
 
-新一代 SkRoot，完美隐藏Root功能，挑战全网Root检测手段，实现真正的**SELinux零触碰、无挂载**，通杀所有内核，**不需要内核源码**，直接 Patch 内核，兼容安卓 APP 直接JNI调用，稳定不闪退。
+新一代 SkRoot，完美隐藏Root功能，挑战全网Root检测手段，实现**SELinux零触碰、无挂载**，通杀所有内核，**不需要内核源码**，直接 Patch 内核，兼容安卓 APP 直接JNI调用，稳定不闪退。
 
 ## 版本对比
 
@@ -10,7 +10,7 @@
 | **用途** | 面向基础 Root 场景，稳定性最佳。 | 主力版本，拥有更强的控制能力。 |
 | **功能** | 仅提供基础 Root 支持。 | 支持 **授权管理** + **内核模块**。 |
 | **进阶** | - | 隐藏目录、隐蔽执行sh、解除温控、系统文件无痕伪造等。 |
-| **模块能力** | - | 支持内核热修改，最高 **10万Hook点位、0性能损耗**，单模块跨内核通用运行。 |
+| **模块能力** | - | 支持内核热修改Hook，**最多10万个Hook位置、无性能损耗**，单模块跨内核通用运行。 |
 
 ## 功能列表：
 1.测试ROOT权限
@@ -42,7 +42,7 @@
 2. 其中【**注入su到指定进程**】**只支持授权su到64位的APP**，老式32位App不再进行支持。
 
 ## SkRoot(Lite) 使用流程：
-1.下载源码编译或**下载编译产物**： [patch_kernel_root.exe](https://github.com/abcz316/SKRoot-linuxKernelRoot/blob/master/Lite_version/patch_kernel_root(2026-3-10).exe)、 [PermissionManager.apk](https://github.com/abcz316/SKRoot-linuxKernelRoot/blob/master/Lite_version/SKRoot-Lite-(2026-3-8).apk)
+1.下载源码编译或**下载编译产物**： [patch_kernel_root.exe](https://github.com/abcz316/SKRoot-linuxKernelRoot/blob/master/Lite_version/patch_kernel_root(2026-3-11).exe)、 [PermissionManager.apk](https://github.com/abcz316/SKRoot-linuxKernelRoot/blob/master/Lite_version/SKRoot-Lite-(2026-3-8).apk)
 
 2.将内核kernel文件拖拽置`patch_kernel_root.exe`即可一键自动化流程补丁内核，同时会自动生成Root密匙。
 

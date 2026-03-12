@@ -1,15 +1,15 @@
 ﻿#include "kallsyms_lookup_name_6_1_0.h"
 #include "find_static_code_start.h"
 
+#include <set>
+
 #ifndef MIN
 #define MIN(x, y)(x < y) ? (x) : (y)
 #endif // !MIN
 
 #define A64_NOP 0xD503201F
-
 #define R_AARCH64_RELATIVE 1027
 #define MAX_FIND_RANGE 0x1000
-
 namespace {
 	const int KSYM_NAME_LEN = 128;
 	struct Elf64_Rela {
@@ -17,7 +17,6 @@ namespace {
 		uint64_t r_info = 0;
 		uint64_t r_addend = 0;
 	};
-
 
 	static inline bool looks_kernel_va(uint64_t v) {
 		static const uint64_t starts[] = {
@@ -45,26 +44,13 @@ bool KallsymsLookupName_6_1_0::init() {
 	std::cout << std::hex << "code_static_start: 0x" << code_static_start << std::endl;
 
 	size_t offset_list_start = 0, offset_list_end = 0;
-	std::vector<std::pair<uint64_t, uint64_t>> addresses;
-
 	size_t kallsyms_num_offset = 0;
 	if (find_kallsyms_offsets_list(offset_list_start, offset_list_end)) {
-		size_t kallsyms_relative_base_offset = find_kallsyms_relative_base_offset(offset_list_end);
-		if (!kallsyms_relative_base_offset) {
-			std::cout << "Unable to find the kallsyms relative base" << std::endl;
-			return false;
-		}
-		m_kallsyms_relative_base = rd64_le(m_file_buf, kallsyms_relative_base_offset);
-		std::cout << std::hex << "kallsyms_relative_base: 0x" << m_kallsyms_relative_base << ", offset: 0x" << kallsyms_relative_base_offset << std::endl;
-
-		size_t kallsyms_relative_base_end_offset = kallsyms_relative_base_offset + sizeof(uint64_t);
-
-		m_kallsyms_num = find_kallsyms_num1(offset_list_start, offset_list_end, kallsyms_relative_base_end_offset, 10, kallsyms_num_offset);
+		m_kallsyms_num = find_kallsyms_num1(offset_list_start, offset_list_end, 10, kallsyms_num_offset);
 		if (!m_kallsyms_num) {
 			std::cout << "Unable to find the num of kallsyms offset list" << std::endl;
 			return false;
 		}
-
 		std::cout << std::hex << "kallsyms_num: 0x" << m_kallsyms_num << ", offset: 0x" << kallsyms_num_offset << std::endl;
 
 		// revise the offset list offset again
@@ -82,38 +68,25 @@ bool KallsymsLookupName_6_1_0::init() {
 		std::cout << std::hex << "kallsyms_offset_start: 0x" << offset_list_start << std::endl;
 		std::cout << std::hex << "kallsyms_offset_end: 0x" << offset_list_end << std::endl;
 		m_kallsyms_offsets.offset = offset_list_start;
-
 		CONFIG_KALLSYMS_BASE_RELATIVE = true;
 
-	} else if (find_kallsyms_addresses_list(addresses)) {
+	} else if (find_kallsyms_addresses_list(m_kallsyms_addresses.addresses)) {
+		m_kallsyms_addresses.printf();
+		const auto& addresses = m_kallsyms_addresses.addresses;
 		uint64_t virtual_base = addresses[0].second;
 		uint64_t ptr_table_end = addresses[addresses.size() - 1].first;
 		uint64_t offset_table_end = ptr_table_end - virtual_base;
-		size_t kallsyms_relative_base_offset = find_kallsyms_relative_base_offset(offset_table_end);
-
-		if (!kallsyms_relative_base_offset) {
-			std::cout << "Unable to find the kallsyms relative base" << std::endl;
-			return false;
-		}
-		m_kallsyms_relative_base = rd64_le(m_file_buf, kallsyms_relative_base_offset);
-		std::cout << std::hex << "kallsyms_relative_base: 0x" << m_kallsyms_relative_base << ", offset: 0x" << kallsyms_relative_base_offset << std::endl;
-
-		size_t kallsyms_relative_base_end_offset = kallsyms_relative_base_offset + sizeof(uint64_t);
-
-		m_kallsyms_num = find_kallsyms_num2(addresses.size(), kallsyms_relative_base_end_offset, 0, kallsyms_num_offset);
+		m_kallsyms_num = find_kallsyms_num2(addresses.size(), offset_table_end, 0, kallsyms_num_offset);
 		if (!m_kallsyms_num) {
 			std::cout << "Unable to find the num of kallsyms offset list" << std::endl;
 			return false;
 		}
-
 		std::cout << std::hex << "kallsyms_num: 0x" << m_kallsyms_num << ", offset: 0x" << kallsyms_num_offset << std::endl;
-
 		CONFIG_KALLSYMS_BASE_RELATIVE = false;
 	} else {
 		std::cout << "Unable to find the list of 'kallsyms offsets' and 'kallsyms addresses'" << std::endl;
 		return false;
 	}
-
 
 	size_t kallsyms_num_end_offset = kallsyms_num_offset + sizeof(m_kallsyms_num);
 	size_t name_list_start = 0, name_list_end = 0;
@@ -127,8 +100,7 @@ bool KallsymsLookupName_6_1_0::init() {
 
 	size_t markers_list_start = 0;
 	size_t markers_list_end = 0;
-	bool markers_list_is_align8 = false;
-	if (!find_kallsyms_markers_list(m_kallsyms_num, name_list_end, markers_list_start, markers_list_end, markers_list_is_align8)) {
+	if (!find_kallsyms_markers_list(m_kallsyms_num, name_list_end, markers_list_start, markers_list_end)) {
 		std::cout << "Unable to find the list of kallsyms markers list" << std::endl;
 		return false;
 	}
@@ -136,19 +108,9 @@ bool KallsymsLookupName_6_1_0::init() {
 	std::cout << std::hex << "kallsyms_markers_end: 0x" << markers_list_end << std::endl;
 	m_kallsyms_markers.offset = markers_list_start;
 
-	size_t seqs_of_names_list_start = 0;
-	size_t seqs_of_names_list_end = 0;
-	if (!find_kallsyms_seqs_of_names_list(m_kallsyms_num, markers_list_end, markers_list_is_align8, seqs_of_names_list_start, seqs_of_names_list_end)) {
-		std::cout << "Unable to find the list of kallsyms seqs names list" << std::endl;
-		return false;
-	}
-	std::cout << std::hex << "kallsyms_seqs_of_names_list_start: 0x" << seqs_of_names_list_start << std::endl;
-	std::cout << std::hex << "kallsyms_seqs_of_names_list_end: 0x" << seqs_of_names_list_end << std::endl;
-	m_kallsyms_seqs_of_names.offset = seqs_of_names_list_start;
-	
 	size_t token_table_start = 0;
 	size_t token_table_end = 0;
-	if (!find_kallsyms_token_table(seqs_of_names_list_end, token_table_start, token_table_end)) {
+	if (!find_kallsyms_token_table(markers_list_end, token_table_start, token_table_end)) {
 		std::cout << "Unable to find the list of kallsyms token table" << std::endl;
 		return false;
 	}
@@ -192,7 +154,7 @@ int KallsymsLookupName_6_1_0::get_kallsyms_num() {
 static bool __find_kallsyms_addresses_list(const std::vector<char>& file_buf, size_t max_cnt, size_t& start, size_t& end) {
 	auto var_len = sizeof(Elf64_Rela);
 	for (auto x = 0; x + var_len < file_buf.size(); x += 8) {
-		Elf64_Rela* rela = (Elf64_Rela*)&file_buf[x];
+		Elf64_Rela *rela = (Elf64_Rela*)&file_buf[x];
 		if (!looks_kernel_va(rela->r_offset) || !looks_kernel_va(rela->r_addend) || (rela->r_info & 0xFFFFFFFFu) != R_AARCH64_RELATIVE) {
 			continue;
 		}
@@ -214,7 +176,7 @@ static bool __find_kallsyms_addresses_list(const std::vector<char>& file_buf, si
 	return false;
 }
 
-static bool __convert_kallsyms_addresses_list(const std::vector<char>& file_buf, size_t start, size_t end, std::vector<std::pair<uint64_t, uint64_t>>& addresses) {
+static void __convert_kallsyms_addresses_list(const std::vector<char>& file_buf, size_t start, size_t end, std::vector<std::pair<uint64_t, uint64_t>>& addresses) {
 	std::unordered_map<uint64_t, Elf64_Rela> virtual_mapper;
 	for (auto x = start; x < end; x += sizeof(Elf64_Rela)) {
 		Elf64_Rela* rela = (Elf64_Rela*)&file_buf[x];
@@ -225,6 +187,11 @@ static bool __convert_kallsyms_addresses_list(const std::vector<char>& file_buf,
 	for (auto& kv : virtual_mapper) {
 		addresses.emplace_back(kv.first, kv.second.r_addend);
 	}
+}
+
+static bool __shrink_kallsyms_addresses_list(const std::vector<char>& file_buf,
+	std::vector<std::pair<uint64_t, uint64_t>>& addresses) {
+
 	std::sort(addresses.begin(), addresses.end(),
 		[](const auto& a, const auto& b) { return a.first < b.first; });
 	auto shrink_to_range = [&](size_t i0, size_t i1) {
@@ -241,7 +208,7 @@ static bool __convert_kallsyms_addresses_list(const std::vector<char>& file_buf,
 		uint64_t prev_off = addresses[i].first;
 		uint64_t prev_val = addresses[i].second;
 
-		size_t good = looks_kernel_va(prev_val) ? 1 : 0;
+		size_t good = looks_kernel_va(prev_val) ? 1 : 0; 
 		// Continuous slot position: offset+8 per step
 		while (j < addresses.size()) {
 			if (addresses[j].first != prev_off + 8) break;
@@ -277,7 +244,8 @@ bool KallsymsLookupName_6_1_0::find_kallsyms_addresses_list(std::vector<std::pai
 	for (auto i = 60000; i > 30000; i -= 5000) {
 		size_t start = 0, end = 0;
 		if (__find_kallsyms_addresses_list(m_file_buf, i, start, end)) {
-			return __convert_kallsyms_addresses_list(m_file_buf, start, end, addresses);
+			__convert_kallsyms_addresses_list(m_file_buf, start, end, addresses);
+			return __shrink_kallsyms_addresses_list(m_file_buf, addresses);
 		}
 	}
 	return false;
@@ -312,7 +280,7 @@ static bool __find_kallsyms_offsets_list(const std::vector<char>& file_buf, size
 }
 
 bool KallsymsLookupName_6_1_0::find_kallsyms_offsets_list(size_t& start, size_t& end) {
-	for (auto i = 60000; i > 30000; i -= 5000) {
+	for (auto i = 60000; i > 5000; i -= 5000) {
 		if (__find_kallsyms_offsets_list(m_file_buf, i, start, end)) {
 			return true;
 		}
@@ -320,25 +288,14 @@ bool KallsymsLookupName_6_1_0::find_kallsyms_offsets_list(size_t& start, size_t&
 	return false;
 }
 
-size_t KallsymsLookupName_6_1_0::find_kallsyms_relative_base_offset(size_t offset_list_end) {
-	for (int i = 0; i < 5; i++) {
-		auto off = offset_list_end + sizeof(unsigned int) * i;
-		uint64_t val = rd64_le(m_file_buf, off);
-		if (looks_kernel_va(val)) {
-			return off;
-		}
-	}
-	return 0;
-}
-
-int KallsymsLookupName_6_1_0::find_kallsyms_num1(size_t offset_list_start, size_t offset_list_end, size_t kallsyms_relative_base_end_offset, size_t fuzzy_range, size_t& kallsyms_num_offset) {
+int KallsymsLookupName_6_1_0::find_kallsyms_num1(size_t offset_list_start, size_t offset_list_end, size_t fuzzy_range, size_t& kallsyms_num_offset) {
 	size_t size = (offset_list_end - offset_list_start) / sizeof(int);
 	size_t allow_min_size = size - fuzzy_range;
 	size_t allow_max_size = size + fuzzy_range;
 	auto _min = MIN(m_file_buf.size(), MAX_FIND_RANGE);
 	int cnt = 10;
 	for (size_t x = 0; (x + sizeof(int)) < _min; x++) {
-		auto pos = kallsyms_relative_base_end_offset + x * sizeof(int);
+		auto pos = offset_list_end + x * sizeof(int);
 		int val = *(int*)&m_file_buf[pos];
 		if (val == 0) {
 			continue;
@@ -354,13 +311,13 @@ int KallsymsLookupName_6_1_0::find_kallsyms_num1(size_t offset_list_start, size_
 	return 0;
 }
 
-int KallsymsLookupName_6_1_0::find_kallsyms_num2(size_t size, size_t kallsyms_relative_base_end_offset, size_t fuzzy_range, size_t& kallsyms_num_offset) {
+int KallsymsLookupName_6_1_0::find_kallsyms_num2(size_t size, size_t offset_list_end, size_t fuzzy_range, size_t& kallsyms_num_offset) {
 	size_t allow_min_size = size - fuzzy_range;
 	size_t allow_max_size = size + fuzzy_range;
 	auto _min = MIN(m_file_buf.size(), MAX_FIND_RANGE);
 	int cnt = 10;
 	for (size_t x = 0; (x + sizeof(int)) < _min; x++) {
-		auto pos = kallsyms_relative_base_end_offset + x * sizeof(int);
+		auto pos = offset_list_end + x * sizeof(int);
 		int val = *(int*)&m_file_buf[pos];
 		if (val == 0) {
 			continue;
@@ -382,6 +339,7 @@ bool KallsymsLookupName_6_1_0::find_kallsyms_names_list(int kallsyms_num, size_t
 	name_list_end = 0;
 	size_t x = kallsyms_num_end_offset;
 	auto _min = MIN(m_file_buf.size(), x + MAX_FIND_RANGE);
+
 	for (; (x + sizeof(char)) < _min; x++) {
 		char val = *(char*)&m_file_buf[x];
 		if (val == '\0') {
@@ -390,17 +348,31 @@ bool KallsymsLookupName_6_1_0::find_kallsyms_names_list(int kallsyms_num, size_t
 		name_list_start = x;
 		break;
 	}
+
 	size_t off = name_list_start;
 	for (int i = 0; i < kallsyms_num; i++) {
+		if (off >= m_file_buf.size()) return false;
+
+		unsigned int sym_len = 0;
 		unsigned char ch = (unsigned char)m_file_buf[off++];
-		off += ch;
+		if (ch <= 0x7F) {
+			sym_len = ch;
+		} else {
+			if (off >= m_file_buf.size()) return false;
+			unsigned char ch2 = (unsigned char)m_file_buf[off++];
+			sym_len = (ch & 0x7F) | (ch2 << 7);
+		}
+		if (sym_len == 0) {
+			break;
+		}
+		off += sym_len;
 	}
 	name_list_end = off;
 	return true;
 }
 
 
-bool KallsymsLookupName_6_1_0::find_kallsyms_markers_list(int kallsyms_num, size_t name_list_end_offset, size_t& markers_list_start, size_t& markers_list_end, bool & markers_list_is_align8) {
+bool KallsymsLookupName_6_1_0::find_kallsyms_markers_list(int kallsyms_num, size_t name_list_end_offset, size_t& markers_list_start, size_t& markers_list_end) {
 	size_t start = align_up<8>(name_list_end_offset);
 	const int var_len = sizeof(uint32_t);
 	for (auto x = start; x + var_len < m_file_buf.size(); x += var_len) {
@@ -417,7 +389,7 @@ bool KallsymsLookupName_6_1_0::find_kallsyms_markers_list(int kallsyms_num, size
 	
 	auto exist_val_start = markers_list_start + var_len;
 
-	markers_list_is_align8 = false;
+	bool is_align8 = false;
 	int cnt = 5;
 	uint32_t last_second_var_val = 0;
 	for (auto y = markers_list_start + var_len; y + var_len < m_file_buf.size(); y += var_len * 2) {
@@ -429,11 +401,11 @@ bool KallsymsLookupName_6_1_0::find_kallsyms_markers_list(int kallsyms_num, size
 		last_second_var_val = val2;
 		cnt--;
 		if (cnt == 0) {
-			markers_list_is_align8 = true;
+			is_align8 = true;
 			break;
 		}
 	}
-	if (markers_list_is_align8) {
+	if (is_align8) {
 		size_t back_val = align_up<8>(markers_list_start) - markers_list_start;
 		if (back_val == 0) {
 			markers_list_start -= 8;
@@ -448,19 +420,8 @@ bool KallsymsLookupName_6_1_0::find_kallsyms_markers_list(int kallsyms_num, size
 	return true;
 }
 
-bool KallsymsLookupName_6_1_0::find_kallsyms_seqs_of_names_list(int kallsyms_num, size_t markers_list_end_offset, bool markers_list_is_align8, size_t& seqs_of_names_list_start, size_t& seqs_of_names_list_end) {
+bool KallsymsLookupName_6_1_0::find_kallsyms_token_table(size_t markers_list_end_offset, size_t& kallsyms_token_table_start, size_t& kallsyms_token_table_end) {
 	size_t start = align_up<8>(markers_list_end_offset);
-	seqs_of_names_list_start = start;
-	if (markers_list_is_align8) {
-		seqs_of_names_list_end = seqs_of_names_list_start + kallsyms_num * sizeof(uint32_t) * 2;
-	} else {
-		seqs_of_names_list_end = seqs_of_names_list_start + kallsyms_num * sizeof(uint32_t);
-	}
-	return true;
-}
-
-bool KallsymsLookupName_6_1_0::find_kallsyms_token_table(size_t seqs_of_names_list_end_offset, size_t& kallsyms_token_table_start, size_t& kallsyms_token_table_end) {
-	size_t start = align_up<8>(seqs_of_names_list_end_offset);
 	const int var_len = sizeof(uint32_t);
 	for (auto x = start; x + var_len < m_file_buf.size(); x += var_len) {
 		uint32_t val1 = *(uint32_t*)&m_file_buf[x];
@@ -532,35 +493,30 @@ unsigned int KallsymsLookupName_6_1_0::kallsyms_expand_symbol(unsigned int off, 
 	int len, skipped_first = 0;
 	const char* tptr;
 	const uint8_t* data;
-	const uint8_t* kallsyms_names = (uint8_t*)&m_file_buf[m_kallsyms_names.offset];
-	const uint16_t* kallsyms_token_index = (uint16_t*)&m_file_buf[m_kallsyms_token_index.offset];
-	const unsigned char* kallsyms_token_table = (unsigned char*)&m_file_buf[m_kallsyms_token_table.offset];
 
 	/* Get the compressed symbol length from the first symbol byte. */
-	data = &kallsyms_names[off];
+
+	data = (uint8_t*)&m_file_buf[m_kallsyms_names.offset + off * sizeof(uint8_t)];
+
 	len = *data;
 	data++;
-	off++;
-
-	/* If MSB is 1, it is a "big" symbol, so needs an additional byte. */
-	if ((len & 0x80) != 0) {
-		len = (len & 0x7F) | (*data << 7);
-		data++;
-		off++;
-	}
 
 	/*
 	 * Update the offset to return the offset for the next symbol on
 	 * the compressed stream.
 	 */
-	off += len;
+	off += len + 1;
 
 	/*
 	 * For every byte on the compressed symbol data, copy the table
 	 * entry for that byte.
 	 */
+
 	while (len) {
-		tptr = (const char*)& kallsyms_token_table[kallsyms_token_index[*data]];
+		uint8_t x = *data;
+		short y = *(short*)&m_file_buf[m_kallsyms_token_index.offset + x * sizeof(uint16_t)];
+
+		tptr = &m_file_buf[m_kallsyms_token_table.offset + y * sizeof(unsigned char)];
 		data++;
 		len--;
 
@@ -587,23 +543,24 @@ tail:
 }
 
 uint64_t KallsymsLookupName_6_1_0::kallsyms_sym_address(int idx) {
-
 	if (!CONFIG_KALLSYMS_BASE_RELATIVE) {
 		return m_kallsyms_addresses.addresses[idx].second;
 	}
 
-	/* values are unsigned offsets if --absolute-percpu is not in effect */
-	//TODO:
+	///* values are unsigned offsets if --absolute-percpu is not in effect */
 	//if (!IS_ENABLED(CONFIG_KALLSYMS_ABSOLUTE_PERCPU))
 	//	return kallsyms_relative_base + (u32)kallsyms_offsets[idx];
 
+
 	/* ...otherwise, positive offsets are absolute values */
 	int* kallsyms_offsets = (int*)&m_file_buf[m_kallsyms_offsets.offset];
+
 	if (kallsyms_offsets[idx] >= 0)
 		return kallsyms_offsets[idx];
 
 	/* ...and negative offsets are relative to kallsyms_relative_base - 1 */
-	return m_kallsyms_relative_base - 1 - kallsyms_offsets[idx];
+	//return m_kallsyms_relative_base - 1 - kallsyms_offsets[idx];
+	return 0;
 }
 
 /* Lookup the address for this symbol. Returns 0 if not found. */
@@ -623,13 +580,12 @@ std::unordered_map<std::string, uint64_t> KallsymsLookupName_6_1_0::kallsyms_on_
 			off = kallsyms_expand_symbol(off, namebuf, sizeof(namebuf));
 
 			uint64_t offset = kallsyms_sym_address(i);
-
+			
 			if (!CONFIG_KALLSYMS_BASE_RELATIVE) {
 				offset -= m_kallsyms_addresses.base_address;
 			} else {
 				offset += m_kallsyms_offsets.base_off;
 			}
-
 			m_kallsyms_symbols_cache[namebuf] = offset;
 		}
 	}
