@@ -26,6 +26,19 @@
             "download_chn_alert": "",
             "download_eng_alert": ""
         },
+		{
+            "chn_name": "恢复SELinux状态",
+            "eng_name": "",
+            "ver": "1.0.0",
+            "desc": "用于某些漏洞机型获取 Root 权限后，恢复系统的 SELinux 状态。",
+            "author": "SKRoot",
+            "uuid": "JEIFIBfcTbZFOotyFOm3emYlDS3AmzHb",
+            "update_date": "2026-3-14",
+            "source_url": "https://github.com/abcz316/SKRoot-linuxKernelRoot/tree/master/Pro(%E4%BC%97%E6%B5%8B%E5%BC%80%E6%94%BE%E4%B8%AD)/sources/testModule/module_fake_device",
+			"download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_fake_device/skroot_recover_selinux_module.zip",
+            "download_chn_alert": "",
+            "download_eng_alert": ""
+        },
         {
             "chn_name": "隐蔽的系统终端",
             "eng_name": "",
@@ -36,19 +49,6 @@
             "update_date": "2026-3-3",
             "source_url": "https://github.com/abcz316/SKRoot-linuxKernelRoot/tree/master/Pro(%E4%BC%97%E6%B5%8B%E5%BC%80%E6%94%BE%E4%B8%AD)/sources/testModule/module_hide_sh_exec",
             "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_hide_sh_exec/module.zip",
-            "download_chn_alert": "",
-            "download_eng_alert": ""
-        },
-		{
-            "chn_name": "恢复SELinux状态",
-            "eng_name": "",
-            "ver": "1.0.0",
-            "desc": "适用于漏洞机型获取 Root 权限后，恢复系统的 SELinux 状态。",
-            "author": "SKRoot",
-            "uuid": "JEIFIBfcTbZFOotyFOm3emYlDS3AmzHb",
-            "update_date": "2026-3-14",
-            "source_url": "https://github.com/abcz316/SKRoot-linuxKernelRoot/tree/master/Pro(%E4%BC%97%E6%B5%8B%E5%BC%80%E6%94%BE%E4%B8%AD)/sources/testModule/module_fake_device",
-			"download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_fake_device/skroot_recover_selinux_module.zip",
             "download_chn_alert": "",
             "download_eng_alert": ""
         },
