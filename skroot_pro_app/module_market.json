@@ -39,6 +39,19 @@
             "download_chn_alert": "",
             "download_eng_alert": ""
         },
+		{
+            "chn_name": "恢复SELinux状态",
+            "eng_name": "",
+            "ver": "1.0.0",
+            "desc": "适用于漏洞机型获取 Root 权限后，恢复系统的 SELinux 状态。",
+            "author": "SKRoot",
+            "uuid": "JEIFIBfcTbZFOotyFOm3emYlDS3AmzHb",
+            "update_date": "2026-3-14",
+            "source_url": "https://github.com/abcz316/SKRoot-linuxKernelRoot/tree/master/Pro(%E4%BC%97%E6%B5%8B%E5%BC%80%E6%94%BE%E4%B8%AD)/sources/testModule/module_fake_device",
+			"download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_fake_device/skroot_recover_selinux_module.zip",
+            "download_chn_alert": "",
+            "download_eng_alert": ""
+        },
         {
             "chn_name": "温控解除",
             "eng_name": "",
@@ -151,6 +164,7 @@
             "author": "Cycle1337 & 6飞起来6",
             "uuid": "Vk0EFJTuG2aBLQqc6WLHVPHnhfiZ8VKG",
             "update_date": "2026-3-3",
+			"ban": true,
             "source_url": "https://github.com/abcz316/SKRoot-linuxKernelRoot/tree/master/Pro(%E4%BC%97%E6%B5%8B%E5%BC%80%E6%94%BE%E4%B8%AD)/sources/testModule/module_fake_device",
             "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_fake_device/cycle1337_bypass_device_flag_module.zip",
             "download_chn_alert": "风险警告：此模块为高风险模块，仅满足使用效果，不保证隐藏效果，若继续安装，请点击“确认”，产生一切后果请自负。",
