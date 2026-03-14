@@ -30,7 +30,7 @@
             "chn_name": "恢复SELinux状态",
             "eng_name": "",
             "ver": "1.0.0",
-            "desc": "用于某些漏洞机型获取 Root 权限后，恢复系统的 SELinux 状态。",
+            "desc": "某些漏洞机型获取 Root 权限后，需要恢复 SELinux 状态。",
             "author": "SKRoot",
             "uuid": "JEIFIBfcTbZFOotyFOm3emYlDS3AmzHb",
             "update_date": "2026-3-14",
