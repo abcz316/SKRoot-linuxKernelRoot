@@ -29,11 +29,11 @@
         {
             "chn_name": "隐蔽的系统终端",
             "eng_name": "",
-            "ver": "2.0.0",
+            "ver": "3.0.0",
             "desc": "提供隐蔽的 sh 执行通道，彻底替代终端类 App，避免终端类 App 带来的特征暴露。",
             "author": "SKRoot",
             "uuid": "zse9vkTjLjWXbafvx8Mlh1MTf8SMTUEL",
-            "update_date": "2026-3-3",
+            "update_date": "2026-4-5",
             "source_url": "https://github.com/abcz316/SKRoot-linuxKernelRoot/tree/master/Pro(%E4%BC%97%E6%B5%8B%E5%BC%80%E6%94%BE%E4%B8%AD)/sources/testModule/module_hide_sh_exec",
             "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_hide_sh_exec/module.zip",
             "download_chn_alert": "",
@@ -63,6 +63,20 @@
             "source_url": "https://github.com/abcz316/SKRoot-linuxKernelRoot/tree/master/Pro(%E4%BC%97%E6%B5%8B%E5%BC%80%E6%94%BE%E4%B8%AD)/sources/testModule/module_tricky_store",
             "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_tricky_store/module.zip",
             "download_chn_alert": "",
+            "download_eng_alert": ""
+        },
+        {
+            "chn_name": "防设备标记&自动清理",
+            "eng_name": "",
+            "ver": "4.0.1",
+            "desc": "需要手动添加包名",
+            "author": "SKRoot & Cycle1337 & 6飞起来6",
+            "uuid": "Vk0EFJTuG2aBLQqc6WLHVPHnhfiZ8VKG",
+            "update_date": "2026-4-5",
+			"ban": false,
+            "source_url": "https://github.com/abcz316/SKRoot-linuxKernelRoot/tree/master/Pro(%E4%BC%97%E6%B5%8B%E5%BC%80%E6%94%BE%E4%B8%AD)/sources/testModule/module_fake_device",
+            "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_fake_device/cycle1337_bypass_device_flag_module.zip",
+            "download_chn_alert": "风险警告：此模块为高风险模块，仅满足使用效果，不保证隐藏效果，若继续安装，请点击“确认”，产生一切后果请自负。",
             "download_eng_alert": ""
         },
         {

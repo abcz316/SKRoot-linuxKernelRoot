@@ -1,10 +1,19 @@
+4.3.2更新内容：
+  1.修复部分android16设备无法越狱的问题。
+  2.修复skroot模块安装、卸载回调无法使用部分接口问题。
+  3.新增偏移量接口 (跨内核)：inode->i_rdev,i_bdev
+  4.新增偏移量接口 (跨内核)：renamedata->old_dir,new_dir
+  5.新增清空日志按钮。
+  6.升级【防标记&自动清理】模块。
+  7.升级【隐蔽的终端】模块：添加文件操作、输入模拟器。
+
 4.3.1更新内容：
   1.修复GPU漏洞被利用时触发死机警报（需重新修补）。
   2.修复一些痕迹安全问题。
   3.修复小米17、红米K90、一加15无法越狱的问题。
   4.新增添加adb授权功能。
   5.新增软重启功能。
-  6.新增内核API调用（export_symbol.h）
+  6.新增内核API调用 (export_symbol.h)
 
 4.3.0更新内容：
   1.修复一加手机越狱残留痕迹（免解Root模式，一加可解决momo调试环境提示）。
@@ -15,8 +24,8 @@
   2.修复小米6、小米9机型不兼容的问题。
   3.修复一加ace2会睡死问题（需重新修补）。
   4.新增热启动模式（免解Root模式，一加可解决momo调试环境提示）。
-  5.新增偏移量接口（跨内核）：cred->cap_inheritable、task->stack、THREAD_SIZE
-  6.新增内核API调用（export_symbol.h）
+  5.新增偏移量接口 (跨内核)：cred->cap_inheritable、task->stack、THREAD_SIZE
+  6.新增内核API调用 (export_symbol.h)
 
 4.2.7更新内容：
   1.修复管理器的一些bug。
@@ -29,8 +38,8 @@
 4.2.6更新内容：
   1.修复管理器的一些bug。
   2.修复su无法独立后台运行的问题。
-  3.新增偏移量接口（跨内核）：file->private_data
-  4.新增内核API调用（export_symbol.h）
+  3.新增偏移量接口 (跨内核)：file->private_data
+  4.新增内核API调用 (export_symbol.h)
   5.新增隐蔽的系统终端模块。
   6.新增温控解除模块。
 
@@ -38,11 +47,11 @@
   1.新增WebUI工具函数。
   2.新增保险丝开关文件，便于开发者调试。
   3.新增原子32位/64位内核内存读写接口。
-  4.新增偏移量接口（跨内核）：inode->i_mapping, i_state, i_rwsem
-  5.新增偏移量接口（跨内核）：vm_area_struct->vm_flags
-  6.新增偏移量接口（跨内核）：file->f_op
-  7.新增偏移量接口（跨内核）：proc_ops, file_operations, miscdevice, super_block
-  8.新增内核API便捷调用写法（export_symbol.h）
+  4.新增偏移量接口 (跨内核)：inode->i_mapping, i_state, i_rwsem
+  5.新增偏移量接口 (跨内核)：vm_area_struct->vm_flags
+  6.新增偏移量接口 (跨内核)：file->f_op
+  7.新增偏移量接口 (跨内核)：proc_ops, file_operations, miscdevice, super_block
+  8.新增内核API便捷调用写法 (export_symbol.h)
   9.新增模块市场。
   10.新增伪装机型模块。
   11.新增系统文件伪造 Demo。
@@ -58,8 +67,8 @@
   3.修复Linux kernel < 4.19无法开机的问题。
   4.修复部分机型显示发生故障。
   5.新增"is_syscall_args_in_ptregs"接口，方便开发者对老机型兼容Hook syscall。
-  6.新增偏移量接口（跨内核）：dentry, fdtable, files_struct, file, inode, mm_struct, task_struct, vm_area_struct
-  7.新增内核IRQ中断等函数导出（跨内核）。
+  6.新增偏移量接口 (跨内核)：dentry, fdtable, files_struct, file, inode, mm_struct, task_struct, vm_area_struct
+  7.新增内核IRQ中断等函数导出 (跨内核)。
   8.新增WebUI写法：自带path、body入参。
   9.新增WebUI工具函数头文件。
 
