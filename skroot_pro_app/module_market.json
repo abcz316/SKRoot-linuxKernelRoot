@@ -93,6 +93,19 @@
             "download_eng_alert": ""
         },
         {
+            "chn_name": "Zui游戏助手-去除机型校验",
+            "eng_name": "",
+            "ver": "1.0.0",
+            "desc": "解决Zui系统(如联想Y700系列)，使用模拟机型模块时，无法使用游戏助手的问题，TG频道:@Whitelist520",
+            "author": "阿灵",
+            "uuid": "u6rQGRK4WoE7IJRvYsSxD70eBtutYK31",
+            "update_date": "2026-4-11",
+            "source_url": "https://github.com/abcz316/SKRoot-linuxKernelRoot/tree/master/Pro(%E4%BC%97%E6%B5%8B%E5%BC%80%E6%94%BE%E4%B8%AD)/src/testModule/module_fake_device",
+            "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_fake_device/aling_fake_zui_module.zip",
+            "download_chn_alert": "",
+            "download_eng_alert": ""
+        },
+        {
             "chn_name": "【教程】系统文件伪造 Demo",
             "eng_name": "",
             "ver": "1.0.0",
