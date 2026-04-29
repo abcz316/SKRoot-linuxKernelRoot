@@ -83,7 +83,7 @@
             "chn_name": "防格机 (防变黑砖)",
             "eng_name": "",
             "ver": "1.0.0",
-            "desc": "内核级防黑砖保护，拦截恶意程序对核心分区的写入，防止设备变黑砖。需提前手动备份/mnt/vendor/persist/，双清后可恢复正常开机。",
+            "desc": "内核级防黑砖保护，拦截恶意程序对核心分区的写入，防止设备变黑砖。需提前手动备份/mnt/vendor/persist/，双清后可恢复正常开机。保护机制将在系统启动1分钟后自动生效。",
             "author": "SKRoot",
             "uuid": "BbA6MdJYoS2ggs58zU327m5ufBihCOrS",
             "update_date": "2026-4-28",
