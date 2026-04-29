@@ -1,3 +1,12 @@
+4.3.5更新内容：
+  1.修复skroot模块后台运行，内存会被回收问题。
+  2.新增偏移量接口 (跨内核)：mm_struct->mmap,mm_mt,total_vm
+  3.新增偏移量接口 (跨内核)：block_device->bd_partno、gendisk->part0
+  4.新增偏移量接口 (跨内核)：file->f_mapping
+  5.新增内核API调用 (export_symbol.h)
+  6.新增 ADB 开发者模式开关。
+  7.支持华为nova2s Linux4.9机型。
+
 4.3.4更新内容：
   1.修复管理器的一些bug。
   2.修复 ADB 漏洞会被恶意利用导致被侦测的BUG。
