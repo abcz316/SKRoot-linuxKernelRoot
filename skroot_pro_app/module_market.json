@@ -53,6 +53,20 @@
             "download_eng_alert": ""
         },
         {
+            "chn_name": "防格机 (防变黑砖)",
+            "eng_name": "",
+            "ver": "1.0.1",
+            "desc": "内核级防黑砖保护，拦截恶意程序对核心分区的写入，防止设备变黑砖。开机1分钟后保护生效。需提前手动备份/mnt/vendor/persist/，双清后可恢复正常开机。",
+            "author": "SKRoot",
+            "uuid": "BbA6MdJYoS2ggs58zU327m5ufBihCOrS",
+            "update_date": "2026-4-29",
+			"ban": false,
+            "source_url": "https://github.com/abcz316/SKRoot-linuxKernelRoot/tree/master/Pro(%E4%BC%97%E6%B5%8B%E5%BC%80%E6%94%BE%E4%B8%AD)/src/testModule/module_protect_device",
+            "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_protect_device/module.zip",
+            "download_chn_alert": "",
+            "download_eng_alert": ""
+        },
+        {
             "chn_name": "Tricky Store",
             "eng_name": "",
             "ver": "1.4.1-r5",
@@ -77,20 +91,6 @@
             "source_url": "https://github.com/abcz316/SKRoot-linuxKernelRoot/tree/master/Pro(%E4%BC%97%E6%B5%8B%E5%BC%80%E6%94%BE%E4%B8%AD)/src/testModule/module_fake_device",
             "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_fake_device/cycle1337_bypass_device_flag_module.zip",
             "download_chn_alert": "风险警告：此模块为高风险模块，仅满足使用效果，不保证隐藏效果，若继续安装，请点击“确认”，产生一切后果请自负。",
-            "download_eng_alert": ""
-        },
-        {
-            "chn_name": "防格机 (防变黑砖)",
-            "eng_name": "",
-            "ver": "1.0.1",
-            "desc": "内核级防黑砖保护，拦截恶意程序对核心分区的写入，防止设备变黑砖。开机1分钟后保护生效。需提前手动备份/mnt/vendor/persist/，双清后可恢复正常开机。",
-            "author": "SKRoot",
-            "uuid": "BbA6MdJYoS2ggs58zU327m5ufBihCOrS",
-            "update_date": "2026-4-29",
-			"ban": false,
-            "source_url": "https://github.com/abcz316/SKRoot-linuxKernelRoot/tree/master/Pro(%E4%BC%97%E6%B5%8B%E5%BC%80%E6%94%BE%E4%B8%AD)/src/testModule/module_protect_device",
-            "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_protect_device/module.zip",
-            "download_chn_alert": "",
             "download_eng_alert": ""
         },
         {
