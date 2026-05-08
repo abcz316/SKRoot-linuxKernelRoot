@@ -83,7 +83,7 @@
             "chn_name": "防设备标记&自动清理",
             "eng_name": "",
             "ver": "4.0.6",
-            "desc": "需手动添加目标包名。开启成功判断：/mnt/vendor/persist/data目录下文件为空、且无法新建文件，则表示拦截已生效。本模块采用内核级拦截技术，不改目录权限。",
+            "desc": "需手动添加目标包名。开启成功判断：/mnt/vendor/persist/data目录下文件为空，且无法新建文件，则表示拦截已生效。本模块采用内核级拦截技术，不改目录权限。",
             "author": "SKRoot & 蜃 & Cycle1337",
             "uuid": "Vk0EFJTuG2aBLQqc6WLHVPHnhfiZ8VKG",
             "update_date": "2026-5-8",
