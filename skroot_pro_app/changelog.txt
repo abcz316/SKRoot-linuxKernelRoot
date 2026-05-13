@@ -1,3 +1,18 @@
+4.3.5更新内容：
+  1.修复skroot模块后台运行，内存会被回收问题。
+  2.修复“隐蔽的终端模块”无法满频率运行的问题。
+  3.修复一加设备进程被杀的问题。
+  4.修复一加ace5至尊版会死机的问题。
+  5.修复管理器app 暗黑模式显示异常。
+  6.新增卸载内核Hook接口。
+  7.新增偏移量接口 (跨内核)：mm_struct->mmap,mm_mt,total_vm、file->f_mapping、inode->i_mode
+  8.新增偏移量接口 (跨内核)：task_struct->tgid,__state,ptrace
+  9.新增偏移量接口 (跨内核)：seq_file、block_device、address_space、super_block
+  10.新增内核API调用 (export_symbol.h)
+  11.新增防格机（防变黑砖）模块。
+  12.新增 ADB 开发者模式开关。
+  13.支持华为nova2s Linux 4.9机型。
+
 4.3.4更新内容：
   1.修复管理器的一些bug。
   2.修复 ADB 漏洞会被恶意利用导致被侦测的BUG。
