@@ -94,20 +94,6 @@
             "download_eng_alert": ""
         },
         {
-            "chn_name": "防标记改麒麟9000s",
-            "eng_name": "",
-            "ver": "1.0.0",
-            "desc": "内核级伪装/proc/cpuinfo，无挂载",
-            "author": "SKRoot & Auto",
-            "uuid": "DrAofKWAYs3XO0Js4YBzB3ecqMQVdzkH",
-            "update_date": "2026-6-6",
-			"ban": false,
-            "source_url": "https://github.com/abcz316/SKRoot-linuxKernelRoot/tree/master/Pro(%E4%BC%97%E6%B5%8B%E5%BC%80%E6%94%BE%E4%B8%AD)/src/testModule/module_fake_device",
-            "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_fake_device/auto_fake_cpuinfo_module.zip",
-            "download_chn_alert": "风险警告：此模块为高风险模块，仅满足使用效果，不保证隐藏效果，若继续安装，请点击“确认”，产生一切后果请自负。",
-            "download_eng_alert": ""
-        },
-        {
             "chn_name": "阿灵的机型模拟",
             "eng_name": "",
             "ver": "5.2.5",
@@ -117,6 +103,20 @@
             "update_date": "2026-5-13",
             "source_url": "https://github.com/abcz316/SKRoot-linuxKernelRoot/tree/master/Pro(%E4%BC%97%E6%B5%8B%E5%BC%80%E6%94%BE%E4%B8%AD)/src/testModule/module_fake_device",
             "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_fake_device/aling_fake_dev_module.zip",
+            "download_chn_alert": "风险警告：此模块为高风险模块，仅满足使用效果，不保证隐藏效果，若继续安装，请点击“确认”，产生一切后果请自负。",
+            "download_eng_alert": ""
+        },
+        {
+            "chn_name": "伪装CPU信息为麒麟9000s",
+            "eng_name": "",
+            "ver": "1.0.0",
+            "desc": "内核级伪装/proc/cpuinfo为麒麟9000s，无挂载",
+            "author": "SKRoot & Auto",
+            "uuid": "DrAofKWAYs3XO0Js4YBzB3ecqMQVdzkH",
+            "update_date": "2026-6-6",
+			"ban": false,
+            "source_url": "https://github.com/abcz316/SKRoot-linuxKernelRoot/tree/master/Pro(%E4%BC%97%E6%B5%8B%E5%BC%80%E6%94%BE%E4%B8%AD)/src/testModule/module_fake_device",
+            "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_fake_device/auto_fake_cpuinfo_module.zip",
             "download_chn_alert": "风险警告：此模块为高风险模块，仅满足使用效果，不保证隐藏效果，若继续安装，请点击“确认”，产生一切后果请自负。",
             "download_eng_alert": ""
         },
