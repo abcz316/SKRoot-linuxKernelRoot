@@ -110,7 +110,7 @@
             "chn_name": "伪装CPU信息为麒麟9000s",
             "eng_name": "",
             "ver": "1.0.0",
-            "desc": "内核级伪装/proc/cpuinfo为麒麟9000s，无挂载",
+            "desc": "内核级伪装/proc/cpuinfo为麒麟9000s，无挂载。有的娱乐App成功欺骗，有的娱乐App会提示环境异常，请以实际测试为准。",
             "author": "SKRoot & Auto",
             "uuid": "DrAofKWAYs3XO0Js4YBzB3ecqMQVdzkH",
             "update_date": "2026-6-6",
