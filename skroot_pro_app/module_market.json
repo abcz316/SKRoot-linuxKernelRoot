@@ -83,7 +83,7 @@
             "chn_name": "防设备标记&自动清理",
             "eng_name": "",
             "ver": "5.0.6",
-            "desc": "需手动添加目标包名。本模块采用内核拦截技术，不改目录权限。支持高通、天玑。",
+            "desc": "需手动添加目标包名。本模块采用内核拦截技术，不改目录权限。支持高通、天玑。防标记工作时，指纹支付App可能报异常。",
             "author": "SKRoot & 蜃 & Cycle1337",
             "uuid": "Vk0EFJTuG2aBLQqc6WLHVPHnhfiZ8VKG",
             "update_date": "2026-5-29",
