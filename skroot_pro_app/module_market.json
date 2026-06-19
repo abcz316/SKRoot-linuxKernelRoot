@@ -80,6 +80,19 @@
             "download_eng_alert": ""
         },
         {
+            "chn_name": "修改Android安全补丁日期",
+            "eng_name": "",
+            "ver": "1.0.0",
+            "desc": "一键修改 Android 安全补丁日期，自动同步多个系统分区相关属性。",
+            "author": "SKRoot",
+            "uuid": "nv2ZfKbBpBYxYvFqwgcGHEvQkjFjaRvS",
+            "update_date": "2026-6-20",
+            "source_url": "https://github.com/abcz316/SKRoot-linuxKernelRoot/tree/master/Pro(%E4%BC%97%E6%B5%8B%E5%BC%80%E6%94%BE%E4%B8%AD)/src/testModule/module_fake_device",
+            "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_fake_device/sk_fake_security_date_module.zip",
+            "download_chn_alert": "",
+            "download_eng_alert": ""
+        },
+        {
             "chn_name": "修复/data/local/tmp目录",
             "eng_name": "",
             "ver": "1.0.0",
@@ -124,7 +137,7 @@
             "chn_name": "伪装CPU信息为麒麟9000s",
             "eng_name": "",
             "ver": "1.0.0",
-            "desc": "内核级伪装/proc/cpuinfo为麒麟9000s，无挂载。有的娱乐App成功欺骗，有的娱乐App会提示环境异常，请以实际测试为准。",
+            "desc": "内核级伪装/proc/cpuinfo为麒麟9000s，无挂载。有的娱乐App成功欺骗，有的娱乐App会提示环境异常。【安全提示】测试本模块时，请勿直接上大号，务必先用小号尝试！",
             "author": "SKRoot & Auto",
             "uuid": "DrAofKWAYs3XO0Js4YBzB3ecqMQVdzkH",
             "update_date": "2026-6-6",

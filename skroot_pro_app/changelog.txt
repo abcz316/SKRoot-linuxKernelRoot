@@ -1,8 +1,3 @@
-4.4.0更新内容：
-  1.
-  2.
-  3.新增偏移量接口 (跨内核)：seq_operations、kstat
-  4.新增内核API调用 (export_symbol.h)
   
 4.3.9更新内容：
   1.解决越狱残留SELinux被侦测的问题。
