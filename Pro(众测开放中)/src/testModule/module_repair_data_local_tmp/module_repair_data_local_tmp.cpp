@@ -10,6 +10,7 @@
 #include "kernel_module_kit_umbrella.h"
 
 #define DATA_LOCAL_TMP_DIR "/data/local/tmp"
+#define DATA_LOCAL_TRACES_DIR "/data/local/traces"
 #define DATA_DATA_DIR "/data/data"
 #define SAFE_INODE_RANGE 1000
 
@@ -23,7 +24,7 @@
 AOSP 代码标准的顺延逻辑
 mkdir /data/local 0751 root root
 mkdir /data/local/tmp 0771 shell shell
-mkdir /data/local/traces 0771 shell shell
+mkdir /data/local/traces 0771 shell shell <--- 以这里inode为靶，inode值减去1，即是/data/local/tmp的inode值
 mkdir /data/data 0771 system system # <--- 以这里inode为靶，inode值减去2，即是/data/local/tmp的inode值
 mkdir /data/app-private 0771 system system
 mkdir /data/app-ephemeral 0771 system system
@@ -118,9 +119,16 @@ static bool get_dir_inode(const char* dir, uint64_t& inode) {
 }
 
 static uint64_t make_target_inode_value() {
-    uint64_t ino_data_data = 0;
-    get_dir_inode(DATA_DATA_DIR, ino_data_data);
-    if(ino_data_data > 0) return ino_data_data - 2;
+    {
+        uint64_t ino = 0;
+        get_dir_inode(DATA_LOCAL_TRACES_DIR, ino);
+        if(ino > 0 && ino < SAFE_INODE_RANGE) return ino - 1;
+    }
+    {
+        uint64_t ino = 0;
+        get_dir_inode(DATA_DATA_DIR, ino);
+        if(ino > 0) return ino - 2;
+    }
     return 0;
 }
 
@@ -183,7 +191,7 @@ int skroot_module_main(const char* root_key, const char* module_private_dir) {
 // SKRoot 模块名片
 // 字段说明见 module_descriptor.h
 SKROOT_MODULE_NAME("修复/data/local/tmp目录")
-SKROOT_MODULE_VERSION("1.0.0")
+SKROOT_MODULE_VERSION("1.0.1")
 SKROOT_MODULE_DESC("如果/data/local/tmp被删除过，可用本模块进行修复，本模块是内核级修复，稳定可靠。修复inode值、权限、selinux目录标签等。")
 SKROOT_MODULE_AUTHOR("SKRoot")
 SKROOT_MODULE_ID32("o9oOZyIQPHSKmlmmh4Gt9tNZ7KMNO0vo")
