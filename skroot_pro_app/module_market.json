@@ -95,11 +95,11 @@
         {
             "chn_name": "修复/data/local/tmp目录",
             "eng_name": "",
-            "ver": "1.0.0",
+            "ver": "1.0.1",
             "desc": "如果/data/local/tmp被删除过，可用本模块进行修复，本模块是内核级修复，稳定可靠。修复inode值、权限、selinux目录标签等。",
             "author": "SKRoot",
             "uuid": "o9oOZyIQPHSKmlmmh4Gt9tNZ7KMNO0vo",
-            "update_date": "2026-6-11",
+            "update_date": "2026-6-20",
 			"ban": false,
             "source_url": "https://github.com/abcz316/SKRoot-linuxKernelRoot/tree/master/Pro(%E4%BC%97%E6%B5%8B%E5%BC%80%E6%94%BE%E4%B8%AD)/src/testModule/module_repair_data_local_tmp",
             "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_repair_data_local_tmp/module.zip",
