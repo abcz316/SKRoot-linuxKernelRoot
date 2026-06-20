@@ -4,6 +4,7 @@ const $verSpan = document.getElementById('module-version');
 const $autoThirdAppToggle = document.getElementById("toggle-auto-third-app");
 const $fixTeeToggle = document.getElementById("toggle-fix-tee");
 const $hideBootloaderToggle = document.getElementById("toggle-hide-bl");
+const $androidSecurityPatchDate = document.getElementById("android-security-patch-date");
 
 const $targetEditor = document.getElementById("target-editor");
 const $btnCopyTarget = document.getElementById("btn-copy-target");
@@ -31,6 +32,17 @@ async function loadSettings() {
 	} catch (err) {
 		console.error('读取配置失败:', err);
 		alert('读取配置失败：' + (err instanceof Error ? err.message : String(err)));
+	}
+}
+
+
+async function loadAndroidSecurityPatchDate() {
+	try {
+		const date = (await RequestApi.getAndroidSecurityPatchDate()).trim();
+		$androidSecurityPatchDate.textContent = date || "未知";
+	} catch (err) {
+		console.error('读取Android安全补丁日期失败:', err);
+		$androidSecurityPatchDate.textContent = "读取失败";
 	}
 }
 
@@ -267,6 +279,7 @@ async function initVersion() {
 async function onReady() {
 	await initVersion();
 	await loadSettings();
+	await loadAndroidSecurityPatchDate();
 	await loadTargetTxt();
 	await loadKeyboxXml();
 	await loadBootloaderScript();

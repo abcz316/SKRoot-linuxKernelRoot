@@ -9,6 +9,7 @@
 
 #include "file_utils.h"
 #include "android_packages_list_utils.h"
+#include "android_system_property_utils.h"
 #include "tricky_store_daemon.h"
 
 #define MOD_VER "1.4.1-r6"
@@ -24,6 +25,20 @@
 
 using namespace file_utils;
 using namespace android_pkgmap;
+
+static constexpr const char* k_security_patch_property_keys[] = {
+    "ro.build.version.security_patch",
+    "ro.vendor.build.security_patch",
+    "ro.system.build.version.security_patch",
+    "ro.product.build.version.security_patch",
+    "ro.system_ext.build.version.security_patch",
+    "ro.odm.build.version.security_patch",
+    "ro.odm.build.security_patch",
+    "ro.bootimage.build.version.security_patch",
+    "ro.vendor_dlkm.build.version.security_patch",
+    "ro.odm_dlkm.build.version.security_patch",
+    "ro.system_dlkm.build.version.security_patch",
+};
 
 static bool write_target_txt_applist() {
     std::unordered_map<std::string, uint32_t> packages = read_all_pkg_uids_exclude_system();
@@ -67,6 +82,14 @@ static bool get_hide_bootloader_toggle() {
 
 static bool set_hide_bootloader_toggle(bool enable) {
     return is_ok(kernel_module::write_bool_disk_storage("hide_bootloader_toggle", enable));
+}
+
+static std::string get_android_security_patch_date() {
+    for (const char* key : k_security_patch_property_keys) {
+        const std::string old_value = get_system_property(key);
+        if(!old_value.empty()) return old_value;
+    }
+    return {};
 }
 
 static std::string get_target_txt() {
@@ -174,6 +197,7 @@ public:
         else if(path == "/setFixTeeToggle") resp = set_fix_tee_toggle(body == "1") ? "OK" : "FAILED";
         else if(path == "/getHideBootloaderToggle") resp = get_hide_bootloader_toggle() ? "1" : "0";
         else if(path == "/setHideBootloaderToggle") resp = set_hide_bootloader_toggle(body == "1") ? "OK" : "FAILED";
+        else if(path == "/getAndroidSecurityPatchDate") resp = get_android_security_patch_date();
         else if(path == "/getTargetTxt") resp = get_target_txt();
         else if(path == "/setTargetTxt") resp = set_target_txt(body) ? "OK" : "FAILED";
         else if(path == "/getKeyboxXml") resp = get_keybox_xml();

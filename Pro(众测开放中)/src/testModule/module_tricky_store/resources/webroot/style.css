@@ -125,6 +125,24 @@ body {
 	line-height: 1.35;
 }
 
+/* 功能开关里的只读信息值 */
+.row-value {
+	flex-shrink: 0;
+	max-width: 150px;
+	padding: 5px 9px;
+	border-radius: 999px;
+	background: #eef2ff;
+	color: #3730a3;
+	font-family: "SF Mono", "Roboto Mono", Menlo, Consolas, monospace;
+	font-size: 12px;
+	font-weight: 600;
+	line-height: 1.2;
+	text-align: right;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
 /* iOS 风格 switch */
 .switch {
 	position: relative;

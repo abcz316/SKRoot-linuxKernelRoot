@@ -34,6 +34,11 @@
     return resp.ok ? await resp.text() : ('HTTP ' + resp.status);
   }
 
+  async function getAndroidSecurityPatchDate() {
+    const resp = await postText('/getAndroidSecurityPatchDate');
+    return resp.ok ? await resp.text() : ('HTTP ' + resp.status);
+  }
+
   async function setHideBootloaderToggle(content) {
     const resp = await postText('/setHideBootloaderToggle', content);
     return resp.ok ? await resp.text() : ('HTTP ' + resp.status);
@@ -82,6 +87,7 @@
     setFixTeeToggle,
     getHideBootloaderToggle,
     setHideBootloaderToggle,
+    getAndroidSecurityPatchDate,
     getTargetTxt,
     setTargetTxt,
     getKeyboxXml,
