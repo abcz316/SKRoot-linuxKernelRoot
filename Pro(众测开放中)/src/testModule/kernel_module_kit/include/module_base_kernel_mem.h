@@ -44,7 +44,6 @@ KModErr read_kernel_mem(uint64_t kaddr, void* buf, uint32_t size);
  *       buf            本地数据缓冲区指针
  *       size           写入长度（字节数）
  *       prot           目标区域类型：[KMP_RW 可读写区域]; [KMP_X 仅执行区域]
- * 备注: 当 prot 为 KMP_X（仅执行区域）且需要保证写入原子性时，len 必须 ≤ 4 字节。
  * 返回: OK 表示成功；其它值为错误码
  ***************************************************************************/
 KModErr write_kernel_mem(uint64_t kaddr, const void* buf, uint32_t size, KernMemProt prot = KernMemProt::KMP_RW);
