@@ -56,11 +56,17 @@ inline KModErr install_kernel_function_after_hook(uint64_t target_func_kaddr, co
     return install_kfunc_after_hook_with_buf(target_func_kaddr, handler_shellcode.data(), handler_shellcode.size(), out_hook_handle);
 }
 }
-void set_symbol_lookup_printf_d8685f89f10ca8eb96df766c8babd6c3(bool enable);
+void set_symbol_lookup_printf_silent_d8685f89f10ca8eb96df766c8babd6c3(bool enable);
+bool get_symbol_lookup_printf_silent_d8685f89f10ca8eb96df766c8babd6c3();
 
-class SymbolLookupPrintfGuard_8dfccc5cf454087c7314725d3487e703 final {
+class SymbolLookupSilentGuard_8dfccc5cf454087c7314725d3487e703 final {
 public:
-    SymbolLookupPrintfGuard_8dfccc5cf454087c7314725d3487e703() noexcept { set_symbol_lookup_printf_d8685f89f10ca8eb96df766c8babd6c3(false); }
-    ~SymbolLookupPrintfGuard_8dfccc5cf454087c7314725d3487e703() noexcept { set_symbol_lookup_printf_d8685f89f10ca8eb96df766c8babd6c3(true); }
-    DISABLE_COPY_MOVE(SymbolLookupPrintfGuard_8dfccc5cf454087c7314725d3487e703);
+    SymbolLookupSilentGuard_8dfccc5cf454087c7314725d3487e703() noexcept { 
+        active_ = get_symbol_lookup_printf_silent_d8685f89f10ca8eb96df766c8babd6c3();
+        if (active_) set_symbol_lookup_printf_silent_d8685f89f10ca8eb96df766c8babd6c3(false);
+    }
+    ~SymbolLookupSilentGuard_8dfccc5cf454087c7314725d3487e703() noexcept { if (active_) set_symbol_lookup_printf_silent_d8685f89f10ca8eb96df766c8babd6c3(true); }
+    DISABLE_COPY_MOVE(SymbolLookupSilentGuard_8dfccc5cf454087c7314725d3487e703);
+private:
+    bool active_ = false;
 };

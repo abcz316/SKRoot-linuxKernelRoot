@@ -49,6 +49,19 @@ inline KModErr install_module(const char* root_key, const char* module_zip_path,
     return err;
 }
 
+inline KModErr install_module_dev_run_once(const char* root_key, const char* module_zip_path, std::string& out_reason) {
+    thread_local std::string* tls_out = nullptr;
+    auto cb = [](const char* text) {
+        if (!tls_out) return;
+        (*tls_out) = text;
+    };
+    tls_out = &out_reason;
+    KModErr install_module_dev_run_once_with_cb(const char* root_key, const char* module_zip_path, void (*cb)(const char* reason));
+    KModErr err = install_module_dev_run_once_with_cb(root_key, module_zip_path, cb);
+    tls_out = nullptr;
+    return err;
+}
+
 inline KModErr get_su_auth_list(const char* root_key, std::vector<su_auth_item>& out_pkgs) {
     thread_local std::vector<su_auth_item>* tls_out = nullptr;
     auto cb = [](const su_auth_item* item) {

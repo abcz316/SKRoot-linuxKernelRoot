@@ -56,6 +56,14 @@ KModErr parse_module_desc_from_zip_file(const char* root_key, const char* module
 KModErr install_module(const char* root_key, const char* module_zip_path, std::string& out_reason);
 
 /***************************************************************************
+ * 开发者单次安装
+ * 说明:
+ *   将模块以“仅运行一次”模式安装，防止模块引发循环死机，避免无法开机。
+ * 注意: 模块稳定后，请使用 install_module() 正常添加。
+ ***************************************************************************/
+KModErr install_module_dev_run_once(const char* root_key, const char* module_zip_path, std::string& out_reason);
+
+/***************************************************************************
 * 卸载模块
 * 参数: root_key            ROOT权限密钥文本
 *       mod_uuid            模块UUID

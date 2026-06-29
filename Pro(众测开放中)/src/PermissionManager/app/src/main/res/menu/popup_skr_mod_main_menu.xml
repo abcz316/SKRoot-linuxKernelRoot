@@ -1,5 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android"
-    >
-    <item android:id="@+id/add_skr_mod" android:title="添加模块"/>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/add_skr_mod"
+        android:title="添加模块" />
+    <item
+        android:id="@+id/skroot_module_dev"
+        android:title="模块开发">
+        <menu>
+            <item
+                android:id="@+id/add_skr_mod_run_once"
+                android:title="单次试运行模块" />
+            <item
+                android:id="@+id/skroot_module_dev_guide"
+                android:title="了解SKRoot模块开发" />
+        </menu>
+    </item>
 </menu>

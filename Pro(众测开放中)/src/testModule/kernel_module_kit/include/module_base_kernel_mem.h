@@ -73,13 +73,13 @@ KModErr write_kernel_rw_mem_atomic32(uint64_t kaddr, uint32_t val);
 KModErr write_kernel_rw_mem_atomic64(uint64_t kaddr, uint64_t val);
 
 /***************************************************************************
- * 设置内核内存区域的保护属性
- * 参数: kaddr           内核地址（页对齐）
+ * 设置内核内存区域(页)的保护属性
+ * 参数: kaddr          内核地址
  *      size            要修改的内存大小（字节）
  *      prot            目标保护属性: MEM_PROT_RW/RO/X
  * 返回: OK 表示成功；其它值为错误码
  ***************************************************************************/
-KModErr set_kernel_memory_protection(uint64_t kaddr, uint64_t size, KernMemProt prot);
+KModErr set_kernel_mem_protection(uint64_t kaddr, uint64_t size, KernMemProt prot);
 
 /***************************************************************************
  * 获取内核虚拟基址

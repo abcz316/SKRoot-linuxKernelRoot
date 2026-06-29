@@ -18,7 +18,7 @@ public final class NativeBridge {
     public static native String getSuAuthList(String rootKey);
     public static native String clearSuAuthList(String rootKey);
 
-    public static native String installSkrootModule(String rootKey, String zipFilePath);
+    public static native String installSkrootModule(String rootKey, String zipFilePath, boolean isDevRunOnceMode);
     public static native String uninstallSkrootModule(String rootKey, String modUuid);
     public static native String getSkrootModuleList(String rootKey);
     public static native String parseSkrootModuleDesc(String rootKey, String zipFilePath);
@@ -37,5 +37,7 @@ public final class NativeBridge {
     public static native String readSkrootLog(String rootKey);
     public static native String clearSkrootLog(String rootKey);
 
+    public static native String oneplusBypassWriteStage1(String rootKey);
+    public static native boolean oneplusBypassIsWorkNormal(String rootKey);
 
 }

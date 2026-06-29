@@ -46,7 +46,7 @@ inline void emit_huawei_kti_add_ce72c7e634f27712ee84f3dd5e8e0ec9(Assembler* a, G
 	static bool inited = false;
 	if(inited && kallsyms_lookup_huawei_failed) return;
 	inited = true;
-	SymbolLookupPrintfGuard_8dfccc5cf454087c7314725d3487e703 pg;
+	SymbolLookupSilentGuard_8dfccc5cf454087c7314725d3487e703 pg;
 	uint64_t kti_randomize_init_kaddr = 0;
 	uint64_t kti_offset_kaddr = 0;
     if(is_failed(kernel_module::kallsyms_lookup_name("kti_randomize_init", kti_randomize_init_kaddr))) return;
@@ -780,7 +780,7 @@ inline KModErr virt_to_phys(uint64_t virt_kaddr, uint64_t & result) {
 }
 
 inline KModErr phys_to_virt(uint64_t phys_addr, uint64_t & result) {
-	SymbolLookupPrintfGuard_8dfccc5cf454087c7314725d3487e703 s;
+	SymbolLookupSilentGuard_8dfccc5cf454087c7314725d3487e703 s;
     uint64_t physvirt_offset = 0;
     if(is_ok(kernel_module::kallsyms_lookup_name("physvirt_offset", physvirt_offset)) && physvirt_offset) {
 		uint64_t physvirt_offset_val = 0;

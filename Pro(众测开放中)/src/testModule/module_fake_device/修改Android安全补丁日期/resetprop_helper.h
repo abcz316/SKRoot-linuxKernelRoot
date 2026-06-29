@@ -4,6 +4,7 @@
 #include <cstring>
 #include <string>
 #include "exec_cmdline_utils.h"
+#include "android_system_property_utils.h"
 
 enum class ResetPropMode {
     kTrigger,     // 普通 resetprop，可能触发 property change

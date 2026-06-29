@@ -4,15 +4,17 @@ import static com.linux.permissionmanager.AppSettings.HOTLOAD_SHELL_PATH;
 import static com.linux.permissionmanager.AppSettings.KEY_IS_HOTLOAD_MODE;
 import static com.linux.permissionmanager.helper.MagicaRootHelper.executeMagicaRootScript;
 
+import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.TextUtils;
+import android.util.TypedValue;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -38,11 +40,17 @@ import com.linux.permissionmanager.utils.GetAppListPermissionHelper;
 import com.linux.permissionmanager.utils.GetSdcardPermissionsHelper;
 import com.linux.permissionmanager.utils.ShellUtils;
 
+import org.json.JSONObject;
+
+import java.io.File;
+import java.io.FileOutputStream;
+
 public class MainActivity extends AppCompatActivity {
     private String mRootKey = "";
     private String mHotloadCmd = "";
     private String mHotloadMethod = "SHELL";
     private String mHotloadResult = "";
+    private String mOneplusBypassResult = "";
     private Dialog mLoadingDialog;
 
     private HomeFragment mHomeFragm;
@@ -64,7 +72,7 @@ public class MainActivity extends AppCompatActivity {
         mHotloadMethod = AppSettings.getString("hotloadMethod", mHotloadMethod);
         checkGetAppListPermission();
         showInputRootKeyDlg();
-        setupFragment();
+        setupFragment("");
     }
 
     private void showInputRootKeyDlg() {
@@ -106,6 +114,43 @@ public class MainActivity extends AppCompatActivity {
         return holder;
     }
 
+    private int resolveThemeColor(Context context, int attr, int fallbackColor) {
+        TypedValue outValue = new TypedValue();
+        if (!context.getTheme().resolveAttribute(attr, outValue, true)) return fallbackColor;
+        if (outValue.resourceId != 0) return context.getResources().getColor(outValue.resourceId);
+        return outValue.data;
+    }
+    private int withAlpha(int color, int alpha) { return (color & 0x00FFFFFF) | ((alpha & 0xFF) << 24); }
+
+    private TextView createMiniActionButton(Context context, String text) {
+        float density = context.getResources().getDisplayMetrics().density;
+        int primaryColor = resolveThemeColor(context, androidx.appcompat.R.attr.colorPrimary, 0xFF6200EE);
+        TextView tv = new TextView(context);
+        tv.setText(text);
+        tv.setTextSize(14);
+        tv.setTextColor(primaryColor);
+        tv.setGravity(Gravity.CENTER);
+        tv.setSingleLine(true);
+        tv.setPadding((int) (12 * density),(int) (5 * density),(int) (12 * density),(int) (5 * density));
+        tv.setMinHeight((int) (34 * density));
+        tv.setClickable(true);
+        tv.setFocusable(true);
+        android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
+        bg.setColor(0x00000000);
+        bg.setCornerRadius(7 * density);
+        bg.setStroke(Math.max(1, (int) (1 * density)), withAlpha(primaryColor, 0x66));
+        tv.setBackground(bg);
+        return tv;
+    }
+
+    private static void exportHotloadToSdcard(Activity activity, String text) {
+        File outFile = new File(HOTLOAD_SHELL_PATH);
+        FileUtils.writeTextAsync(activity, outFile, text, true, (ok, file, errMsg) -> {
+            if (ok) DialogUtils.showMsgDlg(activity, "导出成功", "已存放在：" + file.getAbsolutePath(),null);
+            else DialogUtils.showMsgDlg(activity,"导出失败", "无法导出到：" + file.getAbsolutePath() + "\n\n错误信息：" + (errMsg == null ? "unknown" : errMsg), null);
+        });
+    }
+
     private void showBootModeInputDlg() {
         int dp16 = (int) (16 * getResources().getDisplayMetrics().density);
         int dp4= (int) (4 * getResources().getDisplayMetrics().density);
@@ -135,7 +180,7 @@ public class MainActivity extends AppCompatActivity {
                     if(TextUtils.isEmpty(mRootKey)) return;
                     AppSettings.setString("rootKey", mRootKey);
                     AppSettings.setBoolean(KEY_IS_HOTLOAD_MODE, false);
-                    setupFragment();
+                    setupFragment(mRootKey);
                     switchPage(0);
                 }).create();
         modeRow.tvSwitch.setOnClickListener(v -> {
@@ -156,8 +201,12 @@ public class MainActivity extends AppCompatActivity {
         if(TextUtils.isEmpty(script)) return;
         DialogUtils.dismissDialog(mLoadingDialog);
         mLoadingDialog = DialogUtils.showLoadingDialog(this, "正在加载热启动补丁，预计需要 1 分钟…");
-        if (TextUtils.equals(method, "MAGICA")) executeMagicaRootScript(this, script, this::handleHotloadResult);
-        else new Thread(() ->handleHotloadResult(ShellUtils.executeScript(this, script))).start();
+        if (TextUtils.equals(method, "MAGICA")) {
+            executeMagicaRootScript(this, script, result -> {
+                oneplusBypassWriteStage1(true);
+                handleHotloadResult(mOneplusBypassResult + result);
+            });
+        } else new Thread(() ->handleHotloadResult(ShellUtils.executeScript(this, script))).start();
     }
 
     private boolean isSkrootChannelOK(String rootKey) { return NativeBridge.testSkrootBasics(rootKey, "Channel").contains("OK"); }
@@ -170,15 +219,32 @@ public class MainActivity extends AppCompatActivity {
                 mLoadingDialog = null;
                 if(isSkrootChannelOK(mRootKey)) {
                     DialogUtils.showMsgDlg(this, "提示","加载完成", null);
-                    setupFragment();
+                    setupFragment(mRootKey);
                     switchPage(0);
                 } else DialogUtils.showLogDialog(this, mHotloadResult, true);
             }, 3000);
         });
     }
 
+    private void oneplusBypassWriteStage1(boolean showLog) {
+        try {
+            String json = NativeBridge.getSystemStatusJson();
+            JSONObject obj = new JSONObject(json);
+            int selinux = obj.optInt("selinux", -1);
+            if (selinux != 0) return;
+            mOneplusBypassResult += NativeBridge.oneplusBypassWriteStage1(mRootKey);
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
+        if(!TextUtils.isEmpty(mOneplusBypassResult)) {
+            mOneplusBypassResult += "\n";
+            if(showLog) DialogUtils.showLogDialog(this, "一加Oppo内部接口拦截日志（仅用于异常排查）：\n" + mOneplusBypassResult, true);
+        }
+    }
+
     private void showHotloadModeInputDlg() {
         int dp16 = (int) (16 * getResources().getDisplayMetrics().density);
+        int dp6= (int) (6 * getResources().getDisplayMetrics().density);
         int dp4 = (int) (4 * getResources().getDisplayMetrics().density);
         LinearLayout rootLayout = new LinearLayout(this);
         rootLayout.setOrientation(LinearLayout.VERTICAL);
@@ -193,44 +259,59 @@ public class MainActivity extends AppCompatActivity {
         inputTxt.setFocusableInTouchMode(true);
         inputTxt.setEnabled(TextUtils.isEmpty(mHotloadCmd));
         inputTxt.setSelection(mRootKey.length());
+        LinearLayout actionRow = new LinearLayout(this);
+        actionRow.setOrientation(LinearLayout.HORIZONTAL);
+        actionRow.setPadding(0, dp16, 0, 0);
+        TextView importBtn = createMiniActionButton(this, "从 1.h 导入");
+        TextView exportBtn = createMiniActionButton(this, "导出");
+        LinearLayout.LayoutParams importLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT,LinearLayout.LayoutParams.WRAP_CONTENT);
+        importLp.setMargins(0, 0, dp6, 0);
+        LinearLayout.LayoutParams exportLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        exportLp.setMargins(dp6, 0, 0, 0);
+        actionRow.addView(importBtn, importLp);
+        actionRow.addView(exportBtn, exportLp);
         ModeRowHolder modeRow = createModeRow(this, "热启动");
         rootLayout.addView(modeRow.root);
         rootLayout.addView(tipText);
         rootLayout.addView(inputTxt);
+        rootLayout.addView(actionRow);
         final AlertDialog dialog = new AlertDialog.Builder(this)
                 .setTitle("Root 密钥配置")
                 .setIcon(android.R.drawable.ic_dialog_info)
                 .setView(rootLayout)
                 .setNegativeButton("取消", null)
-                .setNeutralButton("从1.h导入", null)
                 .setPositiveButton("确定", (d, which) -> {
                     mRootKey = inputTxt.getText().toString().trim();
                     if(TextUtils.isEmpty(mRootKey)) return;
                     AppSettings.setString("rootKey", mRootKey);
                     AppSettings.setBoolean(KEY_IS_HOTLOAD_MODE, true);
-                    setupFragment();
+                    setupFragment(mRootKey);
                     switchPage(0);
-                    if(!isSkrootChannelOK(mRootKey) && !TextUtils.isEmpty(mHotloadCmd)) {
-                        executeHotloadScript(mHotloadCmd, mHotloadMethod);
+                    if (!TextUtils.isEmpty(mHotloadCmd)) {
+                        if (!isSkrootChannelOK(mRootKey)) executeHotloadScript(mHotloadCmd, mHotloadMethod);
+                        else oneplusBypassWriteStage1(true);
                     }
                 }).create();
         modeRow.tvSwitch.setOnClickListener(v -> {
             dialog.dismiss();
             showModeSelectDlg(true, this::showBootModeInputDlg, this::showHotloadModeInputDlg);
         });
-        dialog.show();
-        dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener(v -> {
+
+        importBtn.setOnClickListener(v -> {
             if(!GetSdcardPermissionsHelper.getPermissions(this, this, this.getPackageName())) {
                 DialogUtils.showNeedPermissionDialog(this);
                 return;
             }
             String scriptText = FileUtils.readTextFile(HOTLOAD_SHELL_PATH);
-            if (TextUtils.isEmpty(scriptText)) DialogUtils.showMsgDlg(this, "错误", "读取文件失败或文件不存在", null);
+            if (TextUtils.isEmpty(scriptText)) {
+                DialogUtils.showMsgDlg(this, "错误", "读取文件失败或文件不存在", null);
+                return;
+            }
             String rootKey = extractConfigValue(scriptText, "ROOT_KEY");
             String method = extractConfigValue(scriptText, "METHOD");
             if (TextUtils.isEmpty(rootKey)) return;
             mRootKey = rootKey;
-            mHotloadMethod = method;
+            mHotloadMethod = TextUtils.isEmpty(method) ? "SHELL" : method;
             mHotloadCmd = scriptText;
             inputTxt.setText(mRootKey);
             inputTxt.setEnabled(false);
@@ -238,6 +319,16 @@ public class MainActivity extends AppCompatActivity {
             AppSettings.setString("hotloadCmd", mHotloadCmd);
             AppSettings.setString("hotloadMethod", mHotloadMethod);
         });
+
+        exportBtn.setOnClickListener(v -> {
+            if(!GetSdcardPermissionsHelper.getPermissions(this, this, this.getPackageName())) {
+                DialogUtils.showNeedPermissionDialog(this);
+                return;
+            }
+            if (!TextUtils.isEmpty(mHotloadCmd)) exportHotloadToSdcard(this, mHotloadCmd);
+        });
+        dialog.show();
+        if (!TextUtils.isEmpty(mHotloadCmd)) oneplusBypassWriteStage1(false);
     }
     
     private void checkGetAppListPermission() {
@@ -249,17 +340,17 @@ public class MainActivity extends AppCompatActivity {
                 },null, null);
     }
 
-    private void setupFragment() {
+    private void setupFragment(String rootKey) {
         mBottomTab = findViewById(R.id.bottom_tab);
         mBottomTab.removeAllTabs();
         mBottomTab.addTab(mBottomTab.newTab().setText("主页"), true);
         mBottomTab.addTab(mBottomTab.newTab().setText("授权"));
         mBottomTab.addTab(mBottomTab.newTab().setText("模块"));
         mBottomTab.addTab(mBottomTab.newTab().setText("设置"));
-        mHomeFragm = new HomeFragment(MainActivity.this, mRootKey);
-        mSuAuthFragm = new SuAuthFragment(MainActivity.this, mRootKey);
-        mSkrModFragm = new SkrModFragment(MainActivity.this, mRootKey);
-        mSettingsFragm = new SettingsFragment(MainActivity.this, mRootKey);
+        mHomeFragm = new HomeFragment(MainActivity.this, rootKey);
+        mSuAuthFragm = new SuAuthFragment(MainActivity.this, rootKey);
+        mSkrModFragm = new SkrModFragment(MainActivity.this, rootKey);
+        mSettingsFragm = new SettingsFragment(MainActivity.this, rootKey);
         switchPage(0);
         mBottomTab.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override public void onTabSelected(TabLayout.Tab tab) { switchPage(tab.getPosition()); }

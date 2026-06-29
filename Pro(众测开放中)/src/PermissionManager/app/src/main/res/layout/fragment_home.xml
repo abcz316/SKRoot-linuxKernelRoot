@@ -112,6 +112,18 @@
                     android:textSize="12sp"
                     android:textStyle="bold"
                     />
+
+                <TextView
+                    android:id="@+id/tv_oneplus_bypass_status"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="✅一加Oppo内部接口：\n已拦截"
+                    android:textColor="@color/green"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:visibility="gone"
+                    />
+
                 <View
                     android:layout_marginTop="14dp"
                     android:layout_width="match_parent"

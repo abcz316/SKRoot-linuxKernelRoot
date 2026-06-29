@@ -96,7 +96,7 @@ public class SkrModMarketPage {
     }
 
     private void onAddSkrMod(String zipFilePath) {
-        SkrModInstaller.installFromZip(mActivity, mRootKey, zipFilePath);
+        SkrModInstaller.installFromZip(mActivity, mRootKey, zipFilePath, false);
         refreshPage();
     }
 

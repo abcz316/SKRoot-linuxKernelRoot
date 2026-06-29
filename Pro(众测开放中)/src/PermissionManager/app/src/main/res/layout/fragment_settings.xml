@@ -291,11 +291,37 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:layout_marginBottom="4dp"> <TextView
-                    android:textSize="13sp"
-                    android:layout_width="wrap_content"
+                    android:layout_marginBottom="10dp">
+
+                    <TextView
+                        android:textSize="13sp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="开发指南：" />
+
+                    <TextView
+                        android:id="@+id/module_dev_guide_pdf_tv"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="13sp"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:textColor="#1E88E5"
+                        android:foreground="?attr/selectableItemBackgroundBorderless"
+                        android:text="SKRoot模块开发指南.pdf" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="官方网站：" />
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="4dp">
+                    <TextView
+                        android:textSize="13sp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="官方网站：" />
 
                     <TextView
                         android:id="@+id/link_tv"

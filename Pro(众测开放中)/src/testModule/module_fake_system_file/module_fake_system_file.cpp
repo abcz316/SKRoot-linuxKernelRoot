@@ -22,7 +22,7 @@ struct FakeFile {
         : system_file_path(std::move(target)), fake_file_path(std::move(source)) {}
 };
 
-KModErr kernel_hijack_file(const fs::path& system_file_path, const fs::path& fake_file_path) {
+static KModErr kernel_file_hijack(const fs::path& system_file_path, const fs::path& fake_file_path) {
     std::error_code ec;
     if (!fs::exists(system_file_path, ec) || ec) return KModErr::ERR_MODULE_OPEN_FILE;
     if (!fs::exists(fake_file_path, ec) || ec) return KModErr::ERR_MODULE_OPEN_FILE;
@@ -112,7 +112,7 @@ int skroot_module_main(const char* root_key, const char* module_private_dir) {
         printf("  [+] Rule Added:\n");
         printf("      Target: %s\n", item.system_file_path.c_str());
         printf("      Source: %s\n", item.fake_file_path.c_str());
-        KModErr err = kernel_hijack_file(item.system_file_path, item.fake_file_path);
+        KModErr err = kernel_file_hijack(item.system_file_path, item.fake_file_path);
         printf("      Result: [%s]\n", to_string(err).c_str());
     }
     printf("[SKRoot] All rules loaded.\n");

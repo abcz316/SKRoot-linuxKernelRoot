@@ -21,6 +21,7 @@ import com.linux.permissionmanager.R;
 import com.linux.permissionmanager.adapter.SkrModInstalledAdapter;
 import com.linux.permissionmanager.adapter.SkrModPrinter;
 import com.linux.permissionmanager.bridge.NativeBridge;
+import com.linux.permissionmanager.fragment.SettingsFragment;
 import com.linux.permissionmanager.model.SkrModInstalledItem;
 import com.linux.permissionmanager.model.SkrModRunState;
 import com.linux.permissionmanager.model.SkrModUpdateInfo;
@@ -167,8 +168,8 @@ public class SkrModInstalledPage {
         popupMenu.show();
     }
 
-    private void onAddSkrMod(String zipFilePath) {
-        SkrModInstaller.installFromZip(mActivity, mRootKey, zipFilePath);
+    private void onAddSkrMod(String zipFilePath, boolean isDevRunOnceMode) {
+        SkrModInstaller.installFromZip(mActivity, mRootKey, zipFilePath, isDevRunOnceMode);
         refreshPage();
     }
 
@@ -248,7 +249,7 @@ public class SkrModInstalledPage {
         downloader.downloadToCache(url, skrMod.getUuid() + "_" + updateInfo.getLatestVer() + ".zip", SkrModDownloader.AutoDelete.ON_BOTH,
                 new SkrModDownloader.Callback() {
                     @Override
-                    public void onSuccess(File file) { onAddSkrMod(file.getAbsolutePath()); }
+                    public void onSuccess(File file) { onAddSkrMod(file.getAbsolutePath(), false); }
                     @Override
                     public void onError(Exception e) {
                         DialogUtils.showMsgDlg(mActivity, "下载失败", e != null ? e.getMessage() : "未知错误", null);
@@ -261,24 +262,27 @@ public class SkrModInstalledPage {
         popupMenu.getMenuInflater().inflate(R.menu.popup_skr_mod_main_menu, popupMenu.getMenu());
         popupMenu.setOnMenuItemClickListener(item -> {
             int itemId = item.getItemId();
-            if (itemId == R.id.add_skr_mod) chooseFile();
+            if (itemId == R.id.add_skr_mod) chooseFile(false);
+            if (itemId == R.id.add_skr_mod_run_once) chooseFile(true);
+            if (itemId == R.id.skroot_module_dev_guide) SettingsFragment.openModuleDevGuidePdf(mActivity);
             return true;
         });
         popupMenu.show();
     }
 
-    private void chooseFile() {
+    private void chooseFile(boolean isDevRunOnceMode) {
         if(!GetSdcardPermissionsHelper.getPermissions(mActivity, mActivity, mActivity.getPackageName())) {
             DialogUtils.showNeedPermissionDialog(mActivity);
             return;
         }
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
         intent.setType("application/zip");
-        mActivity.startActivityForResult(intent, ActivityResultId.REQUEST_CODE_CHOOSE_FILE);
+        mActivity.startActivityForResult(intent, isDevRunOnceMode ? ActivityResultId.CHOOSE_FILE_INSTALL_MODULE_DEV_RUN_ONCE : ActivityResultId.CHOOSE_FILE_INSTALL_MODULE);
     }
 
     public void onChooseFileActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == ActivityResultId.REQUEST_CODE_CHOOSE_FILE && resultCode == Activity.RESULT_OK) {
+        if ((requestCode == ActivityResultId.CHOOSE_FILE_INSTALL_MODULE || requestCode == ActivityResultId.CHOOSE_FILE_INSTALL_MODULE_DEV_RUN_ONCE )
+                && resultCode == Activity.RESULT_OK) {
             Uri uri = data.getData();
             if (uri == null) return;
             String filePath = FileUtils.getPathFromUriByCopy(mActivity, uri);
@@ -286,9 +290,7 @@ public class SkrModInstalledPage {
                 Log.e("SkrModFragment", "Invalid file path or failed to copy file");
                 return;
             }
-            onAddSkrMod(filePath);
+            onAddSkrMod(filePath, requestCode == ActivityResultId.CHOOSE_FILE_INSTALL_MODULE_DEV_RUN_ONCE);
         }
     }
-
-
 }

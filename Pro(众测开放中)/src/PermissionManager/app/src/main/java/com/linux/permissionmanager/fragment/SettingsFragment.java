@@ -42,6 +42,7 @@ public class SettingsFragment extends Fragment {
     private Button mBtnShowSkrootLog;
     private Button mBtnClearSkrootLog;
     private TextView mTvAboutVer;
+    private TextView mTvModuleDevGuidePdf;
     private TextView mTvLink;
     private TextView mTvTg;
 
@@ -79,6 +80,7 @@ public class SettingsFragment extends Fragment {
         mBtnShowSkrootLog = view.findViewById(R.id.show_skroot_log_btn);
         mBtnClearSkrootLog = view.findViewById(R.id.clear_skroot_log_btn);
         mTvAboutVer = view.findViewById(R.id.about_ver_tv);
+        mTvModuleDevGuidePdf = view.findViewById(R.id.module_dev_guide_pdf_tv);
         mTvLink = view.findViewById(R.id.link_tv);
         mTvTg = view.findViewById(R.id.tg_tv);
 
@@ -127,7 +129,7 @@ public class SettingsFragment extends Fragment {
     }
 
     private void showSelectTestSkrootBasicsDlg() {
-        final String[] items = {"1.通道检查", "2.内核起始地址检查", "3.写入内存测试", "4.读取跳板测试", "5.写入跳板测试"};
+        final String[] items = {"1.通道检查", "2.内核起始地址检查", "3.写入内存测试", "4.读取跳板测试", "5.写入跳板测试", "6.物理地址计算测试"};
         AlertDialog.Builder builder = new AlertDialog.Builder(mActivity);
         builder.setTitle("请选择一个选项");
         builder.setSingleChoiceItems(items, -1, new DialogInterface.OnClickListener() {
@@ -140,6 +142,7 @@ public class SettingsFragment extends Fragment {
                 else if(which == 2) item = "WriteTest";
                 else if(which == 3) item = "ReadTrampoline";
                 else if(which == 4) item = "WriteTrampoline";
+                else if(which == 5) item = "PhysAddrCalc";
                 String log = NativeBridge.testSkrootBasics(mRootKey, item);
                 if(log.contains("ERR_MODULE_MUST_UNINSTALL")) log += "\n请先卸载 SKRoot 环境，再重试。";
                 DialogUtils.showLogDialog(mActivity, log, true);
@@ -242,11 +245,18 @@ public class SettingsFragment extends Fragment {
         mTvAboutVer.setText(sb.toString());
     }
 
+    static public void openModuleDevGuidePdf(Context ctx) {
+        String url = "https://abcz316.github.io/SKRoot-linuxKernelRoot/skroot_pro_app/module_developer_help.pdf";
+        UrlIntentUtils.openUrl(ctx, url);
+    }
+
     private void initLink() {
         mTvLink.setText("github.com/abcz316/SKRoot-linuxKernelRoot");
         mTvTg.setText("t.me/skrootabc");
+        mTvModuleDevGuidePdf.setOnClickListener(v -> openModuleDevGuidePdf(mActivity));
         mTvLink.setOnClickListener(v -> UrlIntentUtils.openUrl(mActivity, mTvLink.getText().toString()));
         mTvTg.setOnClickListener(v -> UrlIntentUtils.openUrl(mActivity, mTvTg.getText().toString()));
+        makeUnderline(mTvModuleDevGuidePdf);
         makeUnderline(mTvLink);
         makeUnderline(mTvTg);
     }

@@ -1,5 +1,6 @@
 package com.linux.permissionmanager.utils;
 
+import android.app.Activity;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
@@ -12,6 +13,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 public class FileUtils {
     public static String getPathFromUriByCopy(Context context, Uri uri) {
@@ -138,5 +142,44 @@ public class FileUtils {
             return null;
         }
         return sb.toString();
+    }
+
+    public interface WriteCallback {
+        void onResult(boolean ok, File file, String errMsg);
+    }
+    public static void writeTextAsync(Activity activity, File outFile, String text, boolean createParentDirs, WriteCallback callback) {
+        new Thread(() -> {
+            boolean ok = false;
+            String errMsg = null;
+            try {
+                if (outFile == null) {
+                    throw new IOException("outFile is null");
+                }
+                File parent = outFile.getParentFile();
+                if (createParentDirs && parent != null && !parent.exists()) {
+                    if (!parent.mkdirs() && !parent.exists()) {
+                        throw new IOException("mkdirs failed: " + parent.getAbsolutePath());
+                    }
+                }
+                try (FileOutputStream fos = new FileOutputStream(outFile, false)) {
+                    byte[] data = text == null ? new byte[0] : text.getBytes(StandardCharsets.UTF_8);
+                    fos.write(data);
+                    fos.flush();
+                }
+                ok = true;
+            } catch (Exception e) {
+                errMsg = e.getMessage();
+            }
+            final boolean finalOk = ok;
+            final String finalErrMsg = errMsg;
+            if (activity != null && callback != null) {
+                activity.runOnUiThread(() -> callback.onResult(finalOk, outFile, finalErrMsg));
+            }
+        }).start();
+    }
+
+    public static File makeSdcardLogFile(String prefix, String suffix) {
+        String time = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
+        return new File("/sdcard", prefix + time + suffix);
     }
 }

@@ -13,6 +13,7 @@
 
 #include "urlEncodeUtils.h"
 #include "sysNodeHelper.h"
+#include "oneplusDeviceDetect.h"
 #include "cJSON.h"
 
 using namespace std;
@@ -256,19 +257,23 @@ Java_com_linux_permissionmanager_bridge_NativeBridge_clearSuAuthList(
 
 extern "C" JNIEXPORT jstring JNICALL
 Java_com_linux_permissionmanager_bridge_NativeBridge_installSkrootModule(
-        JNIEnv* env, jclass /* this */, jstring rootKey, jstring zipFilePath) {
+        JNIEnv* env, jclass /* this */, jstring rootKey, jstring zipFilePath, jboolean isDevRunOnceMode) {
     string strRootKey = jstringToStr(env, rootKey);
     string strZipFilePath = jstringToStr(env, zipFilePath);
 
-    string reason;
-    KModErr err = install_module(strRootKey.c_str(), strZipFilePath.c_str(), reason);
     stringstream sstr;
-    if(is_ok(err)) sstr << "install_module: " << to_string(err).c_str();
-    else sstr << "install_module: " << to_string(err).c_str() << ", reason: " << reason.c_str();
+    string reason;
+    KModErr err = KModErr::ERR_MODULE_ASM;
+    if(isDevRunOnceMode) {
+        err = install_module_dev_run_once(strRootKey.c_str(), strZipFilePath.c_str(), reason);
+        sstr << "install_module_dev_run_once: " << to_string(err).c_str();
+    } else {
+        err = install_module(strRootKey.c_str(), strZipFilePath.c_str(), reason);
+        sstr << "install_module: " << to_string(err).c_str();
+    }
+    if(is_failed(err)) sstr << ", reason: " << reason.c_str();
     return env->NewStringUTF(sstr.str().c_str());
 }
-
-
 
 extern "C" JNIEXPORT jstring JNICALL
 Java_com_linux_permissionmanager_bridge_NativeBridge_uninstallSkrootModule(
@@ -408,6 +413,7 @@ Java_com_linux_permissionmanager_bridge_NativeBridge_testSkrootBasics(
     else if(strItem == "WriteTest") basicItem = BasicItem::WriteTest;
     else if(strItem == "ReadTrampoline") basicItem = BasicItem::ReadTrampoline;
     else if(strItem == "WriteTrampoline") basicItem = BasicItem::WriteTrampoline;
+    else if(strItem == "PhysAddrCalc") basicItem = BasicItem::PhysAddrCalc;
     else return env->NewStringUTF(strItem.c_str());
 
     stringstream sstr;
@@ -502,4 +508,23 @@ Java_com_linux_permissionmanager_bridge_NativeBridge_clearSkrootLog(
     stringstream sstr;
     sstr << "clear_skroot_log: " << to_string(err).c_str();
     return env->NewStringUTF(sstr.str().c_str());
+}
+
+KModErr oneplus_bypass_stage1_and_2(const char* root_key, void (*cb)(const char* info));
+extern "C" JNIEXPORT jstring JNICALL Java_com_linux_permissionmanager_bridge_NativeBridge_oneplusBypassWriteStage1(
+        JNIEnv* env, jclass /* this */, jstring rootKey) {
+    string strRootKey = jstringToStr(env, rootKey);
+    if(!device_detect::is_oneplus_device()) return env->NewStringUTF("not oneplus device");
+    thread_local std::string tls_result;
+    auto cb = [](const char* out_str) { tls_result = out_str; };
+    oneplus_bypass_stage1_and_2(strRootKey.c_str(), cb);
+    return env->NewStringUTF(tls_result.c_str());
+}
+
+bool oneplus_bypass_is_work_normal(const char* root_key);
+extern "C" JNIEXPORT jboolean JNICALL Java_com_linux_permissionmanager_bridge_NativeBridge_oneplusBypassIsWorkNormal(
+        JNIEnv* env, jclass /* this */, jstring rootKey) {
+    string strRootKey = jstringToStr(env, rootKey);
+    if(!device_detect::is_oneplus_device()) return false;
+    return oneplus_bypass_is_work_normal(strRootKey.c_str());
 }

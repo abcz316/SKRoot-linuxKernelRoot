@@ -38,6 +38,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
     private TextView tvSelinuxStatus;
     private TextView tvSeccompStatus;
     private TextView tvAdbStatus;
+    private TextView tvOneplusBypassStatus;
     private EditText mConsoleEdit;
     public HomeFragment(Activity activity, String rootKey) {
         mActivity = activity;
@@ -68,6 +69,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
         tvSelinuxStatus = view.findViewById(R.id.tv_selinux_status);
         tvSeccompStatus = view.findViewById(R.id.tv_seccomp_status);
         tvAdbStatus =view. findViewById(R.id.tv_adb_status);
+        tvOneplusBypassStatus =view. findViewById(R.id.tv_oneplus_bypass_status);
         mConsoleEdit = view.findViewById(R.id.console_edit);
 
         install_skroot_env_btn.setOnClickListener(this);
@@ -152,6 +154,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
             // ADB
             if (adb) setStatusText(tvAdbStatus, "Adb: 已开启", false);
             else setStatusText(tvAdbStatus, "Adb: 未开启", true);
+            if (selinux != 0 && NativeBridge.oneplusBypassIsWorkNormal(mRootKey)) tvOneplusBypassStatus.setVisibility(View.VISIBLE);
         } catch (Throwable e) {
             e.printStackTrace();
         }

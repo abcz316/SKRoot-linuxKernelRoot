@@ -156,27 +156,11 @@ public class DialogUtils {
     }
 
     private static void saveLogsToSdcard(Activity activity, String logs) {
-        String time = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
-        File outFile = new File("/sdcard", "skroot_logs_" + time + ".log");
-        new Thread(() -> {
-            boolean ok = false;
-            String errMsg = null;
-            try (FileOutputStream fos = new FileOutputStream(outFile, false)) {
-                byte[] data = logs == null ? new byte[0] : logs.getBytes("UTF-8");
-                fos.write(data);
-                fos.flush();
-                ok = true;
-            } catch (Exception e) { errMsg = e.getMessage(); }
-            final boolean finalOk = ok;
-            final String finalErrMsg = errMsg;
-            activity.runOnUiThread(() -> {
-                if (finalOk) {
-                    DialogUtils.showMsgDlg(activity, "保存成功", "日志已保存到：\n" + outFile.getAbsolutePath(),null);
-                } else {
-                    DialogUtils.showMsgDlg(activity, "保存失败", "无法保存日志到：\n" + outFile.getAbsolutePath() + "\n\n错误信息："+ (finalErrMsg == null ? "unknown" : finalErrMsg), null);
-                }
-            });
-        }).start();
+        File outFile = FileUtils.makeSdcardLogFile("skroot_logs_", ".log");
+        FileUtils.writeTextAsync(activity, outFile, logs, false, (ok, file, errMsg) -> {
+            if (ok) DialogUtils.showMsgDlg(activity,"保存成功", "日志已保存到：\n" + file.getAbsolutePath(),null);
+            else DialogUtils.showMsgDlg(activity, "保存失败", "无法保存日志到：\n" + file.getAbsolutePath() + "\n\n错误信息：" + (errMsg == null ? "unknown" : errMsg), null);
+        });
     }
 
     private static void showLogSaveSelectMenu(Activity activity, View anchor, String logs) {
