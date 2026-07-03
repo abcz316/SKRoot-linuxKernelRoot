@@ -104,7 +104,7 @@ public class SkrModMarketPage {
         String url = skrMod.getDownloadUrl();
         if (TextUtils.isEmpty(url)) return;
         SkrModDownloader downloader = new SkrModDownloader(mActivity);
-        downloader.downloadToCache(url, skrMod.getUuid() + "_" + skrMod.getVer() + ".zip", SkrModDownloader.AutoDelete.ON_BOTH,
+        downloader.downloadToCache(url, skrMod.getId32() + "_" + skrMod.getVer() + ".zip", SkrModDownloader.AutoDelete.ON_BOTH,
                 new SkrModDownloader.Callback() {
                     @Override
                     public void onSuccess(File file) { onAddSkrMod(file.getAbsolutePath()); }
@@ -211,7 +211,7 @@ public class SkrModMarketPage {
             String engName     = it.optString("eng_name", "");
             String desc        = it.optString("desc", "");
             String ver         = it.optString("ver", "");
-            String uuid        = it.optString("uuid", "");
+            String id32        = it.optString("id32", "");
             String author      = it.optString("author", "");
             String updateDate  = it.optString("update_date", "");
             boolean ban  = it.optBoolean("ban", false);
@@ -225,7 +225,7 @@ public class SkrModMarketPage {
                     engName,
                     desc,
                     ver,
-                    uuid,
+                    id32,
                     author,
                     updateDate,
                     sourceUrl,
@@ -255,7 +255,7 @@ public class SkrModMarketPage {
                 || contains(it.getEngName(), k)
                 || contains(it.getAuthor(), k)
                 || contains(it.getDesc(), k)
-                || contains(it.getUuid(), k)
+                || contains(it.getId32(), k)
                 || contains(it.getVer(), k);
     }
     

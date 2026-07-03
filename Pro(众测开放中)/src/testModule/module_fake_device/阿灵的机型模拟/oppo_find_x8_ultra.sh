@@ -31,7 +31,7 @@ check_reset_prop "ro.build.description" "PKJ110-user 15 PKJ110_15.1.1.501CN01 en
 # 构建信息
 check_reset_prop "ro.build.id" "AP3A.240617.008"
 check_reset_prop "ro.build.version.incremental" "1758264862075"
-check_reset_prop "ro.build.version.security_patch" "2025-11-05"
+#check_reset_prop "ro.build.version.security_patch" "2025-11-05"
 check_reset_prop "ro.build.display.id" "AP3A.240617.008 dev-keys"
 
 #check_reset_prop "ro.build.version.release" "15"

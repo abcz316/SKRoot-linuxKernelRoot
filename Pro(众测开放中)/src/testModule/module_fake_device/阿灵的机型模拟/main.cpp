@@ -1,20 +1,46 @@
 ﻿#include <sys/wait.h>
 #include "kernel_module_kit_umbrella.h"
 
+#define MODIFY_ANDROID_SECURE_DATE_MODID32 "nv2ZfKbBpBYxYvFqwgcGHEvQkjFjaRvS"
+
 static void android_open_url(const std::string& url) {
     std::string cmd = "am start -a android.intent.action.VIEW -d " + url;
     FILE * fp = popen(cmd.c_str(), "r");
     if(fp) pclose(fp);
 }
 
-static void run_script(const char* script) {
+extern char** environ;
+
+static void exec_script(const char* script) {
     const char* sh = "/system/bin/sh";
     char* const argv[] = {
-        (char*)sh,
-        (char*)script,
+        const_cast<char*>(sh),
+        const_cast<char*>(script),
         nullptr
     };
     execve(sh, argv, environ);
+    // execve 成功不会返回，走到这里说明失败
+    perror("execve /system/bin/sh failed");
+    _exit(127);
+}
+
+static int fork_run_script_and_wait(const char* script) {
+    pid_t pid = ::fork();
+    if (pid < 0) {
+        perror("fork failed");
+        return -1;
+    }
+    if (pid == 0) {
+        exec_script(script);
+        _exit(127); // 理论上不会走到这里，防御一下
+    }
+    int status = 0;
+    while (::waitpid(pid, &status, 0) < 0) {
+        if (errno == EINTR) continue;
+        perror("waitpid failed");
+        return -1;
+    }
+    return status;
 }
 
 // SKRoot模块入口函数
@@ -26,12 +52,23 @@ int skroot_module_main(const char* root_key, const char* module_private_dir) {
     printf("   阿灵\n");
     printf("*******************************\n");
     if(sh.empty()) return 0;
-    pid_t pid = ::fork();
-    if (pid == 0) {
-        run_script(sh.c_str());
-        _exit(127);
+    fork_run_script_and_wait(sh.c_str());
+
+    std::vector<skroot_env::module_record> mod_list;
+    if(is_ok(skroot_env::get_all_modules_list(root_key, mod_list))) {
+        bool found = false;
+        for(auto & item : mod_list) {
+            if(strcmp(item.desc.id32, MODIFY_ANDROID_SECURE_DATE_MODID32) == 0) {
+                found = true;
+                break;
+            }
+        }
+        if(!found) {
+            std::string secure_sh = sh + ".secure_date.sh";
+            fork_run_script_and_wait(secure_sh.c_str());
+            printf("run done:%s\n", secure_sh.c_str());
+        }
     }
-    int status; waitpid(pid, &status, 0);
     return 0;
 }
 
@@ -56,7 +93,7 @@ public:
 // SKRoot 模块名片
 // 字段说明见 module_descriptor.h
 SKROOT_MODULE_NAME("阿灵的机型模拟")
-SKROOT_MODULE_VERSION("5.2.5")
+SKROOT_MODULE_VERSION("5.2.6")
 SKROOT_MODULE_DESC("需要手动选择模拟机型，TG频道:@Whitelist520")
 SKROOT_MODULE_AUTHOR("阿灵")
 SKROOT_MODULE_ID32("z2rYhJP0gOTKK9lYmXS9sanxw6cIZGYD")

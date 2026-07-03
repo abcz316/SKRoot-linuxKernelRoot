@@ -117,7 +117,7 @@ public class SkrModInstalledPage {
                 String ver = URLDecoder.decode(descObj.optString("ver", ""));
                 String desc = URLDecoder.decode(descObj.optString("desc", ""));
                 String author = URLDecoder.decode(descObj.optString("author", ""));
-                String uuid = URLDecoder.decode(descObj.optString("uuid", ""));
+                String id32 = URLDecoder.decode(descObj.optString("id32", ""));
                 String updateJson = URLDecoder.decode(descObj.optString("update_json", ""));
                 boolean webUi = descObj.optBoolean("web_ui", false);
                 String minSdkVer = URLDecoder.decode(descObj.optString("min_sdk_ver", ""));
@@ -127,7 +127,7 @@ public class SkrModInstalledPage {
                         name,
                         desc,
                         ver,
-                        uuid,
+                        id32,
                         author,
                         updateJson,
                         minSdkVer,
@@ -177,7 +177,7 @@ public class SkrModInstalledPage {
         DialogUtils.showCustomDialog(mActivity, "确认", "确定要删除 " + skrMod.getName() + " 模块吗？", null, "确定",
 				(dialog, which) -> {
                     dialog.dismiss();
-                    String tip = NativeBridge.uninstallSkrootModule(mRootKey, skrMod.getUuid());
+                    String tip = NativeBridge.uninstallSkrootModule(mRootKey, skrMod.getId32());
                     if(tip.indexOf("OK") != -1) tip += "，重启后生效";
                     DialogUtils.showMsgDlg(mActivity, "执行结果", tip, null);
                     refreshPage();
@@ -192,7 +192,7 @@ public class SkrModInstalledPage {
     }
 
     private void onOpenSkrModWebUI(SkrModInstalledItem skrMod) {
-        String tip = NativeBridge.openSkrootModuleWebUI(mRootKey, skrMod.getUuid());
+        String tip = NativeBridge.openSkrootModuleWebUI(mRootKey, skrMod.getId32());
         DialogUtils.showMsgDlg(mActivity, "执行结果", tip, null);
     }
 
@@ -200,7 +200,7 @@ public class SkrModInstalledPage {
         mUpdateManager.requestModuleUpdate(
                 skrMod,
                 (item, info) -> {
-                    if (info != null) mAdapter.updateModuleUpdateInfo(item.getUuid(), info);
+                    if (info != null) mAdapter.updateModuleUpdateInfo(item.getId32(), info);
                     if (info == null || !info.isHasNewVersion()) {
                         DialogUtils.showMsgDlg(mActivity, "提示", "当前已是最新版本", null);
                         return;
@@ -227,13 +227,13 @@ public class SkrModInstalledPage {
         mUpdateManager.getAllModulesUpdateCache(
                 listAll,
                 (mod, info) -> {
-                    if (info != null && mAdapter != null) mAdapter.updateModuleUpdateInfo(mod.getUuid(), info);
+                    if (info != null && mAdapter != null) mAdapter.updateModuleUpdateInfo(mod.getId32(), info);
                 }
         );
         mUpdateManager.checkAllModulesUpdate(
                 listAll,
                 (mod, info) -> {
-                    if (info != null && mAdapter != null) mAdapter.updateModuleUpdateInfo(mod.getUuid(), info);
+                    if (info != null && mAdapter != null) mAdapter.updateModuleUpdateInfo(mod.getId32(), info);
                 },
                 (mod, e) -> Log.w("SkrMod", "check update failed: " + mod.getName(), e)
         );
@@ -246,7 +246,7 @@ public class SkrModInstalledPage {
             return;
         }
         SkrModDownloader downloader = new SkrModDownloader(mActivity);
-        downloader.downloadToCache(url, skrMod.getUuid() + "_" + updateInfo.getLatestVer() + ".zip", SkrModDownloader.AutoDelete.ON_BOTH,
+        downloader.downloadToCache(url, skrMod.getId32() + "_" + updateInfo.getLatestVer() + ".zip", SkrModDownloader.AutoDelete.ON_BOTH,
                 new SkrModDownloader.Callback() {
                     @Override
                     public void onSuccess(File file) { onAddSkrMod(file.getAbsolutePath(), false); }

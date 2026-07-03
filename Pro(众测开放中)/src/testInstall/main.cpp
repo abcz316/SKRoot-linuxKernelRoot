@@ -121,7 +121,7 @@ static void print_desc_info(const skroot_env::module_desc& desc) {
     printf("Version : %s\n", desc.version);
     printf("Desc    : %s\n", desc.desc);
     printf("Author  : %s\n", desc.author);
-    printf("UUID    : %s\n", desc.uuid);
+    printf("ID32    : %s\n", desc.id32);
     auto & sdk = desc.min_sdk_ver;
     printf("MinSDK  : %u.%u.%u\n", sdk.major, sdk.minor, sdk.patch);
 	

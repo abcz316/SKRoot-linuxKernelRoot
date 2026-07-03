@@ -100,4 +100,4 @@ check_reset_prop "ro.force.debuggable" "0"
 
 check_reset_prop "ro.com.google.clientidbase" "android-vivo"
 
-check_reset_prop "ro.build.version.security_patch" "2025-10-01"
+#check_reset_prop "ro.build.version.security_patch" "2025-10-01"

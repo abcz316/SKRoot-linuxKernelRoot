@@ -10,7 +10,7 @@ import com.linux.permissionmanager.model.SkrModUpdateInfo;
 import java.util.function.BiConsumer;
 
 public class SkrModUpdateCache {
-    private static String getModuleUpdateKey(SkrModInstalledItem item) { return "module_update_" + item.getUuid(); }
+    private static String getModuleUpdateKey(SkrModInstalledItem item) { return "module_update_" + item.getId32(); }
 
     public static SkrModUpdateInfo getModuleUpdateResponseCache(SkrModInstalledItem item) {
         if (item == null) return null;

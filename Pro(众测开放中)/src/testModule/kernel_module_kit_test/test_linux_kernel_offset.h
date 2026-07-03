@@ -372,11 +372,20 @@ KModErr Test_get_inode_i_bdev_offset() {
     return KModErr::OK;
 }
 
-KModErr Test_get_inode_operations_permission_offset() {
+KModErr Test_get_inode_operations_offset() {
     REQUIRE_ROOT_OR_RETURN();
     uint32_t offset = 0;
+    RETURN_IF_ERROR(kernel_module::get_inode_operations_lookup_offset(offset));
+    printf("Output lookup offset: 0x%x\n", offset);
+    offset = 0;
     RETURN_IF_ERROR(kernel_module::get_inode_operations_permission_offset(offset));
-    printf("Output offset: 0x%x\n", offset);
+    printf("Output permission offset: 0x%x\n", offset);
+    offset = 0;
+    RETURN_IF_ERROR(kernel_module::get_inode_operations_getattr_offset(offset));
+    printf("Output getattr offset: 0x%x\n", offset);
+    offset = 0;
+    RETURN_IF_ERROR(kernel_module::get_inode_operations_setattr_offset(offset));
+    printf("Output setattr offset: 0x%x\n", offset);
     return KModErr::OK;
 }
 
@@ -410,20 +419,41 @@ KModErr Test_get_proc_ops_offsets() {
     return KModErr::OK;
 }
 
-KModErr Test_get_file_operations_offsets() {
+KModErr Test_get_file_operations_offset() {
     REQUIRE_ROOT_OR_RETURN();
-    kernel_module::file_operations_offsets offsets;
-    RETURN_IF_ERROR(kernel_module::get_file_operations_offsets(offsets));
-    printf("Output llseek_offset: 0x%x\n", offsets.llseek_offset);
-    printf("Output read_offset: 0x%x\n", offsets.read_offset);
-    printf("Output write_offset: 0x%x\n", offsets.write_offset);
-    printf("Output read_iter_offset: 0x%x\n", offsets.read_iter_offset);
-    printf("Output write_iter_offset: 0x%x\n", offsets.write_iter_offset);
-    printf("Output poll_offset: 0x%x\n", offsets.poll_offset);
-    printf("Output unlocked_ioctl_offset: 0x%x\n", offsets.unlocked_ioctl_offset);
-    printf("Output mmap_offset: 0x%x\n", offsets.mmap_offset);
-    printf("Output open_offset: 0x%x\n", offsets.open_offset);
-    printf("Output release_offset: 0x%x\n", offsets.release_offset);
+    uint32_t offset = 0;
+    RETURN_IF_ERROR(kernel_module::get_file_operations_llseek_offset(offset));
+    printf("Output llseek offset: 0x%x\n", offset);
+    offset = 0;
+    RETURN_IF_ERROR(kernel_module::get_file_operations_read_offset(offset));
+    printf("Output read offset: 0x%x\n", offset);
+    offset = 0;
+    RETURN_IF_ERROR(kernel_module::get_file_operations_write_offset(offset));
+    printf("Output write offset: 0x%x\n", offset);
+    offset = 0;
+    RETURN_IF_ERROR(kernel_module::get_file_operations_read_iter_offset(offset));
+    printf("Output read_iter offset: 0x%x\n", offset);
+    offset = 0;
+    RETURN_IF_ERROR(kernel_module::get_file_operations_write_iter_offset(offset));
+    printf("Output write_iter offset: 0x%x\n", offset);
+    offset = 0;
+    RETURN_IF_ERROR(kernel_module::get_file_operations_iterate_shared_offset(offset));
+    printf("Output iterate_shared offset: 0x%x\n", offset);
+    offset = 0;
+    RETURN_IF_ERROR(kernel_module::get_file_operations_unlocked_ioctl_offset(offset));
+    printf("Output unlocked_ioctl offset: 0x%x\n", offset);
+    offset = 0;
+    RETURN_IF_ERROR(kernel_module::get_file_operations_mmap_offset(offset));
+    printf("Output mmap offset: 0x%x\n", offset);
+    offset = 0;
+    RETURN_IF_ERROR(kernel_module::get_file_operations_poll_offset(offset));
+    printf("Output poll offset: 0x%x\n", offset);
+    offset = 0;
+    RETURN_IF_ERROR(kernel_module::get_file_operations_open_offset(offset));
+    printf("Output open offset: 0x%x\n", offset);
+    offset = 0;
+    RETURN_IF_ERROR(kernel_module::get_file_operations_release_offset(offset));
+    printf("Output release offset: 0x%x\n", offset);
     return KModErr::OK;
 }
 
@@ -522,6 +552,14 @@ KModErr Test_get_seq_operations_show_offset() {
     REQUIRE_ROOT_OR_RETURN();
     uint32_t offset = 0;
     RETURN_IF_ERROR(kernel_module::get_seq_operations_show_offset(offset));
+    printf("Output offset: 0x%x\n", offset);
+    return KModErr::OK;
+}
+
+KModErr Test_get_kstat_ino_offset() {
+    REQUIRE_ROOT_OR_RETURN();
+    uint32_t offset = 0;
+    RETURN_IF_ERROR(kernel_module::get_kstat_ino_offset(offset));
     printf("Output offset: 0x%x\n", offset);
     return KModErr::OK;
 }

@@ -5,7 +5,7 @@ public class SkrModMarketItem {
     private String engName;
     private String desc;
     private String ver;
-    private String uuid;
+    private String id32;
     private String author;
     private String updateDate;
     private String sourceUrl;
@@ -45,12 +45,12 @@ public class SkrModMarketItem {
         this.ver = ver;
     }
 
-    public String getUuid() {
-        return uuid;
+    public String getId32() {
+        return id32;
     }
 
-    public void setUuid(String uuid) {
-        this.uuid = uuid;
+    public void setId32(String uuid) {
+        this.id32 = uuid;
     }
 
     public String getAuthor() {
@@ -101,12 +101,12 @@ public class SkrModMarketItem {
         this.downloadEngAlert = downloadEngAlert;
     }
 
-    public SkrModMarketItem(String chnName, String engName, String desc, String ver, String uuid, String author, String updateDate, String sourceUrl, String downloadUrl, String downloadChnAlert, String downloadEngAlert) {
+    public SkrModMarketItem(String chnName, String engName, String desc, String ver, String id32, String author, String updateDate, String sourceUrl, String downloadUrl, String downloadChnAlert, String downloadEngAlert) {
         this.chnName = chnName;
         this.engName = engName;
         this.desc = desc;
         this.ver = ver;
-        this.uuid = uuid;
+        this.id32 = id32;
         this.author = author;
         this.updateDate = updateDate;
         this.sourceUrl = sourceUrl;

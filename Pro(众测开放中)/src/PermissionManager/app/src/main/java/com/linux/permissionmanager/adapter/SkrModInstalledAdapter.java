@@ -89,11 +89,11 @@ public class SkrModInstalledAdapter extends RecyclerView.Adapter<SkrModInstalled
         });
     }
 
-    public void updateModuleUpdateInfo(String uuid, SkrModUpdateInfo updateInfo) {
-        if (uuid == null) return;
+    public void updateModuleUpdateInfo(String id32, SkrModUpdateInfo updateInfo) {
+        if (id32 == null) return;
         for (int i = 0; i < skrmods.size(); i++) {
             SkrModInstalledItem item = skrmods.get(i);
-            if (uuid.equals(item.getUuid())) {
+            if (id32.equals(item.getId32())) {
                 item.setUpdateInfo(updateInfo);
                 notifyItemChanged(i);
                 break;

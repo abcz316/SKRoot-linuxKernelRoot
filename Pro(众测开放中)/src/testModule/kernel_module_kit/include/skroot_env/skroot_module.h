@@ -10,7 +10,7 @@ struct module_desc {
     char version[1024] = {0};           // SKRoot 模块版本
     char desc[4096] = {0};              // SKRoot 模块描述信息
     char author[1024] = {0};            // SKRoot 模块作者
-    char uuid[1024] = {0};              // SKRoot 模块UUID
+    char id32[1024] = {0};              // SKRoot 模块唯一身份ID32
     char update_json[1024] = {0};       // SKRoot 更新信息
     bool web_ui = false;
     SkrootSdkVersion min_sdk_ver = {0};
@@ -66,9 +66,9 @@ KModErr install_module_dev_run_once(const char* root_key, const char* module_zip
 /***************************************************************************
 * 卸载模块
 * 参数: root_key            ROOT权限密钥文本
-*       mod_uuid            模块UUID
+*       mod_id32            模块唯一身份ID32
 *       module_argv         需要传递的模块参数
 * 返回: OK     表示调用成功；其他值为错误码
 ***************************************************************************/
-KModErr uninstall_module(const char* root_key, const char* mod_uuid);
+KModErr uninstall_module(const char* root_key, const char* mod_id32);
 } // namespace skroot_env

@@ -30,7 +30,7 @@ check_reset_prop "ro.build.description" "qssi_64-user 15 AQ3A.240812.002 2025073
 # 构建信息
 check_reset_prop "ro.build.id" "AQ3A.240812.002"
 check_reset_prop "ro.build.version.incremental" "20250730.005045"
-check_reset_prop "ro.build.version.security_patch" "2025-06-01"
+#check_reset_prop "ro.build.version.security_patch" "2025-06-01"
 check_reset_prop "ro.build.display.id" "RedMagicOS10.5.19_NP05J"
 
 #check_reset_prop "ro.build.version.release" "15"

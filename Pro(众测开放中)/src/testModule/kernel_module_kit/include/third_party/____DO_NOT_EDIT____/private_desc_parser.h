@@ -33,7 +33,7 @@ inline char skroot_module_name_5d1745f8a8fb4814fb0dbb5aab27bbca[1024] = {0};
         if(strlen(skroot_module_ver_61432c728da7c34d7fd698461a36a421) == 0) printf("");  \
         if(strlen(skroot_module_desc_c658b5f0a346f94d52b96379fc26b0c4) == 0) printf(""); \
         if(strlen(skroot_module_author_857d43a4f1978f830f6a2dc91d840338) == 0) printf(""); \
-        if(strlen(skroot_module_uuid_927fa0e9f491cdcbd07e8a647f09e1e2) == 0) printf(""); \
+        if(strlen(skroot_module_id32_927fa0e9f491cdcbd07e8a647f09e1e2) == 0) printf(""); \
         if(strlen(skroot_module_update_json_7310fa0a06d95799b3f9beaf60e26e85) == 0) printf(""); \
         extern void __compile_save_min_support_sdk_ver(void); \
         __compile_save_min_support_sdk_ver(); \
@@ -66,20 +66,20 @@ inline char skroot_module_author_857d43a4f1978f830f6a2dc91d840338[1024] = {0};
         strncpy(skroot_module_author_857d43a4f1978f830f6a2dc91d840338, ___MOD_AUTHOR_TAG_BEGIN val ___MOD_AUTHOR_TAG_END, sizeof(skroot_module_author_857d43a4f1978f830f6a2dc91d840338) - 1); \
     };
     
-inline char skroot_module_uuid_927fa0e9f491cdcbd07e8a647f09e1e2[1024] = {0};
+inline char skroot_module_id32_927fa0e9f491cdcbd07e8a647f09e1e2[1024] = {0};
 #define __INJECT_SKROOT_MODULE_ID32 inject_skroot_module_uuid32_e4c143955f2eb7eebe1d71130f428f7a
 #define ___MOD_ID32_TAG_BEGIN  "b33dcddd88c07d079a8e0e9ec6ab976f15f2edba46cab91a61234cfbb982111c"
 #define ___MOD_ID32_TAG_END    "3020d9a6c07a30e2649dd29a72d7e57121f0c0ca457b6d21dca5a69acbe6c2c4"
 #define ___MOD_ID32(val) \
     template <std::size_t N> \
-    consteval void uuid32_check_bd8a9bbb16b9b755b96a9f2bc0114e13(const char (&s)[N]) { \
+    consteval void id32_check_bd8a9bbb16b9b755b96a9f2bc0114e13(const char (&s)[N]) { \
         static_assert(N == 33, "SKROOT_MODULE_ID32: 长度必须为32个字符"); \
     } \
     extern "C" __attribute__((visibility("default"))) __attribute__((used, weak)) void __INJECT_SKROOT_MODULE_ID32() { \
-        uuid32_check_bd8a9bbb16b9b755b96a9f2bc0114e13(val); \
-        strncpy(skroot_module_uuid_927fa0e9f491cdcbd07e8a647f09e1e2, ___MOD_ID32_TAG_BEGIN val ___MOD_ID32_TAG_END, sizeof(skroot_module_uuid_927fa0e9f491cdcbd07e8a647f09e1e2) - 1); \
-        extern void __set_current_module_uuid32_1b0494ae8a788541db46b82cc1f0577c(const char*); \
-        __set_current_module_uuid32_1b0494ae8a788541db46b82cc1f0577c(val); \
+        id32_check_bd8a9bbb16b9b755b96a9f2bc0114e13(val); \
+        strncpy(skroot_module_id32_927fa0e9f491cdcbd07e8a647f09e1e2, ___MOD_ID32_TAG_BEGIN val ___MOD_ID32_TAG_END, sizeof(skroot_module_id32_927fa0e9f491cdcbd07e8a647f09e1e2) - 1); \
+        extern void __set_current_module_id32_1b0494ae8a788541db46b82cc1f0577c(const char*); \
+        __set_current_module_id32_1b0494ae8a788541db46b82cc1f0577c(val); \
     }; \
     extern "C" void Error_Missing_SKRoot_Module_ID32__Please_define_SKROOT_MODULE_ID32() { \
         __INJECT_SKROOT_MODULE_ID32(); \
@@ -150,10 +150,10 @@ inline char skroot_module_on_uninstall_enable_flag_ngln4z5zaku6lil4vrz2jtpoecb64
 #define ____INTERNEL_SKROOT_MODULE_WEB_UI_MAIN __skroot_module_web_ui_main_ceb6f0bbebe5c8978eb2168799aa0ca4
 #define ____INTERNEL_SKROOT_MODULE_LAST_WEB_UI_SERVER_PORT __skroot_module_last_web_ui_server_port_db2a2bebe2b190482ad0ac73996c7b86
 #define ____INTERNEL_SKROOT_MODULE_BEFORE_SERVER_EXIT_ACTION __skroot_module_before_server_exit_action_81a98535f12c96a0b3e457727705e44c
-extern "C" __attribute__((visibility("default"))) __attribute__((used, weak)) void ____INTERNEL_SKROOT_MODULE_WEB_UI_MAIN(const char* root_key, const char* module_private_dir, const char* module_webroot_dir, const char* mod_uuid, int port, KModErr& err) {
+extern "C" __attribute__((visibility("default"))) __attribute__((used, weak)) void ____INTERNEL_SKROOT_MODULE_WEB_UI_MAIN(const char* root_key, const char* module_private_dir, const char* module_webroot_dir, const char* mod_id32, int port, KModErr& err) {
     if(strlen(skroot_web_ui_enable_flag_e0c73f6473a0e653be67875a3cf23a53) == 0) printf("");
-    KModErr unsafe_module_start_web_ui_server(const char* root_key, const char* module_private_dir, const char* module_webroot_dir, const char* mod_uuid, kernel_module::WebUIHttpHandler* handler, int port);
-    err = unsafe_module_start_web_ui_server(root_key, module_private_dir, module_webroot_dir, mod_uuid, skroot_web_ui_handler_6f9d89cc84c2ea1bf7364fc1afda99b5, port);
+    KModErr unsafe_module_start_web_ui_server(const char* root_key, const char* module_private_dir, const char* module_webroot_dir, const char* mod_id32, kernel_module::WebUIHttpHandler* handler, int port);
+    err = unsafe_module_start_web_ui_server(root_key, module_private_dir, module_webroot_dir, mod_id32, skroot_web_ui_handler_6f9d89cc84c2ea1bf7364fc1afda99b5, port);
 }
 
 extern "C" __attribute__((visibility("default"))) __attribute__((used, weak)) void ____INTERNEL_SKROOT_MODULE_LAST_WEB_UI_SERVER_PORT(int& out_port, KModErr& err) {
@@ -172,8 +172,8 @@ extern "C" __attribute__((visibility("default"))) __attribute__((used, weak)) vo
     extern "C" int fake_skroot_module_main(const char* root_key) {
         extern void __set_current_module_root_key_hd04aBTnbSZlTRP7S4mQpIeVvr2ssGjW(const char*);
         __set_current_module_root_key_hd04aBTnbSZlTRP7S4mQpIeVvr2ssGjW(root_key);
-        extern void __set_current_module_uuid32_1b0494ae8a788541db46b82cc1f0577c(const char*);
-        __set_current_module_uuid32_1b0494ae8a788541db46b82cc1f0577c("u5BcRRTUwMqU6A6iLkG90jTEq8EXShrE");
+        extern void __set_current_module_id32_1b0494ae8a788541db46b82cc1f0577c(const char*);
+        __set_current_module_id32_1b0494ae8a788541db46b82cc1f0577c("u5BcRRTUwMqU6A6iLkG90jTEq8EXShrE");
         return 0;
     }
 #endif

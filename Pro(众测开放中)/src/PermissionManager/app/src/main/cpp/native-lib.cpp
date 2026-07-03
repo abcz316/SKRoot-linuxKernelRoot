@@ -13,7 +13,7 @@
 
 #include "urlEncodeUtils.h"
 #include "sysNodeHelper.h"
-#include "oneplusDeviceDetect.h"
+#include "oplusDeviceDetect.h"
 #include "cJSON.h"
 
 using namespace std;
@@ -47,7 +47,7 @@ static cJSON * moduleDescToJsonObj(module_desc & desc) {
     string encodeVer = urlEncodeToStr(desc.version);
     string encodeDesc = urlEncodeToStr(desc.desc);
     string encodeAuthor = urlEncodeToStr(desc.author);
-    string encodeUuid = urlEncodeToStr(desc.uuid);
+    string encodeId32 = urlEncodeToStr(desc.id32);
     string encodeUpdateJson = urlEncodeToStr(desc.update_json);
     stringstream ss;
     ss << desc.min_sdk_ver.major << "." << desc.min_sdk_ver.minor << "." << desc.min_sdk_ver.patch;
@@ -56,7 +56,7 @@ static cJSON * moduleDescToJsonObj(module_desc & desc) {
     cJSON_AddStringToObject(item, "ver", encodeVer.c_str());
     cJSON_AddStringToObject(item, "desc", encodeDesc.c_str());
     cJSON_AddStringToObject(item, "author", encodeAuthor.c_str());
-    cJSON_AddStringToObject(item, "uuid", encodeUuid.c_str());
+    cJSON_AddStringToObject(item, "id32", encodeId32.c_str());
     cJSON_AddStringToObject(item, "update_json", encodeUpdateJson.c_str());
     cJSON_AddBoolToObject(item, "web_ui", desc.web_ui);
     cJSON_AddStringToObject(item, "min_sdk_ver", encodeMiniSDK.c_str());
@@ -514,7 +514,7 @@ KModErr oneplus_bypass_stage1_and_2(const char* root_key, void (*cb)(const char*
 extern "C" JNIEXPORT jstring JNICALL Java_com_linux_permissionmanager_bridge_NativeBridge_oneplusBypassWriteStage1(
         JNIEnv* env, jclass /* this */, jstring rootKey) {
     string strRootKey = jstringToStr(env, rootKey);
-    if(!device_detect::is_oneplus_device()) return env->NewStringUTF("not oneplus device");
+    if(!device_detect::is_oplus_device()) return env->NewStringUTF("not oplus device");
     thread_local std::string tls_result;
     auto cb = [](const char* out_str) { tls_result = out_str; };
     oneplus_bypass_stage1_and_2(strRootKey.c_str(), cb);
@@ -525,6 +525,6 @@ bool oneplus_bypass_is_work_normal(const char* root_key);
 extern "C" JNIEXPORT jboolean JNICALL Java_com_linux_permissionmanager_bridge_NativeBridge_oneplusBypassIsWorkNormal(
         JNIEnv* env, jclass /* this */, jstring rootKey) {
     string strRootKey = jstringToStr(env, rootKey);
-    if(!device_detect::is_oneplus_device()) return false;
+    if(!device_detect::is_oplus_device()) return false;
     return oneplus_bypass_is_work_normal(strRootKey.c_str());
 }

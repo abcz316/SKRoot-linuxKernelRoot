@@ -6,7 +6,7 @@ public class SkrModInstalledItem {
     private String name;
     private String desc;
     private String ver;
-    private String uuid;
+    private String id32;
     private String author;
     private String updateJson;
     private String miniSdk;
@@ -18,7 +18,7 @@ public class SkrModInstalledItem {
     public SkrModInstalledItem(String name,
                                String desc,
                                String ver,
-                               String uuid,
+                               String id32,
                                String author,
                                String updateJson,
                                String miniSdk,
@@ -27,7 +27,7 @@ public class SkrModInstalledItem {
         this.name = name;
         this.desc = desc;
         this.ver = ver;
-        this.uuid = uuid;
+        this.id32 = id32;
         this.author = author;
         this.updateJson = updateJson;
         this.miniSdk = miniSdk;
@@ -60,12 +60,12 @@ public class SkrModInstalledItem {
         this.ver = ver;
     }
 
-    public String getUuid() {
-        return uuid;
+    public String getId32() {
+        return id32;
     }
 
-    public void setUuid(String uuid) {
-        this.uuid = uuid;
+    public void setId32(String id32) {
+        this.id32 = id32;
     }
 
     public String getAuthor() {

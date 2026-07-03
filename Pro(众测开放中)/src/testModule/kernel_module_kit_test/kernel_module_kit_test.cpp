@@ -127,7 +127,7 @@ KModErr Test_disk_storage() {
 	return KModErr::OK;
 }
 
-std::vector<uint8_t> generate_filename_lookup_before_hook_bytes() {
+std::vector<uint8_t> make_filename_lookup_before_hook_bytes() {
 	KModErr err = KModErr::OK;
 	aarch64_asm_ctx asm_ctx = init_aarch64_asm();
 	auto a = asm_ctx.assembler();
@@ -145,13 +145,13 @@ KModErr Test_install_kernel_function_before_hook() {
 	RETURN_IF_ERROR(kernel_module::kallsyms_lookup_name("filename_lookup", SymbolMatchMode::Prefix, hit));
 	printf("%s, Output addr: %p\n", hit.name, (void*)hit.addr);
 
-	std::vector<uint8_t> my_func_bytes = generate_filename_lookup_before_hook_bytes();
+	std::vector<uint8_t> my_func_bytes = make_filename_lookup_before_hook_bytes();
 	KModErr err = kernel_module::install_kernel_function_before_hook(hit.addr, my_func_bytes);
 	printf("install_kernel_function_before_hook return: %s\n", to_string(err).c_str());
 	return err;
 }
 
-std::vector<uint8_t> generate_avc_denied_after_hook_bytes() {
+std::vector<uint8_t> make_avc_denied_after_hook_bytes() {
 	aarch64_asm_ctx asm_ctx = init_aarch64_asm();
 	auto a = asm_ctx.assembler();
 	kernel_module::arm64_after_hook_start(a);
@@ -165,7 +165,7 @@ KModErr Test_install_kernel_function_after_hook() {
 	RETURN_IF_ERROR(kernel_module::get_avc_denied_kaddr(avc_denied_addr, ret_addr));
 	printf("get_avc_denied_kaddr Output start addr: %p, ret addr: %p\n", (void*)avc_denied_addr, (void*)ret_addr);
 
-	std::vector<uint8_t> my_func_bytes = generate_avc_denied_after_hook_bytes();
+	std::vector<uint8_t> my_func_bytes = make_avc_denied_after_hook_bytes();
 	KModErr err = kernel_module::install_kernel_function_after_hook(avc_denied_addr, my_func_bytes);
 	printf("install_kernel_function_after_hook return: %s\n", to_string(err).c_str());
 	return err;
@@ -173,7 +173,7 @@ KModErr Test_install_kernel_function_after_hook() {
 
 int main(int argc, char *argv[]) {
  	//TODO: 在此修改你的Root key值。
-	fake_skroot_module_main("zDw14U77idQNQVIpgNe3unWkevmLZIzXBZFnEAVkugLuBCuw");
+	fake_skroot_module_main("txEO2by4A0auZpUxL7Cji2aMR9olMylmoEyNLkoTaqYvuECE");
 
  	// 单元测试：内核模块基础能力
 	int idx = 1;
@@ -256,11 +256,11 @@ int main(int argc, char *argv[]) {
 	TEST(idx++, Test_get_inode_time_offset);				// 获取 inode 结构体中 i_atime/i_mtime/i_ctime 字段的偏移量
 	TEST(idx++, Test_get_inode_i_state_offset);				// 获取 inode 结构体中 i_state 字段的偏移量
 	TEST(idx++, Test_get_inode_i_bdev_offset);				// 获取 inode 结构体中 i_bdev 字段的偏移量
-	TEST(idx++, Test_get_inode_operations_permission_offset);// 获取 inode_operations 结构体中 permission 字段的偏移量
+	TEST(idx++, Test_get_inode_operations_offset);			// 获取 inode_operations 结构体中的各个偏移量
 	TEST(idx++, Test_get_super_block_s_dev_offset);			// 获取 super_block 结构体中 s_dev 字段的偏移量
 	TEST(idx++, Test_get_super_block_s_uuid_offset);		// 获取 super_block 结构体中 s_uuid 字段的偏移量
 	TEST(idx++, Test_get_proc_ops_offsets);					// 获取 proc_ops 结构体的偏移量
-	TEST(idx++, Test_get_file_operations_offsets);			// 获取 file_operations 结构体的偏移量
+	TEST(idx++, Test_get_file_operations_offset);			// 获取 file_operations 结构体中的各个偏移量
 	TEST(idx++, Test_get_miscdevice_offsets);				// 获取 miscdevice 结构体的偏移量
 	TEST(idx++, Test_get_seq_file_buf_offset);				// 获取 seq_file 结构体中 buf 字段的偏移量
 	TEST(idx++, Test_get_seq_file_size_offset);				// 获取 seq_file 结构体中 size 字段的偏移量
@@ -273,6 +273,7 @@ int main(int argc, char *argv[]) {
 	TEST(idx++, Test_get_gendisk_part0_offset1);			// 获取 gendisk 结构体中 part0 字段的偏移量
 	TEST(idx++, Test_get_gendisk_part0_offset2);			// 获取 gendisk 结构体中 part0 字段的偏移量
 	TEST(idx++, Test_get_seq_operations_show_offset);		// 获取 seq_operations 结构体中 show 字段的偏移量
+	TEST(idx++, Test_get_kstat_ino_offset);					// 获取 kstat 结构体中 ino 字段的偏移量
  	TEST(idx++, Test_set_current_caps);						// 设置进程能力集
  	TEST(idx++, Test_set_current_process_name);				// 设置进程名
 

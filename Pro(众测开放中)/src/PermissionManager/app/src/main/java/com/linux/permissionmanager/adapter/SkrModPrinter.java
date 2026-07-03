@@ -12,7 +12,7 @@ public final class SkrModPrinter {
         sb.append("版本：").append(nvl(m.getVer())).append('\n');
         sb.append("描述：").append(nvl(m.getDesc())).append('\n');
         sb.append("作者：").append(nvl(m.getAuthor())).append('\n');
-        sb.append("UUID：").append(nvl(m.getUuid())).append('\n');
+        sb.append("ID32：").append(nvl(m.getId32())).append('\n');
         sb.append("最低SDK要求：").append(nvl(m.getMiniSdk())).append('\n');
 
         boolean onlineUpdate = !TextUtils.isEmpty(m.getUpdateJson());
