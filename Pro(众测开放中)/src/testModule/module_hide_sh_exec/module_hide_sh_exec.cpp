@@ -8,8 +8,12 @@
 #include <sys/stat.h>
 #include <sys/statvfs.h>
 #include <sys/xattr.h>
+#include <unistd.h>
+#include <signal.h>
+#include <time.h>
 #include <cerrno>
 #include <cstring>
+#include <vector>
 
 #include "kernel_module_kit_umbrella.h"
 
@@ -62,8 +66,18 @@ static std::string read_quick_actions_json() {
     return json;
 }
 
-static void create_work_dir(const char* module_private_dir) {
-    fs::path work_dir = fs::path(module_private_dir) / WORK_DIR_NAME;
+static void write_terminal_keep_mode(bool enabled) {
+    kernel_module::write_bool_disk_storage("terminal_keep_mode", enabled);
+}
+
+static bool read_terminal_keep_mode() {
+    bool enabled = false;
+    kernel_module::read_bool_disk_storage("terminal_keep_mode", enabled);
+    return enabled;
+}
+
+static void create_work_dir(const char* module_private_dir, const char* work_dir_name) {
+    fs::path work_dir = fs::path(module_private_dir) / work_dir_name;
     std::error_code ec;
     fs::create_directories(work_dir, ec);
     ::chmod(work_dir.c_str(), 0777);
@@ -73,7 +87,7 @@ static void create_work_dir(const char* module_private_dir) {
 
 std::string module_on_install(const char* root_key, const char* module_private_dir) {
     add_quick_actions({"getenforce", "ls /", "id"});
-    create_work_dir(module_private_dir);
+    create_work_dir(module_private_dir, WORK_DIR_NAME);
     return "";
 }
 
@@ -91,17 +105,39 @@ static void wait_parent_exit(const std::string& root_key, pid_t ppid) {
     }
 }
 
+
 // WebUI HTTP服务器回调函数
 class MyWebHttpHandler : public kernel_module::WebUIHttpHandler {
 public:
     void onPrepareCreate(const char* root_key, const char* module_private_dir, uint32_t port) override {
         m_root_key = root_key;
+
         m_hide_dir = (fs::path(module_private_dir) / WORK_DIR_NAME).string();
-        m_su_interactive.start();
-        fork_sh_process_daemon();
-        m_idle_killer.start(std::chrono::seconds(20), [this] {
+        m_keep_terminal = read_terminal_keep_mode();
+        m_su_interactive.start(module_private_dir);
+        if (!m_keep_terminal) {
+            fork_sh_process_daemon();
+        }
+        m_idle_killer.start(std::chrono::seconds(20), [this]() -> bool {
+            if (m_keep_terminal) {
+                if (!m_su_interactive.isShellForeground()) {
+                    // 当前 shell 不在前台，说明可能有用户后台程序在跑。
+                    // 这次不杀，IdleKiller 继续监控。
+                    return false;
+                }
+                printf("[module_hide_sh_exec] shell foreground, idle kill!\n");
+            } else {
+                printf("[module_hide_sh_exec] idle kill!\n");
+            }
+            if (m_server) m_server->close();
+            m_su_interactive.stop(true);
             _exit(0);
+            return true;
         });
+    }
+
+    void onServerCreated(CivetServer* server) override {
+        m_server = server;
     }
 
     bool handlePost(CivetServer* server, struct mg_connection* conn, const std::string& path, const std::string& body) override {
@@ -116,6 +152,8 @@ public:
         else if(path == "/getHideDir") resp = handle_get_hide_dir();
         else if(path == "/checkFileType") resp = handle_check_file_type(body);
         else if(path == "/checkExecMount") resp = handle_check_exec_mount(body);
+        else if(path == "/getTerminalKeepMode") resp = handle_get_terminal_keep_mode();
+        else if(path == "/saveTerminalKeepMode") resp = handle_save_terminal_keep_mode(body);
         else if(path == "/exitWebui") resp = handle_exit_webui();
 
         kernel_module::webui::send_text(conn, 200, resp);
@@ -127,11 +165,13 @@ public:
 private:
     void fork_sh_process_daemon() {
         pid_t shell_pid = m_su_interactive.get_shell_pid();
+        if (shell_pid <= 0) return;
+
         pid_t ppid = getpid();
         pid_t child = fork();
         if(child == 0) {
             wait_parent_exit(m_root_key, ppid);
-            printf("[module_hide_sh_exec] kill sh!\n");
+            printf("[module_hide_sh_exec] kill sh: %d\n", shell_pid);
             kill(shell_pid, SIGKILL);
             _exit(0);
         }
@@ -213,13 +253,26 @@ private:
 		return is_noexec ? "can not exec" : "can exec";
     }
 	
+    std::string handle_get_terminal_keep_mode() {
+        return read_terminal_keep_mode() ? "1" : "0";
+    }
+
+    std::string handle_save_terminal_keep_mode(const std::string& body) {
+        write_terminal_keep_mode(body == "1");
+        return "OK";
+    }
+
 	std::string handle_exit_webui() {
-       _exit(0);
-       return "OK";
+        if(m_server) m_server->close();
+        m_su_interactive.stop(true);
+        _exit(0);
+        return "OK";
     }
 private:
     std::string m_root_key;
+    CivetServer* m_server = nullptr;
     std::string m_hide_dir;
+    bool m_keep_terminal = false;
     SuInteractive m_su_interactive;
     IdleKiller m_idle_killer;
 };
@@ -227,9 +280,9 @@ private:
 // SKRoot 模块名片
 // 字段说明见 module_descriptor.h
 SKROOT_MODULE_NAME("隐蔽的系统终端")
-SKROOT_MODULE_VERSION("3.0.8")
+SKROOT_MODULE_VERSION("3.1.0")
 SKROOT_MODULE_DESC("提供独立隐蔽的 sh 执行通道，彻底替代终端类 App，避免终端类 App 带来的特征暴露。")
-SKROOT_MODULE_AUTHOR("SKRoot")
+SKROOT_MODULE_AUTHOR("SKRoot、斓梦语")
 SKROOT_MODULE_ID32("zse9vkTjLjWXbafvx8Mlh1MTf8SMTUEL")
 SKROOT_MODULE_ON_INSTALL(module_on_install)
 SKROOT_MODULE_WEB_UI(MyWebHttpHandler)

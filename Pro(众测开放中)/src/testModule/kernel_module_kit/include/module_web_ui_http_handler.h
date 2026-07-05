@@ -21,6 +21,12 @@ public:
     virtual void onPrepareCreate(const char* root_key, const char* module_private_dir, uint32_t port) {}
 
     /***************************************************************************
+     * WebUI 服务器创建后回调
+     * 参数: server  CivetWeb 服务器实例指针，可用于后续主动关闭服务器
+     ***************************************************************************/
+    virtual void onServerCreated(CivetServer* server) {}
+
+    /***************************************************************************
      * 响应处理 GET 请求
      * 参数: server   CivetWeb 服务器实例指针
      *      conn     当前 HTTP 连接对象

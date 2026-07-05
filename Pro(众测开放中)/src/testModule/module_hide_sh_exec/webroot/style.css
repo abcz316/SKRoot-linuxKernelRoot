@@ -1,4 +1,4 @@
-﻿* { -webkit-tap-highlight-color: transparent;  outline: none; }
+* { -webkit-tap-highlight-color: transparent;  outline: none; }
 
 :root{
   --bg:#f8fafc;
@@ -135,7 +135,6 @@ body{
 
 .hl-err { color: #ef4444; font-weight: bold; }
 .hl-root { color: #10b981; font-weight: bold; }
-.hl-cmd { color: var(--accent); font-weight: bold; }
 
 /* ====== Quick Actions Container ====== */
 .quick-actions {
@@ -223,7 +222,7 @@ body{
   flex-shrink: 0;
   font-family:var(--mono);
   font-size:13px;
-  color:var(--accent);
+  color:var(--text);
   font-weight: bold;
 }
 
@@ -326,18 +325,60 @@ input[type="text"]{
   gap: 12px;
   border-bottom: 1px solid var(--line);
 }
-.sheet-back, .sheet-refresh {
-  font-size: 20px; color: var(--muted); cursor: pointer; padding: 4px;
+.sheet-back,
+.sheet-refresh,
+.sheet-new-folder,
+.sheet-close {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  color: var(--muted);
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.16s ease, color 0.16s ease, transform 0.16s ease;
+}
+
+.sheet-back,
+.sheet-refresh {
+  font-size: 20px;
+  line-height: 1;
 }
 
 .sheet-close {
   font-size: 24px;
-  color: var(--muted);
-  cursor: pointer;
-  padding: 0 4px;
   line-height: 1;
 }
-.sheet-close:active { color: var(--accent); }
+
+.sheet-new-folder {
+  border: none;
+  background: transparent;
+  padding: 0;
+  font-size: 0; /* 隐藏 HTML 里原来的 +，改用更统一的文件夹图标 */
+  line-height: 1;
+}
+
+.sheet-new-folder::before {
+  content: "";
+  width: 19px;
+  height: 19px;
+  opacity: 0.72;
+  background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M3 6.5C3 5.12 4.12 4 5.5 4h4.1c.66 0 1.29.26 1.76.73L12.62 6H18.5C19.88 6 21 7.12 21 8.5v7C21 17.43 19.43 19 17.5 19h-11C4.57 19 3 17.43 3 15.5v-9Zm9 4.5v2H10v1.7h2v2h1.8v-2h2V13h-2v-2H12Z'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M3 6.5C3 5.12 4.12 4 5.5 4h4.1c.66 0 1.29.26 1.76.73L12.62 6H18.5C19.88 6 21 7.12 21 8.5v7C21 17.43 19.43 19 17.5 19h-11C4.57 19 3 17.43 3 15.5v-9Zm9 4.5v2H10v1.7h2v2h1.8v-2h2V13h-2v-2H12Z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+.sheet-new-folder:active,
+.sheet-refresh:active,
+.sheet-back:active,
+.sheet-close:active {
+  color: var(--accent);
+  background: rgba(22, 119, 255, 0.07);
+  transform: scale(0.94);
+}
 
 .path-area {
   flex: 1;
@@ -365,6 +406,58 @@ input[type="text"]{
   justify-content: center;
   flex-shrink: 0;
   transform: translateY(-1px);
+}
+
+.paste-bar {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: #f8fafc;
+  border-bottom: 1px solid var(--line);
+}
+.paste-bar.show {
+  display: flex;
+}
+.paste-info {
+  flex: 1;
+  min-width: 0;
+}
+.paste-mode {
+  font-size: 12px;
+  font-weight: 800;
+  color: #1e293b;
+}
+.paste-source {
+  margin-top: 2px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.paste-btn {
+  flex: 0 0 auto;
+  height: 30px;
+  border: 1px solid #dbe3ef;
+  border-radius: 8px;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  background: #fff;
+}
+.paste-cancel {
+  color: #64748b;
+}
+.paste-confirm {
+  color: #fff;
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.paste-btn:active {
+  transform: scale(0.98);
 }
 
 .file-list { flex: 1; overflow-y: auto; }
@@ -443,6 +536,18 @@ input[type="text"]{
   background: #fcfdfe; border-top: 1px solid var(--line);
 }
 
+.action-target {
+  margin-bottom: 10px;
+  padding: 9px 10px;
+  border-radius: 10px;
+  background: #f1f5f9;
+  color: #64748b;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.45;
+  word-break: break-all;
+}
+
 .action-menu-item {
   padding: 14px 16px;
   margin-bottom: 10px;
@@ -455,6 +560,9 @@ input[type="text"]{
   cursor: pointer;
   transition: all 0.2s;
   user-select: none;
+}
+.action-menu-item.danger {
+  color: #ef4444;
 }
 .action-menu-item:last-child {
   margin-bottom: 0;
@@ -828,3 +936,111 @@ input.auto-cmd:focus, input.auto-delay:focus { border-color: var(--accent); back
   }
 }
 
+
+/* ====== 底部使用说明里的兼容设置 ====== */
+.tip-sub {
+  white-space: normal;
+}
+
+.terminal-setting-card {
+  margin-top: 10px;
+  padding: 10px 11px 9px;
+  border: 1px solid rgba(22, 119, 255, 0.12);
+  border-radius: 12px;
+  background: rgba(22, 119, 255, 0.03);
+}
+
+.terminal-setting-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 5px;
+}
+
+.terminal-setting-title {
+  min-width: 0;
+  font-size: 12px;
+  line-height: 1.25;
+  font-weight: 800;
+  color: #1e293b;
+  letter-spacing: .1px;
+}
+
+.terminal-setting-subtitle {
+  margin-bottom: 3px;
+  font-size: 11px;
+  line-height: 1.35;
+  font-weight: 700;
+  color: #475569;
+}
+
+.terminal-setting-desc {
+  font-size: 11px;
+  line-height: 1.55;
+  color: #64748b;
+}
+
+.terminal-setting-note {
+  margin-top: 5px;
+  font-size: 10px;
+  line-height: 1.35;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.terminal-setting-switch {
+  margin-left: auto;
+}
+
+.sk-switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 38px;
+  height: 22px;
+  flex: 0 0 auto;
+  cursor: pointer;
+  user-select: none;
+}
+
+.sk-switch input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.sk-switch span {
+  position: relative;
+  display: block;
+  width: 38px;
+  height: 22px;
+  border-radius: 999px;
+  background: #cbd5e1;
+  transition: background 0.18s ease, opacity 0.18s ease;
+}
+
+.sk-switch span::before {
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.18);
+  transition: transform 0.18s ease;
+}
+
+.sk-switch input:checked + span {
+  background: var(--accent);
+}
+
+.sk-switch input:checked + span::before {
+  transform: translateX(16px);
+}
+
+.sk-switch input:disabled + span {
+  opacity: 0.58;
+}
