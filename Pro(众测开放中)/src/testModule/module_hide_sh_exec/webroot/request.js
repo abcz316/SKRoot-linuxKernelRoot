@@ -69,6 +69,16 @@
     return resp.ok ? await resp.text() : ('HTTP ' + resp.status);
   }
 
+  async function getTerminalKeepMode() {
+    const resp = await postText('/getTerminalKeepMode');
+    return resp.ok ? await resp.text() : ('HTTP ' + resp.status);
+  }
+
+  async function saveTerminalKeepMode(enabled) {
+    const resp = await postText('/saveTerminalKeepMode', enabled ? "1" : "0");
+    return resp.ok ? await resp.text() : ('HTTP ' + resp.status);
+  }
+
   async function exitWebui() {
     const resp = await postText('/exitWebui', "", { keepalive: true });
     return resp.ok ? await resp.text() : ('HTTP ' + resp.status);
@@ -84,6 +94,8 @@
     getHideDir,
     checkFileType,
     checkExecMount,
+    getTerminalKeepMode,
+    saveTerminalKeepMode,
     exitWebui
   };
 })();

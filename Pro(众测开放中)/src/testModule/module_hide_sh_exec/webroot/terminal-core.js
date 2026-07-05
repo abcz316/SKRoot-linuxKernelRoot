@@ -6,13 +6,12 @@
     let pending = "";
     let partialRow = null;
 
-    function highlightText(text, isCmd = false) {
+    function formatOutputText(text) {
       if (!text) return "";
       let html = text
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;");
-      if (isCmd) return `<span class="hl-cmd">${html}</span>`;
       if (/(成功|OK|DONE)/.test(html)) return `<span class="hl-root">${html}</span>`;
       const errPattern = /(发送失败|ERR:|FAILED|Error|error|失败|HTTP [45]\d{2})/g;
       return html.replace(errPattern, (match) => `<span class="hl-err">${match}</span>`);
@@ -24,12 +23,12 @@
       });
     }
 
-    function appendLine(text, isCmd = false) {
+    function appendLine(text) {
       const row = document.createElement("div");
       row.className = "line";
       const txt = document.createElement("div");
       txt.className = "txt";
-      txt.innerHTML = highlightText(text, isCmd);
+      txt.innerHTML = formatOutputText(text);
       row.appendChild(txt);
       out.appendChild(row);
       scrollBottom();
@@ -49,16 +48,24 @@
         partialRow.innerHTML = '<div class="txt"></div>';
         out.appendChild(partialRow);
       }
-      partialRow.firstChild.innerHTML = highlightText(text);
+      partialRow.firstChild.innerHTML = formatOutputText(text);
       scrollBottom();
+    }
+
+    function normalizePtyOutput(s) {
+      return String(s ?? "")
+        .replace(/\r\n/g, "\n")
+        .replace(/\r/g, "");
     }
 
     function consumeChunk(chunk) {
       if (!chunk) return;
-      pending += chunk;
+      pending += normalizePtyOutput(chunk);
       const parts = pending.split("\n");
       pending = parts.pop();
-      for (const line of parts) appendLine(line);
+      for (const line of parts) {
+        appendLine(line);
+      }
       setPartialText(pending);
     }
 
@@ -103,7 +110,7 @@
 	}
 
     return {
-      highlightText,
+      formatOutputText,
       scrollBottom,
       appendLine,
       consumeChunk,

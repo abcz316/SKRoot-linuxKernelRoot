@@ -8,6 +8,7 @@
 #include <thread>
 
 #include "kernel_module_kit_umbrella.h"
+
 class SuInteractive {
 public:
     SuInteractive();
@@ -15,14 +16,15 @@ public:
 
     DISABLE_COPY_MOVE(SuInteractive);
 
-    // 启动 su；stderr 会合并到 stdout
-    bool start();
+    // 启动 su。默认使用 PTY，提供 controlling tty，适合交互脚本/程序。
+    // shell_rc_dir 非空时，会在该目录生成 .skroot_mkshrc，并设置 ENV/PS1/PS2/PROMPT。
+    bool start(std::string_view shell_rc_dir = {});
 
     // 发送数据/发送一行（自动补 '\n'）
     bool send(const std::string& s);
     bool sendLine(const std::string& line);
 
-    // 关闭输入（让对端收到 EOF）
+    // 关闭输入（PTY 模式会关闭 master，让前台程序退出）
     void closeInput();
 
     // 等待子进程退出（返回 exit code；信号：128+sig；失败 -1）
@@ -41,18 +43,22 @@ public:
 
     // 获取shell进程PID
     pid_t get_shell_pid();
+
+    // 当前 PTY 前台进程组是否已经回到 shell 自己
+    bool isShellForeground() const;
 private:
-    static bool makePipe(int p[2]);
     static void setCloExec(int fd);
     static void safeClose(int& fd);
+    static void setupShellPromptEnv_(std::string_view rc_dir);
 
+    bool startPty_(std::string_view shell_rc_dir);
     void readerLoop_();
 
 private:
     pid_t m_pid{-1};
 
-    int m_in_w{-1};     // parent -> child stdin (write end)
-    int m_out_r{-1};    // child -> parent merged stdout/stderr (read end)
+    int m_in_w{-1};     // PTY master 写端
+    int m_out_r{-1};    // PTY master 读端（dup 出来的 fd）
 
     mutable std::mutex m_mu;
     std::string m_out;

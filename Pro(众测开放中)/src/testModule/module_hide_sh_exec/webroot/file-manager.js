@@ -10,12 +10,22 @@
   const fileBack = document.getElementById("fileBack");
   const pathInput = document.getElementById("pathInput");
   const pathGo = document.getElementById("pathGo");
+  const fileNewFolder = document.getElementById("fileNewFolder");
   const fileRefresh = document.getElementById("fileRefresh");
   const fileClose = document.getElementById("fileClose");
+  const pasteBar = document.getElementById("pasteBar");
+  const pasteMode = document.getElementById("pasteMode");
+  const pasteSource = document.getElementById("pasteSource");
+  const pasteCancel = document.getElementById("pasteCancel");
+  const pasteConfirm = document.getElementById("pasteConfirm");
 
   const actionModal = document.getElementById("actionModal");
+  const actionTitle = document.getElementById("actionTitle");
+  const actionTarget = document.getElementById("actionTarget");
   const actAuto = document.getElementById("actAuto");
   const actExec = document.getElementById("actExec");
+  const actCopy = document.getElementById("actCopy");
+  const actCut = document.getElementById("actCut");
   const actRename = document.getElementById("actRename");
   const actionCancel = document.getElementById("actionCancel");
 
@@ -32,16 +42,30 @@
   const autoConfirm = document.getElementById("autoConfirm");
 
   const renameModal = document.getElementById("renameModal");
+  const renameTitle = document.getElementById("renameTitle");
   const renameOldName = document.getElementById("renameOldName");
+  const renameLabel = document.getElementById("renameLabel");
   const renameInput = document.getElementById("renameInput");
   const renameCancel = document.getElementById("renameCancel");
   const renameConfirm = document.getElementById("renameConfirm");
 
   const actDelete = document.getElementById("actDelete");
   const deleteModal = document.getElementById("deleteModal");
+  const deleteMessage = document.getElementById("deleteMessage");
   const deleteTargetName = document.getElementById("deleteTargetName");
   const deleteCancel = document.getElementById("deleteCancel");
   const deleteConfirm = document.getElementById("deleteConfirm");
+
+  const mkdirModal = document.getElementById("mkdirModal");
+  const mkdirParent = document.getElementById("mkdirParent");
+  const mkdirInput = document.getElementById("mkdirInput");
+  const mkdirCancel = document.getElementById("mkdirCancel");
+  const mkdirConfirm = document.getElementById("mkdirConfirm");
+
+  const pasteConflictModal = document.getElementById("pasteConflictModal");
+  const pasteConflictTarget = document.getElementById("pasteConflictTarget");
+  const pasteConflictCancel = document.getElementById("pasteConflictCancel");
+  const pasteConflictConfirm = document.getElementById("pasteConflictConfirm");
   
   const confirmQuickTaskModal = document.getElementById("confirmQuickTaskModal");
   const confirmQuickTaskCancel = document.getElementById("confirmQuickTaskCancel");
@@ -53,7 +77,16 @@
   const execMountConfirm = document.getElementById("execMountConfirm");
 
   let currentPath = "/sdcard";
-  let currentFile = null;
+  let currentItem = null;
+  let currentFiles = [];
+  let clipboardItem = null;
+  let pendingPasteCommand = "";
+  let longPressTimer = null;
+  let longPressHandled = false;
+  let longPressHandledAt = 0;
+  let touchMoved = false;
+  let longPressStartX = 0;
+  let longPressStartY = 0;
   let pendingMode = null;
   let pendingPreparedFile = null;
   let hideDirCache = "";
@@ -68,7 +101,9 @@
     if (!files) {
       files = [{ name: "modules", isDir: true, date: "2026-03-26", time: "22:10", size: 0}];
     }
-    renderFiles(files);
+    currentFiles = Array.isArray(files) ? files : [];
+    renderFiles(currentFiles);
+    updatePasteBar();
   }
 
   function renderFiles(files) {
@@ -114,6 +149,189 @@
 
   function getFileBaseName(filePath) {
     return String(filePath || "").split('/').pop() || "";
+  }
+
+  function normalizePath(path) {
+    const raw = String(path || "/").replace(/\/+/g, "/");
+    if (raw.length > 1) return raw.replace(/\/+$/, "");
+    return raw || "/";
+  }
+
+  function getCurrentFilePath() {
+    return currentItem?.path || "";
+  }
+
+  function getKindName(item = currentItem) {
+    return item?.isDir ? "文件夹" : "文件";
+  }
+
+  function findItemByName(name) {
+    return currentFiles.find(item => item && item.name === name);
+  }
+
+  function targetExists(name) {
+    return !!findItemByName(name);
+  }
+
+  function buildItem(path, isDir) {
+    return {
+      path: normalizePath(path),
+      isDir: !!isDir,
+      name: getFileBaseName(path),
+    };
+  }
+
+  function openActionMenu(item) {
+    currentItem = item;
+    const kindName = getKindName(item);
+    actionTitle.textContent = `选择${kindName}操作`;
+    actionTarget.textContent = item.path;
+    actAuto.style.display = item.isDir ? "none" : "";
+    actExec.style.display = item.isDir ? "none" : "";
+    actRename.textContent = `✎ 重命名${kindName}`;
+    actDelete.textContent = `🗑 删除${kindName}`;
+    ui.showModal(actionModal);
+  }
+
+  function setClipboard(mode) {
+    if (!currentItem) return;
+    clipboardItem = {
+      mode,
+      path: currentItem.path,
+      isDir: currentItem.isDir,
+      name: currentItem.name,
+    };
+    ui.hideModal(actionModal);
+    updatePasteBar();
+    ui.showToast(mode === "copy" ? "已复制，进入目标目录后粘贴" : "已剪切，进入目标目录后粘贴", 1400);
+  }
+
+  function updatePasteBar() {
+    if (!pasteBar) return;
+    if (!clipboardItem) {
+      pasteBar.classList.remove("show");
+      pasteMode.textContent = "";
+      pasteSource.textContent = "";
+      return;
+    }
+    pasteBar.classList.add("show");
+    pasteMode.textContent = clipboardItem.mode === "copy" ? "复制待粘贴" : "移动待粘贴";
+    pasteSource.textContent = clipboardItem.path;
+  }
+
+  function clearClipboard() {
+    clipboardItem = null;
+    pendingPasteCommand = "";
+    updatePasteBar();
+  }
+
+  function buildCopyCommand(srcPath, targetDir) {
+    const dir = normalizePath(targetDir);
+    return `cp -rf ${window.SKTerminalCore.shellQuote(srcPath)} ${window.SKTerminalCore.shellQuote(dir === "/" ? "/" : dir + "/")}`;
+  }
+
+  function buildMoveCommand(srcPath, targetDir) {
+    const dir = normalizePath(targetDir);
+    return `mv -f ${window.SKTerminalCore.shellQuote(srcPath)} ${window.SKTerminalCore.shellQuote(dir === "/" ? "/" : dir + "/")}`;
+  }
+
+  function buildOverwritePasteCommand(baseCommand, targetPath) {
+    return `rm -rf ${window.SKTerminalCore.shellQuote(targetPath)} && ${baseCommand}`;
+  }
+
+  function isSamePath(a, b) {
+    return normalizePath(a) === normalizePath(b);
+  }
+
+  function isChildPath(parent, child) {
+    const p = normalizePath(parent);
+    const c = normalizePath(child);
+    return c.length > p.length && c.startsWith(p === "/" ? "/" : p + "/");
+  }
+
+  function validateName(name, messagePrefix) {
+    const trimmed = String(name || "").trim();
+    if (!trimmed) {
+      alert(`${messagePrefix}不能为空`);
+      return "";
+    }
+    if (trimmed.includes("/")) {
+      alert(`${messagePrefix}不能包含 /`);
+      return "";
+    }
+    if (trimmed === "." || trimmed === "..") {
+      alert(`${messagePrefix}不能是 . 或 ..`);
+      return "";
+    }
+    return trimmed;
+  }
+
+  function openRenameModal() {
+    if (!currentItem) return;
+    const kindName = getKindName();
+    ui.hideModal(actionModal);
+    renameTitle.textContent = `重命名${kindName}`;
+    renameLabel.textContent = `新${kindName}名称`;
+    renameOldName.textContent = currentItem.path;
+    renameInput.value = currentItem.name;
+    ui.showModal(renameModal);
+    setTimeout(() => renameInput.focus(), 100);
+  }
+
+  function openDeleteModal() {
+    if (!currentItem) return;
+    const kindName = getKindName();
+    ui.hideModal(actionModal);
+    deleteMessage.textContent = `确定要删除以下${kindName}吗？此操作不可恢复。`;
+    deleteTargetName.textContent = currentItem.path;
+    ui.showModal(deleteModal);
+  }
+
+  function openMkdirModal() {
+    mkdirParent.textContent = currentPath;
+    mkdirInput.value = "";
+    ui.showModal(mkdirModal);
+    setTimeout(() => mkdirInput.focus(), 100);
+  }
+
+  function getPasteTargetPath() {
+    return ui.joinPath(currentPath, clipboardItem?.name || "");
+  }
+
+  async function executePasteCommand(command) {
+    pendingPasteCommand = "";
+    ui.hideModal(pasteConflictModal);
+    clearClipboard();
+    await executeImmediateCommand(command);
+  }
+
+  async function pasteClipboard() {
+    if (!clipboardItem) return;
+    const srcPath = normalizePath(clipboardItem.path);
+    const dstDir = normalizePath(currentPath);
+    const dstPath = normalizePath(getPasteTargetPath());
+
+    if (isSamePath(srcPath, dstPath)) {
+      alert("不能粘贴到原位置");
+      return;
+    }
+    if (clipboardItem.isDir && (isSamePath(srcPath, dstDir) || isChildPath(srcPath, dstDir))) {
+      alert("不能把文件夹移动或复制到自身或子目录");
+      return;
+    }
+
+    const command = clipboardItem.mode === "copy"
+      ? buildCopyCommand(srcPath, dstDir)
+      : buildMoveCommand(srcPath, dstDir);
+
+    if (targetExists(clipboardItem.name)) {
+      pendingPasteCommand = buildOverwritePasteCommand(command, dstPath);
+      pasteConflictTarget.textContent = dstPath;
+      ui.showModal(pasteConflictModal);
+      return;
+    }
+
+    await executePasteCommand(command);
   }
 
   async function getHideDir() {
@@ -167,7 +385,7 @@
     pendingMode = mode;
     clearPendingPreparedFile();
     try {
-      const prepared = await resolvePreparedFile(currentFile);
+      const prepared = await resolvePreparedFile(getCurrentFilePath());
       pendingPreparedFile = prepared;
       ui.hideModal(actionModal);
       if (prepared.needsCopy) {
@@ -284,8 +502,41 @@
   };
 
   pathGo.onclick = () => loadDir(pathInput.value.trim() || currentPath);
+  fileNewFolder.onclick = openMkdirModal;
   fileBack.onclick = () => loadDir(ui.dirname(currentPath));
   fileRefresh.onclick = () => loadDir(currentPath);
+  pasteCancel.onclick = clearClipboard;
+  pasteConfirm.onclick = () => pasteClipboard();
+
+  fileList.addEventListener("pointerdown", (e) => {
+    const row = e.target.closest('.file-row');
+    if (!row || row.dataset.isdir !== "true") return;
+    longPressHandled = false;
+    touchMoved = false;
+    longPressStartX = e.clientX;
+    longPressStartY = e.clientY;
+    clearTimeout(longPressTimer);
+    longPressTimer = setTimeout(() => {
+      if (touchMoved) return;
+      longPressHandled = true;
+      longPressHandledAt = Date.now();
+      openActionMenu(buildItem(row.dataset.path, true));
+    }, 550);
+  });
+
+  fileList.addEventListener("pointermove", (e) => {
+    const dx = Math.abs(e.clientX - longPressStartX);
+    const dy = Math.abs(e.clientY - longPressStartY);
+    if (dx < 8 && dy < 8) return;
+    touchMoved = true;
+    clearTimeout(longPressTimer);
+  });
+
+  ["pointerup", "pointercancel", "pointerleave"].forEach(eventName => {
+    fileList.addEventListener(eventName, () => {
+      clearTimeout(longPressTimer);
+    });
+  });
 
   fileList.onclick = (e) => {
     const row = e.target.closest('.file-row');
@@ -294,11 +545,25 @@
     const isDir = row.dataset.isdir === "true";
 
     if (isDir) {
+      if (longPressHandled && Date.now() - longPressHandledAt < 900) {
+        longPressHandled = false;
+        return;
+      }
+      longPressHandled = false;
       loadDir(path);
     } else {
-      currentFile = path;
-      ui.showModal(actionModal);
+      openActionMenu(buildItem(path, false));
     }
+  };
+
+  fileList.oncontextmenu = (e) => {
+    const row = e.target.closest('.file-row');
+    if (!row) return;
+    e.preventDefault();
+    clearTimeout(longPressTimer);
+    longPressHandled = true;
+    longPressHandledAt = Date.now();
+    openActionMenu(buildItem(row.dataset.path, row.dataset.isdir === "true"));
   };
 
   fileBtn.onclick = openFileSheet;
@@ -307,18 +572,10 @@
   actionCancel.onclick = () => ui.hideModal(actionModal);
   actExec.onclick = () => prepareAndOpenFlow("exec");
   actAuto.onclick = () => prepareAndOpenFlow("simulator");
-  actRename.onclick = () => {
-    ui.hideModal(actionModal);
-    renameOldName.textContent = currentFile;
-    renameInput.value = currentFile.split('/').pop();
-    ui.showModal(renameModal);
-    setTimeout(() => renameInput.focus(), 100);
-  };
-  actDelete.onclick = () => {
-    ui.hideModal(actionModal);
-    deleteTargetName.textContent = currentFile;
-    ui.showModal(deleteModal);
-  };
+  actCopy.onclick = () => setClipboard("copy");
+  actCut.onclick = () => setClipboard("move");
+  actRename.onclick = openRenameModal;
+  actDelete.onclick = openDeleteModal;
 
   execCancel.onclick = () => ui.hideModal(execModal);
   execConfirm.onclick = async () => {
@@ -341,28 +598,55 @@
 
   renameCancel.onclick = () => ui.hideModal(renameModal);
   renameConfirm.onclick = () => {
-    const newName = renameInput.value.trim();
+    if (!currentItem) return;
+    const newName = validateName(renameInput.value, "新名称");
     if (!newName) return;
+    if (newName === currentItem.name) {
+      alert("新名称不能和原名称相同");
+      return;
+    }
+    if (targetExists(newName)) {
+      alert("同目录已存在同名项目，请换一个名称");
+      return;
+    }
 
-    const dir = ui.dirname(currentFile);
+    const dir = ui.dirname(currentItem.path);
     const newPath = ui.joinPath(dir, newName);
-    const finalCmd = `mv ${window.SKTerminalCore.shellQuote(currentFile)} ${window.SKTerminalCore.shellQuote(newPath)}`;
+    const finalCmd = `mv ${window.SKTerminalCore.shellQuote(currentItem.path)} ${window.SKTerminalCore.shellQuote(newPath)}`;
 
     ui.hideModal(renameModal);
-    closeFileSheet();
-    cmd.value = finalCmd;
-    app.sendCommand();
+    executeImmediateCommand(finalCmd);
   };
 
   deleteCancel.onclick = () => ui.hideModal(deleteModal);
   deleteConfirm.onclick = () => {
-    const finalCmd = `rm -rf ${window.SKTerminalCore.shellQuote(currentFile)}`;
+    if (!currentItem) return;
+    const finalCmd = `rm -rf ${window.SKTerminalCore.shellQuote(currentItem.path)}`;
     
     ui.hideModal(deleteModal);
-    closeFileSheet();
-    
-    cmd.value = finalCmd;
-    app.sendCommand();
+    executeImmediateCommand(finalCmd);
+  };
+
+  mkdirCancel.onclick = () => ui.hideModal(mkdirModal);
+  mkdirConfirm.onclick = () => {
+    const folderName = validateName(mkdirInput.value, "文件夹名称");
+    if (!folderName) return;
+    if (targetExists(folderName)) {
+      alert("当前目录已存在同名项目，请换一个名称");
+      return;
+    }
+    const finalCmd = `mkdir ${window.SKTerminalCore.shellQuote(ui.joinPath(currentPath, folderName))}`;
+    ui.hideModal(mkdirModal);
+    executeImmediateCommand(finalCmd);
+  };
+
+  pasteConflictCancel.onclick = () => {
+    pendingPasteCommand = "";
+    ui.hideModal(pasteConflictModal);
+  };
+  pasteConflictConfirm.onclick = () => {
+    if (!pendingPasteCommand) return;
+    executePasteCommand(pendingPasteCommand);
   };
 
   window.SKFileManager = {

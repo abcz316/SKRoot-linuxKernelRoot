@@ -8,8 +8,8 @@
   const fileBtn = document.getElementById("fileBtn");
   const autoBtn = document.getElementById("autoBtn");
   const sheetOverlay = document.getElementById("sheetOverlay");
-  const inlineTip = document.getElementById("inlineTip");
   const pageExitOverlay = document.getElementById("pageExitOverlay");
+  const terminalKeepSwitch = document.getElementById("terminalKeepSwitch");
 
   const terminalCore = window.SKTerminalCore?.createTerminalCore({
     out,
@@ -31,23 +31,11 @@
     }).join('');
   }
 
-  function updateInlineTip() {
-    if (!inlineTip) return;
-    const typing = !!(cmd.value || "").trim();
-    const text = (out.textContent || "")
-    .replace(/\u00a0/g, " ")
-    .trim();
-    const onlyPrompt = text === "#" || text === "";
-    inlineTip.classList.toggle("hidden", typing || !onlyPrompt);
-  }
-
   async function sendCommand() {
     const raw = cmd.value || "";
     const v = raw.trim();
-    terminalCore.appendLine("# " + (v || "[ENTER]"), true);
     cmd.value = "";
     cmd.focus();
-    updateInlineTip();
     sendBtn.disabled = true;
     try {
       await RequestApi.sendCommand(v);
@@ -71,7 +59,6 @@
       fileBtn,
       autoBtn,
       sheetOverlay,
-      inlineTip,
       pageExitOverlay,
     },
     refreshHistory,
@@ -79,11 +66,41 @@
     appendLine: terminalCore.appendLine,
     setConn: terminalCore.setConn,
     scrollBottom: terminalCore.scrollBottom,
-    highlightText: terminalCore.highlightText,
+    formatOutputText: terminalCore.formatOutputText,
     consumeChunk: terminalCore.consumeChunk,
     closeAllSheets: null,
     openAutoSheet: null,
+    effectiveTerminalKeepMode: false,
+    savedTerminalKeepMode: false,
   };
+
+  async function initTerminalSettings() {
+    if (!terminalKeepSwitch) return;
+    try {
+      const terminalKeepMode = await RequestApi.getTerminalKeepMode() == "1";
+      app.effectiveTerminalKeepMode = terminalKeepMode;
+      app.savedTerminalKeepMode = terminalKeepMode;
+      terminalKeepSwitch.checked = terminalKeepMode;
+    } catch (e) {
+      console.warn("load terminal settings failed:", e);
+    }
+
+    terminalKeepSwitch.addEventListener("change", async () => {
+      const nextValue = terminalKeepSwitch.checked;
+      terminalKeepSwitch.disabled = true;
+      try {
+        await RequestApi.saveTerminalKeepMode(nextValue);
+        app.savedTerminalKeepMode = nextValue;
+        window.SKUiUtils?.showToast?.("设置已保存，下次打开 WebUI 生效", 1800);
+      } catch (e) {
+        terminalKeepSwitch.checked = app.savedTerminalKeepMode;
+        window.SKUiUtils?.showToast?.("设置保存失败，请稍后重试", 1800);
+        console.warn("save terminal settings failed:", e);
+      } finally {
+        terminalKeepSwitch.disabled = false;
+      }
+    });
+  }
 
   window.SKRootApp = app;
 
@@ -92,7 +109,6 @@
     if (chip && chip.dataset.cmd) {
       cmd.value = chip.dataset.cmd;
       cmd.focus();
-      updateInlineTip();
     }
   });
 
@@ -104,12 +120,9 @@
   });
 
   sendBtn.addEventListener("click", sendCommand);
-  cmd.addEventListener("input", updateInlineTip);
-
-  terminalCore.appendLine("#", true);
   terminalCore.setConn(null, "连接中");
+  initTerminalSettings();
   refreshHistory();
-  updateInlineTip();
   cmd.focus();
   setInterval(terminalCore.tick, 1000);
 
@@ -124,6 +137,11 @@
 
   function onPageHidden() {
     if (pageExited) return;
+
+    // 兼容后台模式在本次 WebUI 创建时就已生效；页面隐藏时不主动释放终端。
+    // 开关修改只影响下次打开，所以这里不要读取 savedTerminalKeepMode。
+    if (app.effectiveTerminalKeepMode) return;
+
     pageExited = true;
 
     showPageExitOverlay();

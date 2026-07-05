@@ -25,8 +25,6 @@
         </div>
       </div>
       <div id="out" class="out" role="log" aria-live="polite"></div>
-      <div id="inlineTip" class="inline-tip">部分脚本执行后，可能会没有反应，这个不是没有执行，而是暂时没有回显。按步骤继续输入即可。</div>
-
       <div class="composer">
         <div id="quickActions" class="quick-actions"></div>
 
@@ -52,11 +50,25 @@
         </div>
         <div class="tip">
           <details class="tip-more">
-            <summary>查看使用说明</summary>
+            <summary>查看使用说明与兼容设置</summary>
             <div class="tip-sub">
               本功能并非普通系统终端，而是一个 <strong>极其隐蔽</strong> 的系统终端环境。
-              为降低被侦测风险，其交互方式存在一定限制，部分需要持续交互的命令，可能会出现异常。
-              建议使用右上角的 <strong>输入模拟器</strong> 完成交互。这是隐蔽性与交互性之间的必要取舍。
+              为降低被侦测风险，其交互方式存在一定限制，可能会出现异常。这是隐蔽性与交互性之间的必要取舍。
+
+              <div class="terminal-setting-card">
+                <div class="terminal-setting-head">
+                  <div class="terminal-setting-title">兼容模式</div>
+                  <label class="sk-switch terminal-setting-switch" title="兼容模式">
+                    <input id="terminalKeepSwitch" type="checkbox" />
+                    <span></span>
+                  </label>
+                </div>
+                <div class="terminal-setting-subtitle">遇到后台脚本自动退出？</div>
+                <div class="terminal-setting-desc">
+                  可尝试开启兼容模式，用于兼容少数依赖 sh / TTY 的脚本或程序。开启后关闭 WebUI 时不会立即释放终端。如非必要，建议不要开启。
+                </div>
+                <div class="terminal-setting-note">修改后下次打开 WebUI 生效。</div>
+              </div>
             </div>
           </details>
         </div>
@@ -84,21 +96,33 @@
       <input id="pathInput" type="text" autocomplete="off" spellcheck="false" readonly />
       <div id="pathGo" class="path-go">↵</div>
     </div>
+    <div class="sheet-new-folder" id="fileNewFolder" title="新建文件夹">+</div>
     <div class="sheet-refresh" id="fileRefresh" title="刷新列表">↻</div>
 	<div class="sheet-close" id="fileClose" title="关闭管理">×</div>
   </div>
+  <div id="pasteBar" class="paste-bar" aria-live="polite">
+    <div class="paste-info">
+      <div id="pasteMode" class="paste-mode"></div>
+      <div id="pasteSource" class="paste-source"></div>
+    </div>
+    <button id="pasteCancel" class="paste-btn paste-cancel" type="button">取消</button>
+    <button id="pasteConfirm" class="paste-btn paste-confirm" type="button">粘贴到此处</button>
+  </div>
   <div id="fileList" class="file-list"></div>
-  <div class="sheet-foot">💡 提示：点击文件呼出操作菜单</div>
+  <div class="sheet-foot">💡 提示：点击文件呼出菜单；点击文件夹进入，长按文件夹呼出菜单</div>
 </div>
 
 <div id="actionModal" class="modal-wrap">
   <div class="modal">
-    <div class="modal-title">选择操作</div>
+    <div class="modal-title" id="actionTitle">选择操作</div>
     <div class="modal-body" style="padding: 10px 20px 20px;">
+      <div class="action-target" id="actionTarget"></div>
       <div class="action-menu-item" id="actAuto">＋ 添加至输入模拟器</div>
       <div class="action-menu-item" id="actExec">▶ 直接执行</div>
-      <div class="action-menu-item" id="actRename">✎ 重命名文件</div>
-	  <div class="action-menu-item" id="actDelete">🗑 删除文件</div>
+      <div class="action-menu-item" id="actCopy">⧉ 复制</div>
+      <div class="action-menu-item" id="actCut">⇥ 剪贴/移动</div>
+      <div class="action-menu-item" id="actRename">✎ 重命名</div>
+	  <div class="action-menu-item danger" id="actDelete">🗑 删除</div>
     </div>
     <div class="modal-foot">
       <button class="m-btn m-cancel" style="border-right: none;" id="actionCancel">取消</button>
@@ -152,11 +176,11 @@
 
 <div id="renameModal" class="modal-wrap">
   <div class="modal">
-    <div class="modal-title">重命名文件</div>
+    <div class="modal-title" id="renameTitle">重命名</div>
     <div class="modal-body">
       <div class="code-preview" id="renameOldName"></div>
-      <div class="arg-label">新文件名</div>
-      <input id="renameInput" class="arg-input" type="text" placeholder="输入新文件名(含后缀)" />
+      <div class="arg-label" id="renameLabel">新名称</div>
+      <input id="renameInput" class="arg-input" type="text" placeholder="输入新名称" />
     </div>
     <div class="modal-foot">
       <button class="m-btn m-cancel" id="renameCancel">取消</button>
@@ -169,14 +193,45 @@
   <div class="modal">
     <div class="modal-title" style="color: #ef4444;">确认删除</div>
     <div class="modal-body">
-      <div style="font-size:14px; color:#475569; line-height:1.6">
-        确定要删除以下文件吗？此操作不可恢复。
+      <div id="deleteMessage" style="font-size:14px; color:#475569; line-height:1.6">
+        确定要删除以下项目吗？此操作不可恢复。
       </div>
       <div class="code-preview" id="deleteTargetName" style="margin-top: 10px;"></div>
     </div>
     <div class="modal-foot">
       <button class="m-btn m-cancel" id="deleteCancel">取消</button>
       <button class="m-btn m-exec" id="deleteConfirm" style="color: #ef4444;">确定删除</button>
+    </div>
+  </div>
+</div>
+
+<div id="mkdirModal" class="modal-wrap">
+  <div class="modal">
+    <div class="sheet-new-folder" id="fileNewFolder" title="新建文件夹" aria-label="新建文件夹"></div>
+    <div class="modal-body">
+      <div class="code-preview" id="mkdirParent"></div>
+      <div class="arg-label">文件夹名称</div>
+      <input id="mkdirInput" class="arg-input" type="text" placeholder="输入文件夹名称" />
+    </div>
+    <div class="modal-foot">
+      <button class="m-btn m-cancel" id="mkdirCancel">取消</button>
+      <button class="m-btn m-exec" id="mkdirConfirm">确定新建</button>
+    </div>
+  </div>
+</div>
+
+<div id="pasteConflictModal" class="modal-wrap">
+  <div class="modal">
+    <div class="modal-title">确认覆盖</div>
+    <div class="modal-body">
+      <div id="pasteConflictMessage" class="modal-desc">
+        目标位置已存在同名项目，确认后将执行覆盖式粘贴。
+      </div>
+      <div class="code-preview modal-code-compact" id="pasteConflictTarget"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="m-btn m-cancel" id="pasteConflictCancel">取消</button>
+      <button class="m-btn m-exec" id="pasteConflictConfirm">确认覆盖</button>
     </div>
   </div>
 </div>
