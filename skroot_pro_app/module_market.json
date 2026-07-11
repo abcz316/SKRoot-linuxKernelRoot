@@ -144,6 +144,21 @@
             "download_eng_alert": ""
         },
         {
+            "chn_name": "随机设备序列号",
+            "eng_name": "",
+            "ver": "1.0.0",
+            "desc": "随机伪装硬件序列号(ro.serialno)、内核级伪装高通serial_number，无挂载",
+            "author": "SKRoot & 蜃 & 杨",
+            "uuid": "mZ0lUavxLGTMnwCRDlnSyAZPmZUZpgI0",
+            "id32": "mZ0lUavxLGTMnwCRDlnSyAZPmZUZpgI0",
+            "update_date": "2026-7-12",
+			"ban": false,
+            "source_url": "https://github.com/abcz316/SKRoot-linuxKernelRoot/tree/master/Pro(%E4%BC%97%E6%B5%8B%E5%BC%80%E6%94%BE%E4%B8%AD)/src/testModule/module_fake_device",
+            "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_fake_device/modify_ro_serialno_module.zip",
+            "download_chn_alert": "",
+            "download_eng_alert": ""
+        },
+        {
             "chn_name": "伪装CPU信息为麒麟9000s",
             "eng_name": "",
             "ver": "1.0.0",
