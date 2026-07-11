@@ -1,32 +1,232 @@
-﻿#include <sys/wait.h>
+﻿#include <iostream>
+#include <string>
+#include <sstream>
+#include <string_view>
+#include <random>
+#include <cctype>
 #include "kernel_module_kit_umbrella.h"
 
-static void run_script(const char* script) {
-    const char* sh = "/system/bin/sh";
-    char* const argv[] = {
-        (char*)sh,
-        (char*)script,
-        nullptr
-    };
-    execve(sh, argv, environ);
+#include "resetprop_helper.h"
+#include "patch_soc_info_show.h"
+#include "patch_msm_get_serial_number.h"
+
+#define MODULE_DESC_CN_TEXT "随机伪装硬件序列号(ro.serialno)、内核级伪装高通serial_number，无挂载"
+
+static KModErr patch_kernel_handler(const std::string& fake_soc_sn) {
+    using SymbolMatchMode = kernel_module::SymbolMatchMode;
+	using SymbolHit = kernel_module::SymbolHit;
+
+    uint64_t soc_info_show = 0;
+    SymbolHit msm_get_serial_number = {0};
+    RETURN_IF_ERROR(kernel_module::kallsyms_lookup_name("soc_info_show", soc_info_show));
+	RETURN_IF_ERROR(kernel_module::kallsyms_lookup_name("socinfo:msm_get_serial_number", msm_get_serial_number, SymbolMatchMode::Prefix));
+	printf("soc_info_show: %lx\n", soc_info_show);
+	printf("%s: %lx\n", msm_get_serial_number.name, msm_get_serial_number.addr);
+
+    PatchBase patchBase;
+    PatchSocInfoShow patchSocInfoShow(patchBase, soc_info_show);
+    PatchMsmGetSerialNumber patchMsmGetSerialNumber(patchBase, msm_get_serial_number.addr);
+    KModErr err = patchSocInfoShow.patch_soc_info_show(fake_soc_sn);
+    printf("patch soc_info_show ret: %s\n", to_string(err).c_str());
+    RETURN_IF_ERROR(err);
+    err = patchMsmGetSerialNumber.patch_msm_get_serial_number(fake_soc_sn);
+    printf("patch msm_get_serial_number ret: %s\n", to_string(err).c_str());
+    return err;
+}
+
+static std::string read_soc_sn() {
+    constexpr const char* kPath = "/sys/devices/soc0/serial_number";
+    int fd = ::open(kPath, O_RDONLY | O_CLOEXEC);
+    if (fd < 0) return {};
+    std::string sn;
+    char buf[256];
+    while (true) {
+        ssize_t n = ::read(fd, buf, sizeof(buf));
+        if (n > 0) {
+            sn.append(buf, static_cast<size_t>(n));
+            continue;
+        }
+        if (n == 0) break;
+        if (errno == EINTR) continue;
+        ::close(fd);
+        return {};
+    }
+    ::close(fd);
+    while (!sn.empty() && (sn.back() == '\n' || sn.back() == '\r')) sn.pop_back();
+    return sn;
+}
+
+static bool verify_sn(const std::string& old_sn, const std::string& new_sn, 
+    const std::string& old_soc_sn, const std::string& new_soc_sn) {
+    if(old_sn.empty() || new_sn.empty() || new_sn == old_sn) return false;
+
+    std::string real_sn = get_system_property("ro.serialno");
+    if(real_sn != new_sn) return false;
+
+    if(!old_soc_sn.empty()) {
+        if(new_soc_sn.empty() || new_soc_sn == old_soc_sn) return false;
+        std::string real_soc_sn = read_soc_sn();
+        if(real_soc_sn != new_soc_sn) return false;
+    }
+    return true;
 }
 
 // SKRoot模块入口函数
 int skroot_module_main(const char* root_key, const char* module_private_dir) {
-    pid_t pid = ::fork();
-    if (pid == 0) {
-        run_script("main.sh");
-        _exit(127);
+    kernel_module::set_current_module_description(MODULE_DESC_CN_TEXT);
+
+    std::string resetprop_bin_path = std::string(module_private_dir) + "resetprop";
+    resetprop::init(resetprop_bin_path);
+
+    std::string old_sn = get_system_property("ro.serialno"); 
+    std::string new_sn;
+    kernel_module::read_string_disk_storage("new_sn", new_sn);
+    printf("old serial: %s\n", old_sn.c_str());
+    printf("new serial: %s\n", new_sn.c_str());
+    if (old_sn.empty() || new_sn.empty()) {
+        printf("error: unable to read the current serial number!\n");
+        return -1;
     }
-    int status; waitpid(pid, &status, 0);
+    resetprop::set_property_value("ro.serialno", new_sn.c_str(), ResetPropMode::kNoTrigger);
+    
+    std::string old_soc_sn = read_soc_sn();
+    std::string new_soc_sn;
+    kernel_module::read_string_disk_storage("new_soc_sn", new_soc_sn);
+    printf("old soc sn: %s\n", old_soc_sn.c_str());
+    printf("new soc sn: %s\n", new_soc_sn.c_str());
+    if(!new_soc_sn.empty()) {
+        KModErr err = patch_kernel_handler(new_soc_sn);
+        if(is_failed(err)) return -1;
+    }
+    if(!verify_sn(old_sn, new_sn, old_soc_sn, new_soc_sn)) {
+        printf("verify sn failed\n");
+        kernel_module::set_current_module_description("设置失败，请查看日志");
+        return -1;
+    }
+    printf("verify sn: success\n");
     return 0;
 }
 
+
+// 生成新序列号的核心函数
+static std::string generate_new_sn(std::string_view original_sn) {
+    // 使用 thread_local 保证在多线程环境下安全，且只初始化一次随机数引擎
+    thread_local std::random_device rd;
+    thread_local std::mt19937 gen(rd());
+    
+    // 定义随机数分布范围
+    std::uniform_int_distribution<int> dist_digit(0, 9);
+    std::uniform_int_distribution<int> dist_alpha(0, 25);
+
+    std::string new_sn;
+    // 提前分配内存，避免字符串在追加过程中发生动态重分配，追求极致性能
+    new_sn.reserve(original_sn.size());
+
+    for (char ch : original_sn) {
+        char new_char = ch;
+        
+        // 注意：传入 cctype 系列函数的 char 需要强转为 unsigned char 以避免 UB (未定义行为)
+        if (std::isdigit(static_cast<unsigned char>(ch))) {
+            do {
+                new_char = '0' + dist_digit(gen);
+            } while (new_char == ch);
+        } 
+        else if (std::islower(static_cast<unsigned char>(ch))) {
+            do {
+                new_char = 'a' + dist_alpha(gen);
+            } while (new_char == ch);
+        } 
+        else if (std::isupper(static_cast<unsigned char>(ch))) {
+            do {
+                new_char = 'A' + dist_alpha(gen);
+            } while (new_char == ch);
+        }
+        
+        // 其他符号（如连字符等）不作处理，直接追加
+        new_sn.push_back(new_char);
+    }
+
+    return new_sn;
+}
+
+static std::string generate_new_sn_safe_numeric(std::string_view original_sn) {
+    thread_local std::mt19937 gen(std::random_device{}());
+
+    std::uniform_int_distribution<int> dist_digit(0, 9);
+    std::uniform_int_distribution<int> dist_digit_nonzero(1, 9);
+    std::uniform_int_distribution<int> dist_digit_u32_first(1, 3);
+    std::uniform_int_distribution<int> dist_alpha(0, 25);
+
+    std::string new_sn;
+    new_sn.reserve(original_sn.size());
+
+    bool all_digits = !original_sn.empty();
+    for (char ch : original_sn) {
+        if (!std::isdigit(static_cast<unsigned char>(ch))) {
+            all_digits = false;
+            break;
+        }
+    }
+
+    for (size_t i = 0; i < original_sn.size(); ++i) {
+        char ch = original_sn[i];
+        char new_char = ch;
+        unsigned char uch = static_cast<unsigned char>(ch);
+
+        if (std::isdigit(uch)) {
+            do {
+                if (all_digits && original_sn.size() == 10 && i == 0) {
+                    // 10位纯数字时，首位限制到 1~3，保证不会超过 uint32_t 最大值
+                    new_char = static_cast<char>('0' + dist_digit_u32_first(gen));
+                } else if (all_digits && original_sn.size() > 1 && i == 0 && ch != '0') {
+                    // 尽量避免首位变成 0，保持外观像正常数字
+                    new_char = static_cast<char>('0' + dist_digit_nonzero(gen));
+                } else {
+                    new_char = static_cast<char>('0' + dist_digit(gen));
+                }
+            } while (new_char == ch);
+        } else if (std::islower(uch)) {
+            do {
+                new_char = static_cast<char>('a' + dist_alpha(gen));
+            } while (new_char == ch);
+        } else if (std::isupper(uch)) {
+            do {
+                new_char = static_cast<char>('A' + dist_alpha(gen));
+            } while (new_char == ch);
+        }
+
+        new_sn.push_back(new_char);
+    }
+
+    return new_sn;
+}
+
+std::string module_on_install(const char* root_key, const char* module_private_dir) {
+    printf("welcome modify sn module!\n");
+    std::string old_sn = get_system_property("ro.serialno"); 
+    if (old_sn.empty()) return "error: unable to read the current serial number!";
+    std::string new_sn = generate_new_sn(old_sn);
+    printf("old serial: %s\n", old_sn.c_str());
+    printf("new serial: %s\n", new_sn.c_str());
+    kernel_module::write_string_disk_storage("new_sn", new_sn.c_str());
+
+    std::string old_soc_sn = read_soc_sn();
+    if (!old_sn.empty()) {
+        std::string new_soc_sn = generate_new_sn_safe_numeric(old_soc_sn);
+        printf("old soc sn: %s\n", old_soc_sn.c_str());
+        printf("new soc sn: %s\n", new_soc_sn.c_str());
+        kernel_module::write_string_disk_storage("new_soc_sn", new_soc_sn.c_str());
+    }
+    kernel_module::set_current_module_run_state(skroot_env::ModuleRunState::Abnormal);
+    kernel_module::set_current_module_description("【注意】首次使用，需重启手机后才生效！！！！！");
+    return "";
+}
 // SKRoot 模块名片
 // 字段说明见 module_descriptor.h
 SKROOT_MODULE_NAME("随机设备序列号")
-SKROOT_MODULE_VERSION("0.0.1")
-SKROOT_MODULE_DESC("随机伪装硬件序列号(ro.serialno)")
-SKROOT_MODULE_AUTHOR("SKRoot & 蜃")
-SKROOT_MODULE_ID32("0224718349d85a9c74200ec57ab7ac95")
+SKROOT_MODULE_VERSION("1.0.0")
+SKROOT_MODULE_DESC(MODULE_DESC_CN_TEXT)
+SKROOT_MODULE_AUTHOR("SKRoot & 蜃 & 杨")
+SKROOT_MODULE_ON_INSTALL(module_on_install)
+SKROOT_MODULE_ID32("mZ0lUavxLGTMnwCRDlnSyAZPmZUZpgI0")
 SKROOT_MODULE_UPDATE_JSON("https://abcz316.github.io/SKRoot-linuxKernelRoot/module_fake_device/modify_ro_serialno_update.json")
