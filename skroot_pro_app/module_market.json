@@ -146,7 +146,7 @@
         {
             "chn_name": "随机设备序列号",
             "eng_name": "",
-            "ver": "1.0.0",
+            "ver": "1.0.1",
             "desc": "随机伪装硬件序列号(ro.serialno)、内核级伪装高通serial_number，无挂载",
             "author": "SKRoot & 蜃 & 杨",
             "uuid": "mZ0lUavxLGTMnwCRDlnSyAZPmZUZpgI0",
