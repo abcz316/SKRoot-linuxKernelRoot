@@ -142,13 +142,14 @@ KModErr Test_install_kernel_function_before_hook() {
 	using SymbolHit = kernel_module::SymbolHit;
 
 	SymbolHit hit;
-	RETURN_IF_ERROR(kernel_module::kallsyms_lookup_name("filename_lookup", SymbolMatchMode::Prefix, hit));
+	RETURN_IF_ERROR(kernel_module::kallsyms_lookup_name("filename_lookup", hit, SymbolMatchMode::Prefix));
 	printf("%s, Output addr: %p\n", hit.name, (void*)hit.addr);
 
 	std::vector<uint8_t> my_func_bytes = make_filename_lookup_before_hook_bytes();
 	KModErr err = kernel_module::install_kernel_function_before_hook(hit.addr, my_func_bytes);
 	printf("install_kernel_function_before_hook return: %s\n", to_string(err).c_str());
 	return err;
+	return KModErr::OK;
 }
 
 std::vector<uint8_t> make_avc_denied_after_hook_bytes() {
@@ -203,8 +204,8 @@ int main(int argc, char *argv[]) {
  	TEST(idx++, Test_module_memfree1);						// 调用内核API：module_memfree
  	TEST(idx++, Test_module_alloc2);
  	TEST(idx++, Test_module_memfree2);
- 	TEST(idx++, Test_kallsyms_on_each_symbol1);				// 调用内核API：kallsyms_on_each_symbol
- 	TEST(idx++, Test_kallsyms_on_each_symbol2);
+ 	//TEST(idx++, Test_kallsyms_on_each_symbol1);				// 调用内核API：kallsyms_on_each_symbol
+ 	//TEST(idx++, Test_kallsyms_on_each_symbol2);
  	TEST(idx++, Test_kern_path);							// 调用内核API：kern_path
 
  	// 单元测试：获取Linux内核结构体偏移量

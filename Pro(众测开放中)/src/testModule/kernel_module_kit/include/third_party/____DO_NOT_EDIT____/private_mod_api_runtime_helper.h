@@ -6,10 +6,28 @@
 
 #include "../../module_err_def.h"
 #include "../../module_base_kernel_func_hook.h"
+#include "../../module_base_kernel_symbol_kaddr.h"
 namespace kernel_module {
 inline KModErr execute_kernel_asm_func(const std::vector<uint8_t>& func_bytes, uint64_t& output_result) {
     KModErr execute_kernel_asm_func_with_buf(const uint8_t*shellcode, uint32_t shellcode_len, uint64_t& out_kaddr);
     return execute_kernel_asm_func_with_buf(func_bytes.data(), func_bytes.size(), output_result);
+}
+
+inline KModErr kallsyms_lookup_name(const char * name, uint64_t & out) {
+    SymbolHit hit = {0};
+    KModErr err = kallsyms_lookup_name(name, hit, SymbolMatchMode::Exact);
+    out = hit.addr;
+    return err;
+}
+
+inline KModErr kallsyms_lookup_name_array(const char* name, std::vector<uint64_t>& out) {
+    out.clear();
+    std::vector<SymbolHit> hits;
+    KModErr err = kallsyms_lookup_name_array(name, hits, SymbolMatchMode::Exact);
+    if (is_failed(err)) return err;
+    out.reserve(hits.size());
+    for (const auto& hit : hits) out.emplace_back(hit.addr);
+    return KModErr::OK;
 }
 
 inline KModErr read_string_disk_storage(const char* key, std::string& out) {

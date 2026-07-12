@@ -26,7 +26,6 @@ static KModErr patch_kernel_handler(const std::string& fake_cpuinfo) {
     PatchBase patchBase;
     PatchCShow patchCShow(patchBase, c_show);
     KModErr err = patchCShow.patch_c_show(fake_cpuinfo);
-    printf("patch c_show ret: %s\n", to_string(err).c_str());
     return err;
 }
 

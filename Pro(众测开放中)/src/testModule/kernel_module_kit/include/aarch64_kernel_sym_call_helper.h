@@ -11,7 +11,7 @@
 
 #include "aarch64_asm_arg.h"
 #include "aarch64_asm_idle_reg_pool.h"
-#include "module_base_kernel_symbol_lookup.h"
+#include "module_base_kernel_symbol_kaddr.h"
 
 /***************************************************************************
  * AArch64 内核API调用辅助类

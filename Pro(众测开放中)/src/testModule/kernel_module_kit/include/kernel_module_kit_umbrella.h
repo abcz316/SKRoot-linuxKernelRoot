@@ -33,7 +33,7 @@
 #include "module_base_kernel_func_hook.h"
 #include "module_base_kernel_string_ops.h"
 #include "module_base_linux_version.h"
-#include "module_base_kernel_symbol_lookup.h"
+#include "module_base_kernel_symbol_kaddr.h"
 #include "module_base_kernel_export_symbol.h"
 #include "module_base_kernel_export_symbol.inl"
 #include "module_base_install_callback.h"
