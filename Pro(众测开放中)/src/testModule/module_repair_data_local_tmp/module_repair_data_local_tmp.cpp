@@ -31,7 +31,7 @@ mkdir /data/app-ephemeral 0771 system system
 */
 static KModErr patch_filldir64(uint64_t old_ino, uint64_t new_ino) {
     kernel_module::SymbolHit filldir64;
-    RETURN_IF_ERROR(kernel_module::kallsyms_lookup_name("filldir64", kernel_module::SymbolMatchMode::Prefix, filldir64));
+    RETURN_IF_ERROR(kernel_module::kallsyms_lookup_name("filldir64", filldir64, kernel_module::SymbolMatchMode::Prefix));
     printf("%s, addr: %p\n", filldir64.name, (void*)filldir64.addr);
     PatchBase patchBase;
     PatchFilldir64 patchFilldir64(patchBase, filldir64.addr);
@@ -42,7 +42,7 @@ static KModErr patch_filldir64(uint64_t old_ino, uint64_t new_ino) {
 
 static KModErr patch_compat_filldir(uint64_t old_ino, uint64_t new_ino) {
     kernel_module::SymbolHit compat_filldir;
-    RETURN_IF_ERROR(kernel_module::kallsyms_lookup_name("compat_filldir", kernel_module::SymbolMatchMode::Prefix, compat_filldir));
+    RETURN_IF_ERROR(kernel_module::kallsyms_lookup_name("compat_filldir", compat_filldir, kernel_module::SymbolMatchMode::Prefix));
     printf("%s, addr: %p\n", compat_filldir.name, (void*)compat_filldir.addr);
     PatchBase patchBase;
     PatchCompatFilldir patchCompatFilldir(patchBase, compat_filldir.addr);

@@ -29,7 +29,7 @@ static std::set<std::string> parse_json(const std::string& json) {
 // 开始修补内核
 static KModErr patch_kernel_handler(const std::set<std::string>& hide_dir_list, const std::string& whitelist_comm_name) {
     kernel_module::SymbolHit filldir64;
-    RETURN_IF_ERROR(kernel_module::kallsyms_lookup_name("filldir64", kernel_module::SymbolMatchMode::Prefix, filldir64));
+    RETURN_IF_ERROR(kernel_module::kallsyms_lookup_name("filldir64", filldir64, kernel_module::SymbolMatchMode::Prefix));
     printf("%s, addr: %p\n", filldir64.name, (void*)filldir64.addr);
 
     uint32_t cred_offset = 0;

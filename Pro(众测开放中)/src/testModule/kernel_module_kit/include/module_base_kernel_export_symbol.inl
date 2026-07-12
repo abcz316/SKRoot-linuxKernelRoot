@@ -199,34 +199,35 @@ inline void kallsyms_lookup_size_offset(Assembler* a, KModErr& out_err, uint64_t
 	out_err = CallHelper::callNameAuto(a, "kallsyms_lookup_size_offset", NeedReturnX0::Yes, addr, symbolsize, offset);
 }
 
-inline void kallsyms_on_each_symbol(Assembler* a, KModErr & out_err, SymbolCb fn, GpX data) {
-	out_err = KModErr::ERR_MODULE_ASM;
-	std::vector<uint8_t> callback_code;
-	{
-		aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-		auto b = asm_ctx.assembler();
-		aarch64_asm_bit_c(b);
-		b->mov(x10, x0);
-		b->mov(x11, x1);
-		b->mov(x12, x2);
-		b->mov(x13, x3);
-		fn(b, x10, x11, x12, x13);
-		b->ret(x30);
-		callback_code = aarch64_asm_to_bytes(a);
-		if (callback_code.size() == 0) {
-			out_err = KModErr::ERR_MODULE_ASM;
-			return;
-		}
-	}
-	IdleRegPool pool = IdleRegPool::make(data);
-	GpX xCallback = pool.acquireX();
-	RegProtectGuard g1(a, excluding_x0(pool.getUsed()));
-	aarch64_asm_set_x_data_ptr(a, xCallback, callback_code);
-	std::vector<Arm64Arg> new_regs;
-	new_regs.push_back(to_arg(xCallback));
-	new_regs.push_back(to_arg(data));
-	out_err = CallHelper::callNameAuto(a, "kallsyms_on_each_symbol", NeedReturnX0::Yes, new_regs);
-}
+//TODO: 有问题会死机，待修复
+// inline void kallsyms_on_each_symbol(Assembler* a, KModErr & out_err, SymbolCb fn, GpX data) {
+// 	out_err = KModErr::ERR_MODULE_ASM;
+// 	std::vector<uint8_t> callback_code;
+// 	{
+// 		aarch64_asm_ctx asm_ctx = init_aarch64_asm();
+// 		auto b = asm_ctx.assembler();
+// 		aarch64_asm_bit_c(b);
+// 		b->mov(x10, x0);
+// 		b->mov(x11, x1);
+// 		b->mov(x12, x2);
+// 		b->mov(x13, x3);
+// 		fn(b, x10, x11, x12, x13);
+// 		b->ret(x30);
+// 		callback_code = aarch64_asm_to_bytes(a);
+// 		if (callback_code.size() == 0) {
+// 			out_err = KModErr::ERR_MODULE_ASM;
+// 			return;
+// 		}
+// 	}
+// 	IdleRegPool pool = IdleRegPool::make(data);
+// 	GpX xCallback = pool.acquireX();
+// 	RegProtectGuard g1(a, excluding_x0(pool.getUsed()));
+// 	aarch64_asm_set_x_data_ptr(a, xCallback, callback_code);
+// 	std::vector<Arm64Arg> new_regs;
+// 	new_regs.push_back(to_arg(xCallback));
+// 	new_regs.push_back(to_arg(data));
+// 	out_err = CallHelper::callNameAuto(a, "kallsyms_on_each_symbol", NeedReturnX0::Yes, new_regs);
+// }
 
 inline void get_task_mm(Assembler* a, KModErr & out_err, GpX task) {
     out_err = CallHelper::callNameAuto(a, "get_task_mm", NeedReturnX0::Yes, task);
@@ -524,6 +525,35 @@ inline void seq_printf(Assembler* a, KModErr & out_err, GpX m, const char *f, co
 	CallHelper::callSymbolCandidates(a, out_err,
         (std::vector<std::string>{"seq_printf"}),
 		NeedReturnX0::No,
+        new_regs
+    );
+}
+
+inline void sysfs_emit(Assembler* a, KModErr & out_err, GpX buf, GpX fmt, const Arm64Arg* regs, int regs_count) {
+	std::vector<Arm64Arg> __regs_vec(regs, regs + regs_count);
+	__regs_vec.insert(__regs_vec.begin(), to_arg(fmt));
+	__regs_vec.insert(__regs_vec.begin(), to_arg(buf));
+	CallHelper::callSymbolCandidates(a, out_err,
+        (std::vector<std::string>{"sysfs_emit"}),
+		NeedReturnX0::Yes,
+        __regs_vec
+    );
+}
+
+inline void sysfs_emit(Assembler* a, KModErr & out_err, char *buf, const char *fmt, const Arm64Arg* regs, int regs_count) {
+	std::vector<Arm64Arg> __regs_vec(regs, regs + regs_count);
+	IdleRegPool pool = IdleRegPool::makeFromVec(__regs_vec);
+	GpX xBuf = pool.acquireX();
+	GpX xFmt = pool.acquireX();
+	RegProtectGuard g1(a, xBuf);
+	aarch64_asm_set_x_cstr_ptr(a, xBuf, buf);
+	aarch64_asm_set_x_cstr_ptr(a, xFmt, fmt);
+	std::vector<Arm64Arg> new_regs = __regs_vec;
+	new_regs.insert(new_regs.begin(), to_arg(xFmt));
+	new_regs.insert(new_regs.begin(), to_arg(xBuf));
+	CallHelper::callSymbolCandidates(a, out_err,
+        (std::vector<std::string>{"sysfs_emit"}),
+		NeedReturnX0::Yes,
         new_regs
     );
 }

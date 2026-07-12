@@ -23,7 +23,7 @@ KModErr Test_kallsyms_lookup_name2() {
 
 
     SymbolHit hit;
-    RETURN_IF_ERROR(kernel_module::kallsyms_lookup_name("kernel_resta", SymbolMatchMode::Prefix, hit));
+    RETURN_IF_ERROR(kernel_module::kallsyms_lookup_name("kernel_resta", hit, SymbolMatchMode::Prefix));
     printf("kallsyms_lookup_name2 hit name:%s, addr: %p\n", hit.name, (void*)hit.addr);
     return KModErr::OK;
 }
@@ -237,110 +237,109 @@ KModErr Test_module_memfree2() {
     return KModErr::OK;
 }
 
-static void emit_cb(Assembler* a, GpX data, GpX name_ptr, GpX mod, GpX addr) {
-    KModErr err = KModErr::OK;
-    kernel_module::export_symbol::printk(a, err, "[!!!!] kallsyms_symbol:%s, addr:%llx\n", name_ptr, addr);
-    a->mov(x0, xzr); // continue next
-}
+// static void emit_cb(Assembler* a, GpX data, GpX name_ptr, GpX mod, GpX addr) {
+//     KModErr err = KModErr::OK;
+//     kernel_module::export_symbol::printk(a, err, "[!!!!] kallsyms_symbol:%s, addr:%llx\n", name_ptr, addr);
+//     a->mov(x0, xzr); // continue next
+// }
 
-KModErr Test_kallsyms_on_each_symbol1() {
-    KModErr err = KModErr::OK;
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-    auto a = asm_ctx.assembler();
-    kernel_module::arm64_module_asm_func_start(a);
-    kernel_module::export_symbol::kmalloc(a, err, 1, kernel_module::export_symbol::KmallocFlags::GFP_KERNEL);
-    RETURN_IF_ERROR(err);
-    a->mov(x11, x0);
-    a->strb(wzr, ptr(x11));
+// KModErr Test_kallsyms_on_each_symbol1() {
+//     KModErr err = KModErr::OK;
+//     aarch64_asm_ctx asm_ctx = init_aarch64_asm();
+//     auto a = asm_ctx.assembler();
+//     kernel_module::arm64_module_asm_func_start(a);
+//     kernel_module::export_symbol::kmalloc(a, err, 1, kernel_module::export_symbol::KmallocFlags::GFP_KERNEL);
+//     RETURN_IF_ERROR(err);
+//     a->mov(x11, x0);
+//     a->strb(wzr, ptr(x11));
 
-    kernel_module::export_symbol::kallsyms_on_each_symbol(a, err, emit_cb, x11);
-    RETURN_IF_ERROR(err);
-    kernel_module::export_symbol::kfree(a, err, x11);
-    RETURN_IF_ERROR(err);
-    kernel_module::arm64_module_asm_func_end(a, x0);
-	std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
-    uint64_t result = 0;
-    RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, result));
-    printf("kallsyms_on_each_symbol1 result: ok\n");
-    return KModErr::OK;
-}
+//     kernel_module::export_symbol::kallsyms_on_each_symbol(a, err, emit_cb, x11);
+//     RETURN_IF_ERROR(err);
+//     kernel_module::export_symbol::kfree(a, err, x11);
+//     RETURN_IF_ERROR(err);
+//     kernel_module::arm64_module_asm_func_end(a, x0);
+// 	std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
+//     uint64_t result = 0;
+//     RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, result));
+//     printf("kallsyms_on_each_symbol1 result: ok\n");
+//     return KModErr::OK;
+// }
 
+// struct TLSKsymState2 {
+// 	const char* symbol_name_buf = nullptr;
+// };
 
-struct TLSKsymState2 {
-	const char* symbol_name_buf = nullptr;
-};
+// static thread_local TLSKsymState2 g_tls_ksym2;
+// static void emit_cb_tls2(Assembler* a, GpX data, GpX name_ptr, GpX mod, GpX addr) {
+//     KModErr err = KModErr::OK;
+//     IdleRegPool pool = IdleRegPool::make(data, name_ptr, mod, addr);
+//     GpX xMyKeyName = pool.acquireX();
+//     GpX xCopyTo = pool.acquireX();
+//     GpX xResult = pool.acquireX();
+//     GpX xLen = pool.acquireX();
+//     GpW wFlag = pool.acquireW();
 
-static thread_local TLSKsymState2 g_tls_ksym2;
-static void emit_cb_tls2(Assembler* a, GpX data, GpX name_ptr, GpX mod, GpX addr) {
-    KModErr err = KModErr::OK;
-    IdleRegPool pool = IdleRegPool::make(data, name_ptr, mod, addr);
-    GpX xMyKeyName = pool.acquireX();
-    GpX xCopyTo = pool.acquireX();
-    GpX xResult = pool.acquireX();
-    GpX xLen = pool.acquireX();
-    GpW wFlag = pool.acquireW();
+// 	RegProtectGuard g1(a, excluding_x0(pool.getUsed()));
 
-	RegProtectGuard g1(a, excluding_x0(pool.getUsed()));
+//     Label L_end = a->newLabel();
+//     Label L_continue_next = a->newLabel();
 
-    Label L_end = a->newLabel();
-    Label L_continue_next = a->newLabel();
-
-    a->mov(xResult, Imm(1)); // default stop
-    a->ldrb(wFlag, ptr(data));
-    a->cbnz(wFlag, L_end);
+//     a->mov(xResult, Imm(1)); // default stop
+//     a->ldrb(wFlag, ptr(data));
+//     a->cbnz(wFlag, L_end);
     
-    aarch64_asm_set_x_cstr_ptr(a, xMyKeyName, "kernel_resta");
-    kernel_module::string_ops::kstartswith(a, name_ptr, xMyKeyName);
-    a->cbz(x0, L_continue_next);
+//     aarch64_asm_set_x_cstr_ptr(a, xMyKeyName, "kernel_resta");
+//     kernel_module::string_ops::kstartswith(a, name_ptr, xMyKeyName);
+//     a->cbz(x0, L_continue_next);
     
-    kernel_module::string_ops::kstrlen(a, name_ptr);
-    a->mov(xLen, x0);
-    aarch64_asm_mov_x(a, xCopyTo, (uint64_t)g_tls_ksym2.symbol_name_buf);
-    kernel_module::export_symbol::copy_to_user(a, err, xCopyTo, name_ptr, xLen);
+//     kernel_module::string_ops::kstrlen(a, name_ptr);
+//     a->mov(xLen, x0);
+//     aarch64_asm_mov_x(a, xCopyTo, (uint64_t)g_tls_ksym2.symbol_name_buf);
+//     kernel_module::export_symbol::copy_to_user(a, err, xCopyTo, name_ptr, xLen);
 
-    a->mov(wFlag, Imm(1));
-    a->strb(wFlag, ptr(data));
-    a->b(L_end);
+//     a->mov(wFlag, Imm(1));
+//     a->strb(wFlag, ptr(data));
+//     a->b(L_end);
 
-    a->bind(L_continue_next);
-    a->mov(xResult, xzr);
+//     a->bind(L_continue_next);
+//     a->mov(xResult, xzr);
     
-    a->bind(L_end);
-    a->mov(x0, xResult);
-}
+//     a->bind(L_end);
+//     a->mov(x0, xResult);
+// }
 
-KModErr Test_kallsyms_on_each_symbol2() {
-    char symbol_name_buf[1024] = {0};
-    KModErr err = KModErr::OK;
+// KModErr Test_kallsyms_on_each_symbol2() {
+//     char symbol_name_buf[1024] = {0};
+//     KModErr err = KModErr::OK;
 
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-    auto a = asm_ctx.assembler();
-    kernel_module::arm64_module_asm_func_start(a);
-    kernel_module::export_symbol::kmalloc(a, err, 1, kernel_module::export_symbol::KmallocFlags::GFP_KERNEL);
-    RETURN_IF_ERROR(err);
-    a->mov(x11, x0);
-    a->strb(wzr, ptr(x11));
+//     aarch64_asm_ctx asm_ctx = init_aarch64_asm();
+//     auto a = asm_ctx.assembler();
+//     kernel_module::arm64_module_asm_func_start(a);
+//     kernel_module::export_symbol::kmalloc(a, err, 1, kernel_module::export_symbol::KmallocFlags::GFP_KERNEL);
+//     RETURN_IF_ERROR(err);
+//     a->mov(x11, x0);
+//     a->strb(wzr, ptr(x11));
 
-    memset(&g_tls_ksym2, 0, sizeof(g_tls_ksym2));
-    g_tls_ksym2.symbol_name_buf = symbol_name_buf;
-    kernel_module::export_symbol::kallsyms_on_each_symbol(a, err, emit_cb_tls2, x11);
+//     memset(&g_tls_ksym2, 0, sizeof(g_tls_ksym2));
+//     g_tls_ksym2.symbol_name_buf = symbol_name_buf;
+//     kernel_module::export_symbol::kallsyms_on_each_symbol(a, err, emit_cb_tls2, x11);
 
-    RETURN_IF_ERROR(err);
-    kernel_module::export_symbol::kfree(a, err, x11);
-    RETURN_IF_ERROR(err);
-    kernel_module::arm64_module_asm_func_end(a, x0);
-	std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
-    uint64_t r;
-    err = kernel_module::execute_kernel_asm_func(bytes, r);
-    RETURN_IF_ERROR(err);
+//     RETURN_IF_ERROR(err);
+//     kernel_module::export_symbol::kfree(a, err, x11);
+//     RETURN_IF_ERROR(err);
+//     kernel_module::arm64_module_asm_func_end(a, x0);
+// 	std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
+//     uint64_t r;
+//     err = kernel_module::execute_kernel_asm_func(bytes, r);
+//     RETURN_IF_ERROR(err);
 
-    std::string_view hay{symbol_name_buf};
-    std::string_view needle{"kernel_resta"};
-    bool ok = hay.size() >= needle.size() && hay.compare(0, needle.size(), needle) == 0;
-    printf("kallsyms_on_each_symbol2 name: %s\n", std::string(symbol_name_buf).c_str());
-    printf("kallsyms_on_each_symbol2 result: %s\n", ok ? "ok" : "failed");
-    return KModErr::OK;
-}
+//     std::string_view hay{symbol_name_buf};
+//     std::string_view needle{"kernel_resta"};
+//     bool ok = hay.size() >= needle.size() && hay.compare(0, needle.size(), needle) == 0;
+//     printf("kallsyms_on_each_symbol2 name: %s\n", std::string(symbol_name_buf).c_str());
+//     printf("kallsyms_on_each_symbol2 result: %s\n", ok ? "ok" : "failed");
+//     return KModErr::OK;
+// }
 
 KModErr Test_kern_path() {
     using LookupFlags = kernel_module::export_symbol::LookupFlags;

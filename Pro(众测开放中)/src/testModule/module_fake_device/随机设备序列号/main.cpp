@@ -15,23 +15,29 @@
 static KModErr patch_kernel_handler(const std::string& fake_soc_sn) {
     using SymbolMatchMode = kernel_module::SymbolMatchMode;
 	using SymbolHit = kernel_module::SymbolHit;
-
     uint64_t soc_info_show = 0;
     SymbolHit msm_get_serial_number = {0};
-    RETURN_IF_ERROR(kernel_module::kallsyms_lookup_name("soc_info_show", soc_info_show));
-	RETURN_IF_ERROR(kernel_module::kallsyms_lookup_name("socinfo:msm_get_serial_number", msm_get_serial_number, SymbolMatchMode::Prefix));
+    kernel_module::kallsyms_lookup_name("soc_info_show", soc_info_show);
+	kernel_module::kallsyms_lookup_name("socinfo:msm_get_serial_number", msm_get_serial_number, SymbolMatchMode::Prefix);
 	printf("soc_info_show: %lx\n", soc_info_show);
 	printf("%s: %lx\n", msm_get_serial_number.name, msm_get_serial_number.addr);
 
+    if(!soc_info_show && !msm_get_serial_number.addr) return KModErr::ERR_MODULE_SYMBOL_NOT_EXIST;
+
     PatchBase patchBase;
-    PatchSocInfoShow patchSocInfoShow(patchBase, soc_info_show);
-    PatchMsmGetSerialNumber patchMsmGetSerialNumber(patchBase, msm_get_serial_number.addr);
-    KModErr err = patchSocInfoShow.patch_soc_info_show(fake_soc_sn);
-    printf("patch soc_info_show ret: %s\n", to_string(err).c_str());
-    RETURN_IF_ERROR(err);
-    err = patchMsmGetSerialNumber.patch_msm_get_serial_number(fake_soc_sn);
-    printf("patch msm_get_serial_number ret: %s\n", to_string(err).c_str());
-    return err;
+    if(soc_info_show) {
+        PatchSocInfoShow patchSocInfoShow(patchBase, soc_info_show);
+        KModErr err = patchSocInfoShow.patch_soc_info_show(fake_soc_sn);
+        printf("patch soc_info_show ret: %s\n", to_string(err).c_str());
+        RETURN_IF_ERROR(err);
+    }
+    if(msm_get_serial_number.addr) {
+        PatchMsmGetSerialNumber patchMsmGetSerialNumber(patchBase, msm_get_serial_number.addr);
+        KModErr err = patchMsmGetSerialNumber.patch_msm_get_serial_number(fake_soc_sn);
+        printf("patch msm_get_serial_number ret: %s\n", to_string(err).c_str());
+        RETURN_IF_ERROR(err);
+    }
+    return KModErr::OK;
 }
 
 static std::string read_soc_sn() {
@@ -224,7 +230,7 @@ std::string module_on_install(const char* root_key, const char* module_private_d
 // SKRoot 模块名片
 // 字段说明见 module_descriptor.h
 SKROOT_MODULE_NAME("随机设备序列号")
-SKROOT_MODULE_VERSION("1.0.0")
+SKROOT_MODULE_VERSION("1.0.1")
 SKROOT_MODULE_DESC(MODULE_DESC_CN_TEXT)
 SKROOT_MODULE_AUTHOR("SKRoot & 蜃 & 杨")
 SKROOT_MODULE_ON_INSTALL(module_on_install)

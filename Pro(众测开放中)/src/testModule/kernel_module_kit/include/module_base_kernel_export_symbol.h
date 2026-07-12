@@ -68,16 +68,17 @@ void kallsyms_lookup_name(Assembler* a, KModErr& out_err, GpX name);
 void kallsyms_lookup_size_offset(Assembler* a, KModErr& out_err, GpX addr, GpX symbolsize, GpX offset);
 void kallsyms_lookup_size_offset(Assembler* a, KModErr& out_err, uint64_t addr, GpX symbolsize, GpX offset);
 
+//TODO：有问题会死机待修复，请先使用
 // 原型：int fn(void *data, const char *name, struct module *mod, unsigned long addr)，设置末尾 X0 返回值非0代表终止遍历。
-typedef void (*SymbolCb)(
-    Assembler* a, // Assembler 对象，用于生成 ARM64 指令
-    GpX data,     // 用户数据寄存器，对应 void* data
-    GpX name_ptr, // 符号名指针寄存器，指向内核符号字符串
-    GpX mod,      // 符号所属模块(struct module*)寄存器，可能为 NULL
-    GpX addr      // 符号地址寄存器
-);
-// 原型: int kallsyms_on_each_symbol(int (*fn)(void * data, const char * name, struct module *mod, unsigned long addr), void *data); 返回值为 X0 寄存器
-void kallsyms_on_each_symbol(Assembler* a, KModErr& out_err, SymbolCb fn, GpX data);
+// typedef void (*SymbolCb)(
+//     Assembler* a, // Assembler 对象，用于生成 ARM64 指令
+//     GpX data,     // 用户数据寄存器，对应 void* data
+//     GpX name_ptr, // 符号名指针寄存器，指向内核符号字符串
+//     GpX mod,      // 符号所属模块(struct module*)寄存器，可能为 NULL
+//     GpX addr      // 符号地址寄存器
+// );
+// // 原型: int kallsyms_on_each_symbol(int (*fn)(void * data, const char * name, struct module *mod, unsigned long addr), void *data); 返回值为 X0 寄存器
+// void kallsyms_on_each_symbol(Assembler* a, KModErr& out_err, SymbolCb fn, GpX data);
 
 // 原型: struct mm_struct *get_task_mm(struct task_struct *task); 返回值为 X0 寄存器
 void get_task_mm(Assembler* a, KModErr& out_err, GpX task);
@@ -189,6 +190,20 @@ void seq_printf(Assembler* a, KModErr& out_err, GpX m, const char *f, Regs... re
     auto orig = mk_args(std::forward<Regs>(regs)...);
     void seq_printf(Assembler* a, KModErr& out_err, GpX m, const char *f, const Arm64Arg* regs, int regs_count);
     seq_printf(a, out_err, m, f, orig.data(), static_cast<int>(orig.size()));
+}
+
+// 原型：int sysfs_emit(char *buf, const char *fmt, ...); 返回值为 W0 寄存器
+template <typename... Regs>
+void sysfs_emit(Assembler* a, KModErr& out_err, GpX buf, GpX fmt, Regs... regs) {
+    auto orig = mk_args(std::forward<Regs>(regs)...);
+    void sysfs_emit(Assembler* a, KModErr& out_err, GpX buf, GpX fmt, const Arm64Arg* regs, int regs_count);
+    sysfs_emit(a, out_err, buf, fmt, orig.data(), static_cast<int>(orig.size()));
+}
+template <typename... Regs>
+void sysfs_emit(Assembler* a, KModErr& out_err, char *buf, const char *fmt, Regs... regs) {
+    auto orig = mk_args(std::forward<Regs>(regs)...);
+    void sysfs_emit(Assembler* a, KModErr& out_err, char *buf, const char *fmt, const Arm64Arg* regs, int regs_count);
+    sysfs_emit(a, out_err, buf, fmt, orig.data(), static_cast<int>(orig.size()));
 }
 
 namespace linux_above_5_6_0 {

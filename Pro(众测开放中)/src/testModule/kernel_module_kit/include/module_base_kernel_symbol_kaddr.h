@@ -22,28 +22,40 @@ struct SymbolHit {
 
 /***************************************************************************
  * 根据符号名查找内核符号地址
- * 参数: name         要查找的内核符号名称（以 '\\0' 结尾的字符串）
- *       mode         符号匹配模式
- *       out          输出参数，返回找到的符号地址
+ * 参数:
+ *   name    要查找的符号名称（以 '\0' 结尾）
+ *           如果是模块符号，使用“模块名:符号名”格式，例aaa:bbbbbb
+ * 
+ *   out     输出参数：
+ *             - uint64_t 版本返回命中符号的地址
+ *             - SymbolHit 版本返回命中符号的地址和完整名称
+ *   mode    符号匹配模式，仅 SymbolHit 版本支持
  * 返回: OK 表示成功找到符号；其他值为错误码，其中 ERR_MODULE_SYMBOL_NOT_EXIST 含义为内核符号不存在
  ***************************************************************************/
-KModErr kallsyms_lookup_name(const char * name, SymbolMatchMode mode, SymbolHit & out);
+KModErr kallsyms_lookup_name(const char * name, uint64_t & out);
+KModErr kallsyms_lookup_name(const char * name, SymbolHit & out, SymbolMatchMode mode);
 
-inline KModErr kallsyms_lookup_name(const char * name, uint64_t & out) {
-    SymbolHit hit = {0};
-    KModErr err = kallsyms_lookup_name(name, SymbolMatchMode::Exact, hit);
-    out = hit.addr;
-    return err;
-}
+/***************************************************************************
+ * 查找所有匹配的内核符号
+ * 参数:
+ *   name    要查找的符号名称（以 '\0' 结尾）
+ *           如果是模块符号，使用“模块名:符号名”格式，例aaa:bbbbbb
+ * 
+ *   out     输出数组：
+ *             - vector<uint64_t> 版本返回所有命中符号的地址
+ *             - vector<SymbolHit> 版本返回所有命中符号的地址和完整名称
+ *   mode    符号匹配模式，仅 SymbolHit 数组版本支持
+ * 返回: OK 表示成功找到符号；其他值为错误码，其中 ERR_MODULE_SYMBOL_NOT_EXIST 含义为内核符号不存在
+ ***************************************************************************/
+KModErr kallsyms_lookup_name_array(const char* name, std::vector<uint64_t>& out);
+KModErr kallsyms_lookup_name_array(const char* name, std::vector<SymbolHit>& out, SymbolMatchMode mode);
 
 /***************************************************************************
  * 获取sys_call_table内核地址
  * 参数: func_start_addr             输出sys_call_table内核地址
  * 返回: OK 表示成功；其它值为错误码
  ***************************************************************************/
-inline KModErr get_sys_call_table_kaddr(uint64_t & kaddr) {
-    return kallsyms_lookup_name("sys_call_table", kaddr);
-}
+inline KModErr get_sys_call_table_kaddr(uint64_t & kaddr) { return kallsyms_lookup_name("sys_call_table", kaddr); }
 
 /***************************************************************************
  * 获取指定系统调用号（NR）的内核函数地址（从 sys_call_table 读取）
