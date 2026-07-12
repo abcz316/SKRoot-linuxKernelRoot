@@ -9,6 +9,7 @@
 #include "resetprop_helper.h"
 #include "patch_soc_info_show.h"
 #include "patch_msm_get_serial_number.h"
+#include "boot_session_utils.h"
 
 #define MODULE_DESC_CN_TEXT "随机伪装硬件序列号(ro.serialno)、内核级伪装高通serial_number，无挂载"
 
@@ -20,7 +21,8 @@ static KModErr patch_kernel_handler(const std::string& fake_soc_sn) {
     kernel_module::kallsyms_lookup_name("soc_info_show", soc_info_show);
 	kernel_module::kallsyms_lookup_name("socinfo:msm_get_serial_number", msm_get_serial_number, SymbolMatchMode::Prefix);
 	printf("soc_info_show: %lx\n", soc_info_show);
-	printf("%s: %lx\n", msm_get_serial_number.name, msm_get_serial_number.addr);
+	printf("%s: %lx\n", msm_get_serial_number.name[0] ? msm_get_serial_number.name : "socinfo:msm_get_serial_number",
+       msm_get_serial_number.addr);
 
     if(!soc_info_show && !msm_get_serial_number.addr) return KModErr::ERR_MODULE_SYMBOL_NOT_EXIST;
 
@@ -79,8 +81,14 @@ static bool verify_sn(const std::string& old_sn, const std::string& new_sn,
 
 // SKRoot模块入口函数
 int skroot_module_main(const char* root_key, const char* module_private_dir) {
+    std::string first_install_boot_session;
+    kernel_module::read_string_disk_storage("first_install_boot_session", first_install_boot_session);
+    if(boot_session_utils::read_boot_session() == first_install_boot_session) {
+        printf("Please restart your phone and try again\n");
+        return -1;
+    }
+    
     kernel_module::set_current_module_description(MODULE_DESC_CN_TEXT);
-
     std::string resetprop_bin_path = std::string(module_private_dir) + "resetprop";
     resetprop::init(resetprop_bin_path);
 
@@ -225,6 +233,7 @@ std::string module_on_install(const char* root_key, const char* module_private_d
     }
     kernel_module::set_current_module_run_state(skroot_env::ModuleRunState::Abnormal);
     kernel_module::set_current_module_description("【注意】首次使用，需重启手机后才生效！！！！！");
+    kernel_module::write_string_disk_storage("first_install_boot_session", boot_session_utils::read_boot_session().c_str());
     return "";
 }
 // SKRoot 模块名片
