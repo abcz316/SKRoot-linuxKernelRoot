@@ -8,7 +8,7 @@ public:
 	PatchFilldir64(const PatchBase& patch_base, uint64_t filldir64);
 	~PatchFilldir64();
 
-	KModErr patch_filldir64(const std::set<std::string>& hide_dir_name);
+	KModErr patch_filldir64(const std::set<std::string>& names, const std::set<uint64_t>& ino_set);
 private:
 	uint64_t m_filldir64 = 0;
 };

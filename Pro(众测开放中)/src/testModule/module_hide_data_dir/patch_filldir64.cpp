@@ -35,15 +35,18 @@ android版本的差异内核源码浏览：
  https://android.googlesource.com/kernel/common/
 */
 
+
 PatchFilldir64::PatchFilldir64(const PatchBase& patch_base, uint64_t filldir64) : PatchBase(patch_base), m_filldir64(filldir64) {}
 
 PatchFilldir64::~PatchFilldir64() {}
 
-KModErr PatchFilldir64::patch_filldir64(const std::set<std::string>& hide_dir_list) {
+KModErr PatchFilldir64::patch_filldir64(const std::set<std::string>& names, const std::set<uint64_t>& ino_set) {
 	GpX x1_name = x1;
 	GpW w2_namelen = w2;
+	GpX x4_ino = x4;
 
-	std::vector<std::string> hide_dirs(hide_dir_list.begin(), hide_dir_list.end());
+	std::vector<std::string> hide_names(names.begin(), names.end());
+	std::vector<uint64_t> hide_inos(ino_set.begin(), ino_set.end());
 
 	// 生成Hook func汇编命令
 	aarch64_asm_ctx asm_ctx = init_aarch64_asm();
@@ -53,14 +56,15 @@ KModErr PatchFilldir64::patch_filldir64(const std::set<std::string>& hide_dir_li
 	// 这里下面是内核态要运行的指令
 	kernel_module::arm64_before_hook_start(a);
 
-	// 比较下进程名，放行白名单进程名。
+	// 比较进程名，放行白名单进程名。
 	emit_check_current_allow_visible_to_x10(a);
 	a->cbnz(x10, L_allow_visible);
 
-	for (size_t i = 0; i < hide_dirs.size(); ++i) {
+	// 按目录名称隐藏
+	for (size_t i = 0; i < hide_names.size(); ++i) {
 		Label L_next = a->newLabel();
 
-		const auto& dir_name = hide_dirs[i];
+		const auto& dir_name = hide_names[i];
 		aarch64_asm_mov_w(a, w11, dir_name.length());
 		a->cmp(w2_namelen, w11);
 		a->b(CondCode::kNE, L_next); //下一个
@@ -82,6 +86,23 @@ KModErr PatchFilldir64::patch_filldir64(const std::set<std::string>& hide_dir_li
 		}
 		kernel_module::arm64_before_hook_end(a, false); // 直接返回，不跳回原函数
 
+		a->bind(L_next);
+	}
+	
+	// 按完整路径隐藏
+	for (size_t i = 0; i < hide_inos.size(); ++i) {
+		Label L_next = a->newLabel();
+		aarch64_asm_mov_x(a, x11, hide_inos[i]);
+		a->cmp(x4_ino, x11);
+		a->b(CondCode::kNE, L_next); //下一个
+
+		// 隐藏文件夹的返回
+		if (kernel_module::is_kernel_version_less("6.1.0")) {
+			a->mov(x0, xzr);
+		} else {
+			a->mov(x0, Imm(1));
+		}
+		kernel_module::arm64_before_hook_end(a, false); // 直接返回，不跳回原函数
 		a->bind(L_next);
 	}
 	

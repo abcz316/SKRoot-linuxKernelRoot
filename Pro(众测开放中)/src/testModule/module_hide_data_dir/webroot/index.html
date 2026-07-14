@@ -1,46 +1,83 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#f6f7fb" />
   <title>/data 隐藏目录配置</title>
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="toast.css">
 </head>
 <body>
-  <div class="wrap">
-      <div class="topbar">
+  <main class="wrap">
+    <section class="hero" aria-label="功能说明">
+      <header class="topbar">
         <div class="title"><span class="dot"></span>/data 隐藏目录</div>
-      <div class="sub">请避免与系统目录重名，如 system、vendor、data 等关键词，否则无法开机。</div>
-      <div class="warn">
-        <span>💡 提示：请输入需隐藏的目录名。此功能可将目录<strong>完美隐藏</strong>以防扫描，但防不住“盲猜”！请务必使用<strong>字母+数字</strong>（如 local123），切勿使用常见单词。配置将在重启后生效。</span>
+      </header>
+
+      <div class="intro">
+        <div class="sub">请避免与系统目录重名，如 system、vendor、data 等关键词，否则无法开机。</div>
+        <div class="warn">
+          <span>💡 提示：此功能可将目录<strong>完美隐藏</strong>以防扫描，但防不住“盲猜”！请务必使用<strong>字母+数字</strong>（如 local123）。配置将在重启后生效。</span>
+        </div>
       </div>
-  </div>
+    </section>
 
-    <div class="panel">
-      <!-- 工具栏：输入 + 添加 -->
-      <div class="toolbar">
-        <input id="inputName" placeholder="输入目录名，如：myfolder" maxlength="80" />
-        <button class="btn" id="btnAdd">＋新增</button>
+    <section class="rules-section" aria-labelledby="rulesTitle">
+      <div class="section-head">
+        <h1 id="rulesTitle">已添加</h1>
+        <span id="ruleCount" class="count">0 条</span>
       </div>
-
-      <!-- 错误提示 -->
-      <div id="error" class="error"></div>
-
-      <!-- 列表 -->
       <div id="list" class="list"></div>
-    </div>
+    </section>
+  </main>
 
-    <div class="footer">
-      官方网站：<a href="https://github.com/abcz316/SKRoot-linuxKernelRoot" target="_blank" rel="noopener">https://github.com/abcz316/SKRoot-linuxKernelRoot</a>
-    </div>
+  <div class="bottom-action">
+    <button class="add-rule-btn" id="btnOpenAdd" type="button">
+      <span class="add-rule-icon" aria-hidden="true">＋</span>
+      <span>添加隐藏目录</span>
+    </button>
   </div>
 
-  <!-- 浮动新增 -->
-  <button class="fab" id="fabAdd" aria-label="新增">＋</button>
+  <!-- 新增规则 Bottom Sheet -->
+  <div id="sheetLayer" class="sheet-layer" aria-hidden="true">
+    <button id="sheetBackdrop" class="sheet-backdrop" type="button" aria-label="关闭添加目录"></button>
+
+    <section id="addSheet" class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+      <div class="sheet-handle" aria-hidden="true"></div>
+
+      <div class="sheet-header">
+        <h2 id="sheetTitle">添加隐藏规则</h2>
+        <button id="btnCloseSheet" class="sheet-close" type="button" aria-label="关闭">×</button>
+      </div>
+
+      <div class="mode-switch" role="tablist" aria-label="隐藏方式">
+        <button id="modeName" class="mode-option active" type="button" role="tab" aria-selected="true" data-mode="name">
+          <span class="mode-title">按名称</span>
+          <span class="mode-example">local123</span>
+        </button>
+        <button id="modePath" class="mode-option" type="button" role="tab" aria-selected="false" data-mode="path">
+          <span class="mode-title">按路径</span>
+          <span class="mode-example">/data/a/b</span>
+        </button>
+      </div>
+
+      <label id="inputLabel" class="field-label" for="ruleInput">目录名称</label>
+      <div class="field-wrap">
+        <input id="ruleInput" class="rule-input" type="text" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="80" placeholder="例如：local123" />
+        <button id="btnClearInput" class="clear-input" type="button" aria-label="清空输入">×</button>
+      </div>
+
+      <div id="error" class="error" role="alert"></div>
+
+      <div id="fieldNote" class="field-note">作用范围：/data 下所有同名目录</div>
+
+      <button id="btnConfirmAdd" class="confirm-add" type="button">添加</button>
+    </section>
+  </div>
+
   <script src="request.js"></script>
   <script src="toast.js"></script>
   <script src="main.js"></script>
 </body>
 </html>
-
