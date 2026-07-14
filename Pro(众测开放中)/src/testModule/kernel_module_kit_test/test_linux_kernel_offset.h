@@ -346,6 +346,14 @@ KModErr Test_get_inode_i_size_offset() {
     return KModErr::OK;
 }
 
+KModErr Test_get_inode_i_fop_offset() {
+    REQUIRE_ROOT_OR_RETURN();
+    uint32_t offset = 0;
+    RETURN_IF_ERROR(kernel_module::get_inode_i_fop_offset(offset));
+    printf("Output offset: 0x%x\n", offset);
+    return KModErr::OK;
+}
+
 KModErr Test_get_inode_time_offset() {
     REQUIRE_ROOT_OR_RETURN();
     uint32_t i_atime_offset = 0, i_mtime_offset = 0, i_ctime_offset = 0;

@@ -253,6 +253,7 @@ int main(int argc, char *argv[]) {
  	TEST(idx++, Test_get_inode_i_mapping_offset);			// 获取 inode 结构体中 i_mapping 字段的偏移量
  	TEST(idx++, Test_get_inode_i_ino_offset);				// 获取 inode 结构体中 i_ino 字段的偏移量
  	TEST(idx++, Test_get_inode_i_size_offset);				// 获取 inode 结构体中 i_size 字段的偏移量
+ 	TEST(idx++, Test_get_inode_i_fop_offset);				// 获取 inode 结构体中 i_fop 字段的偏移量
  	TEST(idx++, Test_get_inode_i_rdev_offset);				// 获取 inode 结构体中 i_size 字段的偏移量
 	TEST(idx++, Test_get_inode_time_offset);				// 获取 inode 结构体中 i_atime/i_mtime/i_ctime 字段的偏移量
 	TEST(idx++, Test_get_inode_i_state_offset);				// 获取 inode 结构体中 i_state 字段的偏移量

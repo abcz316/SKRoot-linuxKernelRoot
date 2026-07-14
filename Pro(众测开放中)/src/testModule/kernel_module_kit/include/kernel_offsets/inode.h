@@ -88,6 +88,13 @@ KModErr get_inode_time_offset(uint32_t & i_atime_offset, uint32_t & i_mtime_offs
 KModErr get_inode_i_state_offset(uint32_t & offset);
 
 /***************************************************************************
+* 获取 inode 结构体中 i_fop 字段的偏移量
+* 参数: offset      输出参数，返回 i_fop 字段相对于 inode 起始的偏移量（字节）
+* 返回: OK 表示成功；其它值为错误码
+***************************************************************************/
+KModErr get_inode_i_fop_offset(uint32_t & offset);
+
+/***************************************************************************
 * 获取 inode 结构体中 i_rwsem 字段的偏移量（限 Linux >= 4.7.0）
 * 参数: offset      输出参数，返回 i_rwsem 字段相对于 inode 起始的偏移量（字节）
 * 返回: OK 表示成功；其它值为错误码
