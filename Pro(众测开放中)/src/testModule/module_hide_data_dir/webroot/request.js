@@ -14,8 +14,14 @@
     return resp.ok ? await resp.text() : ('HTTP ' + resp.status);
   }
 
+  async function checkFileExist(filePath) {
+    const resp = await postText('/checkFileExist', filePath);
+    return resp.ok ? await resp.text() : ('HTTP ' + resp.status);
+  }
+
   return {
     getHiddenDirsJson,
-    setHiddenDirsJson
+    setHiddenDirsJson,
+    checkFileExist
   };
 })();

@@ -33,5 +33,5 @@ function showToast(msg, type = 'success') {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => {
     toast.classList.remove('toast--show');
-  }, 2000); // 2000 秒自动消失
+  }, 2000); // 2000 毫秒后自动消失
 }
