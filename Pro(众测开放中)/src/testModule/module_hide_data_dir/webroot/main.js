@@ -15,6 +15,7 @@ const $btnOpenAdd = document.getElementById('btnOpenAdd');
 const $sheetLayer = document.getElementById('sheetLayer');
 const $sheetBackdrop = document.getElementById('sheetBackdrop');
 const $btnCloseSheet = document.getElementById('btnCloseSheet');
+const $modeSwitch = document.querySelector('.mode-switch');
 const $modeButtons = Array.from(document.querySelectorAll('.mode-option'));
 const $inputLabel = document.getElementById('inputLabel');
 const $ruleInput = document.getElementById('ruleInput');
@@ -241,6 +242,8 @@ function setMode(mode) {
   currentMode = mode;
   clearError();
   $ruleInput.value = '';
+
+  $modeSwitch.classList.toggle('path-active', mode === RULE_TYPE.PATH);
 
   $modeButtons.forEach(button => {
     const active = button.dataset.mode === mode;
