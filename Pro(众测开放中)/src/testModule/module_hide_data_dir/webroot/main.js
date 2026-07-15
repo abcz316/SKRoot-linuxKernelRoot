@@ -165,12 +165,6 @@ function exists(rule) {
   return items.some(item => item.type === rule.type && item.value === rule.value);
 }
 
-function describeRule(rule) {
-  return rule.type === RULE_TYPE.NAME
-    ? '同名目录批量隐藏'
-    : '完整路径精准隐藏';
-}
-
 function createElement(tagName, className, text) {
   const element = document.createElement(tagName);
   if (className) element.className = className;
@@ -198,25 +192,22 @@ function render() {
 
   items.forEach((rule, index) => {
     const card = createElement('article', 'rule-card');
+    const content = createElement('div', 'rule-content');
 
-    const header = createElement('div', 'rule-header');
     const typeBadge = createElement(
       'span',
       `rule-type rule-type--${rule.type}`,
       rule.type === RULE_TYPE.NAME ? '按名称' : '按路径'
     );
+    const value = createElement('div', 'rule-value', rule.value);
 
     const del = createElement('button', 'rule-delete', '删除');
     del.type = 'button';
     del.setAttribute('aria-label', `删除规则 ${rule.value}`);
     del.addEventListener('click', () => deleteRule(index, del));
 
-    header.append(typeBadge, del);
-
-    const value = createElement('div', 'rule-value', rule.value);
-    const description = createElement('div', 'rule-desc', describeRule(rule));
-
-    card.append(header, value, description);
+    content.append(typeBadge, value);
+    card.append(content, del);
     $list.appendChild(card);
   });
 }

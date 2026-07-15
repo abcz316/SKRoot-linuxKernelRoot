@@ -133,31 +133,31 @@ body.sheet-open {
 
 .list {
   display: grid;
-  gap: 10px;
+  gap: 9px;
 }
 
 .rule-card {
+  display: flex;
   min-width: 0;
-  padding: 13px 14px 14px;
+  padding: 12px 13px;
+  align-items: center;
+  gap: 12px;
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   box-shadow: 0 5px 18px rgba(15, 23, 42, .05);
 }
 
-.rule-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  min-height: 34px;
+.rule-content {
+  min-width: 0;
+  flex: 1;
 }
 
 .rule-type {
   display: inline-flex;
-  align-items: center;
-  min-height: 25px;
+  min-height: 24px;
   padding: 3px 9px;
+  align-items: center;
   border-radius: 999px;
   font-size: 11px;
   font-weight: 700;
@@ -176,28 +176,23 @@ body.sheet-open {
 }
 
 .rule-value {
-  margin-top: 9px;
+  margin-top: 7px;
   color: #111827;
-  font: 650 14px/1.48 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font: 650 14px/1.45 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
   overflow-wrap: anywhere;
   word-break: break-word;
 }
 
-.rule-desc {
-  margin-top: 5px;
-  color: var(--muted);
-  font-size: 12px;
-}
-
 .rule-delete {
-  min-width: 54px;
-  min-height: 36px;
-  padding: 6px 11px;
+  min-width: 52px;
+  min-height: 34px;
+  padding: 5px 10px;
+  flex: 0 0 auto;
   appearance: none;
   color: #d92d20;
   background: rgba(255, 59, 48, .06);
   border: 1px solid rgba(255, 59, 48, .28);
-  border-radius: 11px;
+  border-radius: 10px;
   font-size: 13px;
   font-weight: 650;
 }
