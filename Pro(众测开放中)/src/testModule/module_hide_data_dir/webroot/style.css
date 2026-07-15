@@ -406,16 +406,39 @@ body.sheet-open {
 }
 
 .mode-switch {
+  position: relative;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 6px;
   margin-top: 14px;
   padding: 4px;
+  overflow: hidden;
   background: #f1f3f7;
   border-radius: 14px;
 }
 
+/* 选中项底部滑块：从左向右平移，而不是切换背景淡入淡出 */
+.mode-switch::before {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  width: calc((100% - 14px) / 2);
+  content: "";
+  background: #fff;
+  border-radius: 11px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, .10);
+  transform: translateX(0);
+  transition: transform .28s cubic-bezier(.22, .82, .28, 1);
+}
+
+.mode-switch.path-active::before {
+  transform: translateX(calc(100% + 6px));
+}
+
 .mode-option {
+  position: relative;
+  z-index: 1;
   display: flex;
   min-width: 0;
   height: 58px;
@@ -429,13 +452,11 @@ body.sheet-open {
   border: 0;
   border-radius: 11px;
   text-align: center;
-  transition: color .16s ease, background .16s ease, box-shadow .16s ease;
+  transition: color .18s ease;
 }
 
 .mode-option.active {
   color: var(--text);
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, .10);
 }
 
 .mode-title {
