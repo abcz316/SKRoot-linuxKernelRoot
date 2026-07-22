@@ -19,11 +19,13 @@
 using namespace std;
 using namespace skroot_env;
 
-static string jstringToStr(JNIEnv* env, jstring jstring1) {
-    const char *str1 = env->GetStringUTFChars(jstring1, 0);
-    string s = str1;
-    env->ReleaseStringUTFChars(jstring1, str1);
-    return s;
+static std::string jstringToStr(JNIEnv* env, jstring value) {
+    if (env == nullptr || value == nullptr) return {};
+    const char* chars = env->GetStringUTFChars(value, nullptr);
+    if (chars == nullptr) return {};
+    std::string result(chars);
+    env->ReleaseStringUTFChars(value, chars);
+    return result;
 }
 
 static string urlEncodeToStr(string str) {
