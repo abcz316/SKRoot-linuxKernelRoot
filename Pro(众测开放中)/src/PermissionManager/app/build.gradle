@@ -10,7 +10,7 @@ android {
         minSdk 26
         targetSdk 31
         versionCode 1
-        versionName "4.5.2"
+        versionName "4.5.3"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
