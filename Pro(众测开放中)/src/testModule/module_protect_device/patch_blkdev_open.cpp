@@ -43,7 +43,7 @@ PatchBlkdevOpen::PatchBlkdevOpen(const PatchBase& patch_base, uint64_t blkdev_op
 
 PatchBlkdevOpen::~PatchBlkdevOpen() {}
 
-KModErr PatchBlkdevOpen::patch_blkdev_open(const std::vector<block_device_helper::DevNodeInfo> & protect_dev, const std::string& test_comm_name, uint64_t control_kaddr, const BlkdevOpenPatchOffsets& off) {
+KModErr PatchBlkdevOpen::patch_blkdev_open(const std::vector<block_device::DevNodeInfo> & protect_dev, const std::string& test_comm, uint64_t control_kaddr, const BlkdevOpenPatchOffsets& off) {
 	std::set<uint32_t> kernel_rdev_set;
     for (auto& dev : protect_dev) kernel_rdev_set.insert(dev.kernel_rdev);
 
@@ -64,7 +64,7 @@ KModErr PatchBlkdevOpen::patch_blkdev_open(const std::vector<block_device_helper
 	//这里下面是内核态要运行的指令
 	kernel_module::arm64_before_hook_start(a);
 	
-	emit_check_current_comm_name_to_x10(a, test_comm_name);
+	emit_check_current_comm_name_to_x10(a, test_comm);
 	a->cbnz(x10, L_entry); // 测试程序，主动拦截。
 
 	aarch64_asm_mov_x(a, x11, control_kaddr);
