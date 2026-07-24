@@ -1,0 +1,424 @@
+﻿* {
+	box-sizing: border-box;
+	-webkit-tap-highlight-color: transparent;
+}
+
+body {
+	margin: 0;
+	font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text",
+				 "Segoe UI", Roboto, "Helvetica Neue", Arial,
+				 "PingFang SC", "Microsoft YaHei", sans-serif;
+	background: #e5e7eb;   /* 整体浅灰，不是一片死白 */
+	color: #0f172a;
+}
+
+.page {
+	max-width: 520px;
+	margin: 0 auto;
+	padding: 12px 14px 24px;
+	min-height: 100vh;
+}
+
+.card {
+	border-radius: 18px;
+	box-shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
+	margin-bottom: 12px;
+}
+
+/* 顶部深色模块头 */
+.header {
+	background: #020617;
+	color: #e5e7eb;
+	padding: 16px 16px 14px;
+}
+
+.header-title-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+}
+
+.title {
+	margin: 0;
+	font-size: 20px;
+	font-weight: 700;
+	letter-spacing: 0.03em;
+}
+
+.badge {
+	font-size: 11px;
+	padding: 4px 10px;
+	border-radius: 999px;
+	border: 1px solid rgba(148, 163, 184, 0.55);
+	color: #e5e7eb;
+	white-space: nowrap;
+}
+
+.subtitle {
+	margin: 6px 0 8px;
+	font-size: 12px;
+	color: #9ca3af;
+}
+
+.meta-line {
+	font-size: 11px;
+	color: #9ca3af;
+}
+
+.meta-line + .meta-line {
+	margin-top: 2px;
+}
+
+/* section 通用卡片 */
+.section {
+	background: #ffffff;
+	padding: 12px 14px 14px;
+}
+
+/* 第二块略微变色，色调隔开一点 */
+.section-alt {
+	background: #f9fafb;
+}
+
+.section-title {
+	margin: 0 0 4px;
+	font-size: 14px;
+	font-weight: 600;
+	color: #111827;
+}
+
+.section-desc {
+	margin: 0 0 8px;
+	font-size: 12px;
+	color: #6b7280;
+}
+
+/* 功能开关行 */
+.row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 10px;
+	padding: 10px 0;
+}
+
+.row + .row {
+	border-top: 1px solid #e5e7eb;
+}
+
+.row-text {
+	flex: 1;
+	min-width: 0;
+}
+
+.row-title {
+	font-size: 14px;
+	font-weight: 500;
+	color: #111827;
+}
+
+.row-desc {
+	margin-top: 3px;
+	font-size: 12px;
+	color: #6b7280;
+	line-height: 1.35;
+}
+
+/* 功能开关里的只读信息值 */
+.row-value {
+	flex-shrink: 0;
+	max-width: 150px;
+	padding: 5px 9px;
+	border-radius: 999px;
+	background: #eef2ff;
+	color: #3730a3;
+	font-family: "SF Mono", "Roboto Mono", Menlo, Consolas, monospace;
+	font-size: 12px;
+	font-weight: 600;
+	line-height: 1.2;
+	text-align: right;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* iOS 风格 switch */
+.switch {
+	position: relative;
+	display: inline-block;
+	width: 46px;
+	height: 26px;
+	flex-shrink: 0;
+}
+
+.switch input {
+	opacity: 0;
+	width: 0;
+	height: 0;
+}
+
+.slider {
+	position: absolute;
+	cursor: pointer;
+	inset: 0;
+	background-color: #d1d5db;
+	transition: 0.22s;
+	border-radius: 999px;
+}
+
+.slider::before {
+	content: "";
+	position: absolute;
+	height: 20px;
+	width: 20px;
+	left: 3px;
+	top: 3px;
+	background-color: #ffffff;
+	border-radius: 999px;
+	box-shadow: 0 1px 3px rgba(15, 23, 42, 0.30);
+	transition: 0.22s;
+}
+
+.switch input:checked + .slider {
+	background-color: #22c55e;
+}
+
+.switch input:checked + .slider::before {
+	transform: translateX(18px);
+}
+
+@media (max-width: 360px) {
+	.page {
+		padding-inline: 10px;
+	}
+}
+
+/* keybox 文本域 + 按钮 */
+.keybox-textarea {
+	margin-top: 6px;
+	width: 100%;
+	min-height: 170px;
+	resize: vertical;
+	border-radius: 10px;
+	border: 1px solid #e5e7eb;
+	padding: 8px 9px;
+	font-family: "SF Mono", "Roboto Mono", Menlo, Consolas, monospace;
+	font-size: 12px;
+	line-height: 1.4;
+	background: #f9fafb;
+	color: #111827;
+	outline: none;
+}
+
+.keybox-textarea:focus {
+	border-color: #22c55e;
+	box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.18);
+	background: #ffffff;
+}
+.keybox-toolbar{
+	display:flex;
+	gap:10px;
+	margin-top:8px;
+}
+
+.tool-btn{
+	flex:1;
+	height:38px;
+	border-radius:999px;
+	border:1px solid #e5e7eb;
+	background:#ffffff;
+	color:#111827;
+	font-size:13px;
+	font-weight:600;
+	cursor:pointer;
+	box-shadow:0 6px 14px rgba(15, 23, 42, 0.06);
+}
+
+.tool-btn:active{
+	transform: translateY(1px);
+	box-shadow:0 3px 10px rgba(15, 23, 42, 0.05);
+}
+
+.tool-btn.tool-warn{
+	border-color: rgba(245, 158, 11, 0.45);
+	background: rgba(245, 158, 11, 0.10);
+	color:#92400e;
+}
+
+.btn-primary {
+	width: 100%;
+	margin-top: 12px;
+	padding: 10px 0;
+	border: none;
+	border-radius: 999px;
+	font-size: 14px;
+	font-weight: 600;
+	background: #22c55e;
+	color: #ffffff;
+	cursor: pointer;
+	box-shadow: 0 8px 18px rgba(34, 197, 94, 0.35);
+}
+
+.btn-primary:active {
+	transform: translateY(1px);
+	box-shadow: 0 4px 10px rgba(34, 197, 94, 0.30);
+}
+
+.tip {
+	margin-top: 6px;
+	font-size: 11px;
+	color: #9ca3af;
+	text-align: center;
+}
+
+/* 让 textarea 明显出现滚动条（内容很长时） */
+.keybox-textarea{
+  overflow: auto;
+  scrollbar-gutter: stable;
+  /* Firefox */
+  scrollbar-width: auto;          /* 可改 thin/auto */
+  scrollbar-color: rgba(100,116,139,.7) rgba(226,232,240,.9);
+}
+
+/* Chrome / Edge / Android WebView */
+.keybox-textarea::-webkit-scrollbar{
+  width: 10px;
+  height: 10px;
+}
+.keybox-textarea::-webkit-scrollbar-track{
+  background: rgba(226,232,240,.9);
+  border-radius: 999px;
+}
+.keybox-textarea::-webkit-scrollbar-thumb{
+  background: rgba(100,116,139,.7);
+  border-radius: 999px;
+  border: 2px solid rgba(226,232,240,.9);
+}
+.keybox-textarea::-webkit-scrollbar-thumb:hover{
+  background: rgba(71,85,105,.85);
+}
+
+/* --- Bootloader 模拟脚本 --- */
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.section-header .section-title {
+    margin: 0; 
+}
+
+/* --- 查看本机属性按钮 --- */
+.btn-ghost {
+    background: transparent;
+    border: none;
+    color: #9ca3af;
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 500;
+}
+
+.btn-ghost:hover {
+    background: rgba(107, 114, 128, 0.1);
+    color: #4b5563;
+}
+
+.btn-ghost:active {
+    transform: scale(0.96);
+}
+
+/* --- 调试弹窗 (Modal) --- */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(2px);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    opacity: 1;
+    transition: opacity 0.2s;
+}
+
+.modal-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+    visibility: hidden;
+}
+
+.modal-card {
+    background: #fff;
+    width: 100%;
+    max-width: 500px;
+    height: 80vh; /* 占据屏幕高度的80% */
+    border-radius: 16px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transform: scale(1);
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.modal-overlay.hidden .modal-card {
+    transform: scale(0.95);
+}
+
+.modal-header {
+    padding: 16px;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 16px;
+    color: #111827;
+}
+
+.btn-close {
+    background: transparent;
+    border: none;
+    font-size: 24px;
+    line-height: 1;
+    color: #6b7280;
+    cursor: pointer;
+    padding: 0 8px;
+}
+
+.modal-body {
+    flex: 1;
+    overflow: auto;
+    padding: 0;
+    background: #f9fafb;
+}
+
+#debug-output {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: transparent;
+    padding: 12px;
+    font-family: "SF Mono", "Roboto Mono", monospace;
+    font-size: 11px;
+    line-height: 1.5;
+    color: #374151;
+    resize: none;
+    outline: none;
+}
+
+.modal-footer {
+    padding: 12px;
+    border-top: 1px solid #e5e7eb;
+    background: #fff;
+}
