@@ -3,7 +3,13 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 LOCAL_MODULE := module_protect_device
 
-LOCAL_SRC_FILES := ../module_protect_device.cpp ../patch_base.cpp ../patch_blkdev_open.cpp
+LOCAL_SRC_FILES := \
+	../module_protect_device.cpp \
+	../block_device_manager.cpp \
+	../block_device_policy.cpp \
+	../block_device_scanner.cpp \
+	../patch_base.cpp \
+	../patch_blkdev_open.cpp
 
 KERNEL_MODULE_KIT := $(LOCAL_PATH)/../../kernel_module_kit
 LOCAL_C_INCLUDES  += $(KERNEL_MODULE_KIT)/include
