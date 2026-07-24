@@ -1,0 +1,20 @@
+allow keystore {adb_data_file shell_data_file} file *
+allow crash_dump keystore process *
+
+# SOTER Layer-A (10.C): ptrace inject into soterserver (platform_app). The debug NDJSON
+# media_rw_data_file grant is debug-only — appended for debug builds in app/build.gradle.kts.
+allow crash_dump platform_app process *
+
+allow ksu self:tcp_socket { create connect read write getopt setopt }
+allow ksu node:tcp_socket node_bind
+allow ksu port:tcp_socket name_connect
+allow magisk self:tcp_socket { create connect read write getopt setopt }
+allow magisk node:tcp_socket node_bind
+allow magisk port:tcp_socket name_connect
+
+allow ksu self:udp_socket { create connect read write getopt setopt }
+allow ksu node:udp_socket node_bind
+allow ksu port:udp_socket name_connect
+allow magisk self:udp_socket { create connect read write getopt setopt }
+allow magisk node:udp_socket node_bind
+allow magisk port:udp_socket name_connect

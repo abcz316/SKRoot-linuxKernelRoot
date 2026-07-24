@@ -1,0 +1,11 @@
+com.android.vending
+com.google.android.gms
+io.github.vvb2060.keyattestation
+io.github.vvb2060.mahoshojo
+icu.nullptr.nativetest
+com.reveny.nativecheck
+com.zhenxi.hunter
+io.github.qwq233.keyattestation
+com.android.nativetest
+io.liankong.riskdetector
+luna.safe.luna

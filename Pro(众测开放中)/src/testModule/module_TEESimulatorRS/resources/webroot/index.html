@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <title>TEESimulator-RS 模块控制台</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="toast.css">
+</head>
+
+<body>
+    <div class="page">
+
+        <!-- 顶部模块信息 -->
+        <header class="card header">
+            <div class="header-title-row">
+                <h1 class="title">TEESimulator-RS</h1>
+                <span class="badge">模块控制台</span>
+            </div>
+
+            <p class="subtitle">
+                Android 证书增强模块 · 提供系统证书接管与 TEE 状态修复能力。
+            </p>
+
+            <div class="meta-line">
+                版本：<span id="module-version">加载中</span>
+            </div>
+            <div class="meta-line">
+                作者：JingMatrix, Enginex0, xiaoxun
+            </div>
+        </header>
+
+        <!-- 功能开关 -->
+        <section class="card section section-alt">
+            <h2 class="section-title">功能开关</h2>
+
+            <div class="row">
+                <div class="row-text">
+                    <div class="row-title">开机自动接管系统外应用</div>
+                    <div class="row-desc">
+                        设备重启后，自动将所有系统外应用加入生效列表。
+                    </div>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="toggle-auto-third-app">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="row">
+                <div class="row-text">
+                    <div class="row-title">修复 TEE 状态异常</div>
+                    <div class="row-desc">
+                        检测到 TEE 相关状态异常时，尝试自动修复。
+                    </div>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="toggle-fix-tee">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+			<div class="row">
+				<div class="row-text">
+					<div class="row-title">隐藏 Bootloader 状态</div>
+					<div class="row-desc">
+						伪装锁定状态，并重置 VerifiedBoot State 等属性。
+					</div>
+				</div>
+				<label class="switch">
+					<input type="checkbox" id="toggle-hide-bl">
+					<span class="slider"></span>
+				</label>
+			</div>
+
+			<div class="row">
+				<div class="row-text">
+					<div class="row-title">Android安全补丁日期</div>
+					<div class="row-desc">
+						修改日期请前往模块市场下载「修改Android安全补丁日期」。
+					</div>
+				</div>
+				<div class="row-value" id="android-security-patch-date">加载中</div>
+			</div>
+
+        </section>
+
+        <section class="card section">
+            <h2 class="section-title">target.txt 配置</h2>
+            <p class="section-desc">
+                target.txt 逐行存放每个 App 的包名（一个包名一行）。修改后请保存。
+            </p>
+
+            <textarea id="target-editor" class="keybox-textarea" spellcheck="false"
+                placeholder="com.example.app1&#10;com.example.app2&#10;..."></textarea>
+
+            <div class="keybox-toolbar">
+                <button class="tool-btn" id="btn-copy-target" type="button">复制全文</button>
+                <button class="tool-btn tool-warn" id="btn-paste-target" type="button">粘贴覆盖全文</button>
+            </div>
+
+            <button class="btn-primary" id="btn-save-target" type="button">
+                保存 target.txt 修改
+            </button>
+
+            <div class="tip">
+                target.txt 修改需要重启设备后才生效。
+            </div>
+        </section>
+
+        <section class="card section">
+            <h2 class="section-title">keybox.xml 配置</h2>
+            <p class="section-desc">
+                这里展示当前 keybox.xml 内容，仅在充分理解配置含义的情况下再修改。
+            </p>
+
+            <textarea id="keybox-editor" class="keybox-textarea" spellcheck="false"
+                placeholder="&lt;keybox&gt;&#10;&lt;!-- 在这里展示实际的 keybox.xml 内容 --&gt;&#10;&lt;/keybox&gt;"></textarea>
+
+            <div class="keybox-toolbar">
+                <button class="tool-btn" id="btn-copy-keybox" type="button">
+                    复制全文
+                </button>
+
+                <button class="tool-btn tool-warn" id="btn-paste-keybox" type="button">
+                    粘贴覆盖全文
+                </button>
+            </div>
+
+            <button class="btn-primary" id="btn-save-keybox">
+                保存 keybox.xml 修改
+            </button>
+
+            <div class="tip">
+                keybox.xml 修改需要重启设备后才生效。
+            </div>
+        </section>
+
+        <section class="card section">
+            <div class="section-header">
+                <h2 class="section-title">隐藏 Bootloader 属性脚本</h2>
+                <button id="btn-debug-props" class="btn-ghost" type="button">
+                    🔍 查看本机属性
+                </button>
+            </div>
+            <p class="section-desc">
+                隐藏 Bootloader 状态的 Shell 脚本逻辑。
+            </p>
+
+            <textarea id="bl-script-editor" class="keybox-textarea" spellcheck="false"
+                placeholder="每行一条命令，例如：&#10;#!/system/bin/sh&#10;resetprop ro.some.prop value&#10;resetprop -w some.prop 0&#10;..."></textarea>
+
+            <div class="keybox-toolbar">
+                <button class="tool-btn" id="btn-copy-bl" type="button">
+                    复制脚本
+                </button>
+
+                <button class="tool-btn tool-warn" id="btn-paste-bl" type="button">
+                    粘贴覆盖
+                </button>
+            </div>
+
+            <button class="btn-primary" id="btn-save-bl">
+                保存 Bootloader 脚本
+            </button>
+
+            <div class="tip">
+                脚本修改需要重启设备后才生效。
+            </div>
+        </section>
+
+    </div>
+
+    <div id="debug-modal" class="modal-overlay hidden">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>系统属性快照</h3>
+                <button id="btn-close-modal" class="btn-close">×</button>
+            </div>
+            <div class="modal-body">
+                <textarea id="debug-output" readonly spellcheck="false"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button id="btn-copy-debug" class="tool-btn">复制全部</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast 容器 -->
+    <div id="toast" class="toast"></div>
+
+    <script src="request.js"></script>
+    <script src="toast.js"></script>
+    <script src="main.js"></script>
+</body>
+
+</html>

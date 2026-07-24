@@ -1,0 +1,15 @@
+#!/system/bin/sh
+
+MODDIR=$1
+
+# Determine classpath
+if [ -f "$MODDIR/classes.dex" ]; then
+    CLASSPATH="$MODDIR/classes.dex"
+elif [ -f "$MODDIR/service.apk" ]; then
+    CLASSPATH="$MODDIR/service.apk"
+else
+    echo "Error: Neither classes.dex nor service.apk found in $MODDIR"
+    exit 1
+fi
+
+exec /system/bin/app_process -Djava.class.path="$CLASSPATH" "$MODDIR" --nice-name=TEESimulator org.matrix.TEESimulator.App
