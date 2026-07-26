@@ -21,7 +21,6 @@ contains_reset_ro_prop() {
   [[ "$(resetprop "$NAME")" == *"$CONTAINS"* ]] && resetprop -n "$NAME" "$NEWVAL"
 }
 
-resetprop -w sys.boot_completed 0
 check_reset_prop "ro.boot.vbmeta.device_state" "locked"
 check_reset_prop "ro.boot.verifiedbootstate" "green"
 check_reset_prop "ro.boot.flash.locked" "1"

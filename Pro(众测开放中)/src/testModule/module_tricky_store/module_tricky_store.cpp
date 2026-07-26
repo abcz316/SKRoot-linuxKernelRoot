@@ -139,6 +139,22 @@ int skroot_module_main(const char* root_key, const char* module_private_dir) {
         fork_run_script_and_wait(HIDE_BOOTLOADER_SH);
     }
 
+    if (auto_third_app_toggle) {
+        bool ok = write_target_txt_applist();
+        printf("write target.txt applist: %s\n", ok ? "success" : "failed");
+        pid_t pid = ::fork();
+        if (pid == 0) {
+            sleep(7);
+            static std::atomic_bool stop_watcher{false};
+            android_pkgmap::watch_packages_list_changed([] {
+                printf("app list has changed!\n");
+                bool ok = write_target_txt_applist();
+                printf("write target.txt applist: %s\n", ok ? "success" : "failed");
+            }, stop_watcher);
+            _exit(127);
+        }
+    }
+
     fork_delayed_task(10, [=] {
         if (auto_third_app_toggle) {
             bool ok = write_target_txt_applist();
