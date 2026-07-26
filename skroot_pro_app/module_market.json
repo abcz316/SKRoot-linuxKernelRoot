@@ -69,11 +69,11 @@
         {
             "chn_name": "TEESimulator-RS",
             "eng_name": "",
-            "ver": "6.0.1-r1",
+            "ver": "6.0.1-r2",
             "desc": "Software simulation for Android hardware-backed key pairs with key attestation",
             "author": "JingMatrix, Enginex0, xiaoxun",
             "id32": "teesimulator601skpro202607210000",
-            "update_date": "2026-7-24",
+            "update_date": "2026-7-26",
             "source_url": "https://github.com/abcz316/SKRoot-linuxKernelRoot/tree/master/Pro(%E4%BC%97%E6%B5%8B%E5%BC%80%E6%94%BE%E4%B8%AD)/src/testModule/module_TEESimulatorRS",
             "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_TEESimulatorRS/module.zip",
             "download_chn_alert": "",
