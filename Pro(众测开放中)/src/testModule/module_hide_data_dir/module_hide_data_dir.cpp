@@ -2,6 +2,7 @@
 #include <set>
 #include <fstream>
 #include "patch_filldir64.h"
+#include "patch_compat_filldir.h"
 #include "kernel_module_kit_umbrella.h"
 #include "simple_hash_util.h"
 #include "cJSON.h"
@@ -70,6 +71,11 @@ static KModErr patch_kernel_handler(const HideDirConfig& config, const std::stri
     kernel_module::SymbolHit filldir64;
     RETURN_IF_ERROR(kernel_module::kallsyms_lookup_name("filldir64", filldir64, kernel_module::SymbolMatchMode::Prefix));
     printf("%s, addr: %p\n", filldir64.name, (void*)filldir64.addr);
+    
+    kernel_module::SymbolHit compat_filldir;
+    RETURN_IF_ERROR(kernel_module::kallsyms_lookup_name("compat_filldir", compat_filldir, kernel_module::SymbolMatchMode::Prefix));
+    printf("%s, addr: %p\n", compat_filldir.name, (void*)compat_filldir.addr);
+
     uint32_t cred_offset = 0;
     uint32_t cred_euid_offset = 0;
     uint32_t comm_offset = 0;
@@ -89,8 +95,15 @@ static KModErr patch_kernel_handler(const HideDirConfig& config, const std::stri
 
     PatchBase patchBase(cred_offset, cred_euid_offset, comm_offset, whitelist_comm_name);
     PatchFilldir64 patchFilldir64(patchBase, filldir64.addr);
+    PatchCompatFilldir patchCompatFilldir(patchBase, compat_filldir.addr);
+
+
     KModErr err = patchFilldir64.patch_filldir64(config.names, ino_set);
     printf("patch filldir64 ret: %s\n", to_string(err).c_str());
+    RETURN_IF_ERROR(err);
+    err = patchCompatFilldir.patch_compat_filldir(config.names, ino_set);
+    printf("patch compat_filldir ret: %s\n", to_string(err).c_str());
+    RETURN_IF_ERROR(err);
     return err;
 }
 
@@ -139,7 +152,7 @@ private:
 // SKRoot 模块名片
 // 字段说明见 module_descriptor.h
 SKROOT_MODULE_NAME("隐藏/data目录")
-SKROOT_MODULE_VERSION("2.0.0")
+SKROOT_MODULE_VERSION("2.0.1")
 SKROOT_MODULE_DESC("内核级隐藏 /data 指定目录，彻底阻断文件扫描；底层拦截机制，免疫各类基于漏洞的暴力扫盘。")
 SKROOT_MODULE_AUTHOR("SKRoot")
 SKROOT_MODULE_ID32("ae12076c010ebabbb233affdd0239c14")
