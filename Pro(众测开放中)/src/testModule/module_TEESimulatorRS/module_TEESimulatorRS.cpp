@@ -1,6 +1,8 @@
 ﻿#include <iostream>
 #include <unistd.h>
 #include <algorithm>
+#include <atomic>
+#include <thread>
 #include <sys/wait.h>
 #include <sys/syscall.h>
 #include "module_TEESimulatorRS.h"
@@ -11,7 +13,7 @@
 #include "android_packages_list_utils.h"
 #include "android_system_property_utils.h"
 
-#define MOD_VER "6.0.1-r1"
+#define MOD_VER "6.0.1-r2"
 
 #define CONFIG_DIR "/data/adb/tricky_store"
 #define TARGET_TXT "/data/adb/tricky_store/target.txt"
@@ -142,6 +144,17 @@ int skroot_module_main(const char* root_key, const char* module_private_dir) {
     if (auto_third_app_toggle) {
         bool ok = write_target_txt_applist();
         printf("write target.txt applist: %s\n", ok ? "success" : "failed");
+        pid_t pid = ::fork();
+        if (pid == 0) {
+            sleep(7);
+            static std::atomic_bool stop_watcher{false};
+            android_pkgmap::watch_packages_list_changed([] {
+                printf("app list has changed!\n");
+                bool ok = write_target_txt_applist();
+                printf("write target.txt applist: %s\n", ok ? "success" : "failed");
+            }, stop_watcher);
+            _exit(127);
+        }
     }
 
     pid_t pid = ::fork();
