@@ -13,7 +13,7 @@
 #include "android_packages_list_utils.h"
 #include "android_system_property_utils.h"
 
-#define MOD_VER "6.0.1-r2"
+#define MOD_VER "6.0.1-r3"
 
 #define CONFIG_DIR "/data/adb/tricky_store"
 #define TARGET_TXT "/data/adb/tricky_store/target.txt"
