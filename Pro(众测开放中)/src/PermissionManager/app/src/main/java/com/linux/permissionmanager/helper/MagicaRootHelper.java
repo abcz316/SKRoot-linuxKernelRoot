@@ -8,25 +8,33 @@ import android.os.Build;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.RemoteException;
-import android.text.TextUtils;
 
 import androidx.annotation.RequiresApi;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class MagicaRootHelper {
-    public interface ResultCallback {
-        void onResult(String result);
+    public interface CompletionCallback {
+        void onComplete();
+    }
+    public interface LineCallback {
+        void onLine(String line);
     }
     @RequiresApi(api = Build.VERSION_CODES.Q)
-    public static void executeMagicaRootScript(Context context, String script, ResultCallback callback) {
+    public static void executeMagicaRootScript(Context context, String script, CompletionCallback callback) {
+        executeMagicaRootScript(context, script, callback, null);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.Q)
+    public static void executeMagicaRootScript(Context context, String script, CompletionCallback callback, LineCallback lineCallback) {
         AtomicBoolean finished = new AtomicBoolean(false);
         ServiceConnection connection = new ServiceConnection() {
             private IRemoteService remoteService;
@@ -42,7 +50,8 @@ public class MagicaRootHelper {
                         e.printStackTrace();
                     }
                     if (remoteProcess == null) {
-                        postResultOnce(context, finished, callback, "ERROR: remote process is null");
+                        emitLine(lineCallback, "ERROR: remote process is null");
+                        postCompleteOnce(context, finished, callback);
                         safeUnbind(context, this);
                         return;
                     }
@@ -50,8 +59,8 @@ public class MagicaRootHelper {
                     ByteArrayOutputStream stdoutBuffer = new ByteArrayOutputStream();
                     ByteArrayOutputStream stderrBuffer = new ByteArrayOutputStream();
 
-                    Thread outThread = new Thread(() -> copyStream(process.getInputStream(), stdoutBuffer), "Magica-stdout");
-                    Thread errThread = new Thread(() -> copyStream(process.getErrorStream(), stderrBuffer), "Magica-stderr");
+                    Thread outThread = new Thread(() -> copyStream(process.getInputStream(), stdoutBuffer, lineCallback), "Magica-stdout");
+                    Thread errThread = new Thread(() -> copyStream(process.getErrorStream(), stderrBuffer, lineCallback), "Magica-stderr");
                     try {
                         outThread.start();
                         errThread.start();
@@ -60,30 +69,12 @@ public class MagicaRootHelper {
                         stdin.flush();
                         stdin.close();
 
-                        int exitCode = process.waitFor();
+                        process.waitFor();
 
                         outThread.join();
                         errThread.join();
 
-                        String stdout = stdoutBuffer.toString(StandardCharsets.UTF_8.name());
-                        String stderr = stderrBuffer.toString(StandardCharsets.UTF_8.name());
-
-                        StringBuilder result = new StringBuilder();
-                        result.append(stdout);
-
-                        if (!stderr.isEmpty()) {
-                            if (result.length() > 0 && result.charAt(result.length() - 1) != '\n') {
-                                result.append('\n');
-                            }
-                            result.append("[stderr]\n").append(stderr);
-                        }
-
-                        if (result.length() > 0 && result.charAt(result.length() - 1) != '\n') {
-                            result.append('\n');
-                        }
-                        result.append("[exitCode] ").append(exitCode).append('\n');
-
-                        postResultOnce(context, finished, callback, result.toString());
+                        postCompleteOnce(context, finished, callback);
                     } catch (Throwable t) {
                         try {
                             process.destroy();
@@ -95,28 +86,8 @@ public class MagicaRootHelper {
                             Thread.currentThread().interrupt();
                         }
 
-                        String stdout = null;
-                        String stderr = null;
-                        try {
-                            stdout = stdoutBuffer.toString(StandardCharsets.UTF_8.name());
-                            stderr = stderrBuffer.toString(StandardCharsets.UTF_8.name());
-                        } catch (UnsupportedEncodingException e) {
-                            e.printStackTrace();
-                        }
-                        StringBuilder msg = new StringBuilder();
-                        msg.append("ERROR: ").append(t.getMessage()).append('\n');
-
-                        if (!TextUtils.isEmpty(stdout)) {
-                            msg.append("[stdout]\n").append(stdout);
-                            if (stdout.charAt(stdout.length() - 1) != '\n') msg.append('\n');
-                        }
-
-                        if (!TextUtils.isEmpty(stderr)) {
-                            msg.append("[stderr]\n").append(stderr);
-                            if (stderr.charAt(stderr.length() - 1) != '\n') msg.append('\n');
-                        }
-
-                        postResultOnce(context, finished, callback, msg.toString());
+                        emitLine(lineCallback, "ERROR: " + t.getMessage());
+                        postCompleteOnce(context, finished, callback);
                     } finally {
                         try {
                             if (process != null) process.destroy();
@@ -128,7 +99,8 @@ public class MagicaRootHelper {
 
             @Override
             public void onServiceDisconnected(ComponentName name) {
-                postResultOnce(context, finished, callback, "ERROR: service disconnected");
+                emitLine(lineCallback, "ERROR: service disconnected");
+                postCompleteOnce(context, finished, callback);
             }
         };
 
@@ -136,9 +108,13 @@ public class MagicaRootHelper {
             Intent intent = new Intent(context, MagicaService.class);
             Executor executor = context.getMainExecutor();
             boolean ok = context.bindIsolatedService(intent, Context.BIND_AUTO_CREATE, "magica", executor, connection);
-            if (!ok) postResultOnce(context, finished, callback, "ERROR: bindIsolatedService returned false");
+            if (!ok) {
+                emitLine(lineCallback, "ERROR: bindIsolatedService returned false");
+                postCompleteOnce(context, finished, callback);
+            }
         } catch (Throwable t) {
-            postResultOnce(context, finished, callback, "ERROR: bindIsolatedService failed - " + t.getMessage());
+            emitLine(lineCallback, "ERROR: bindIsolatedService failed - " + t.getMessage());
+            postCompleteOnce(context, finished, callback);
         }
     }
 
@@ -155,11 +131,16 @@ public class MagicaRootHelper {
         }
     }
     private static void copyStream(InputStream in, ByteArrayOutputStream out) {
-        byte[] buf = new byte[8192];
-        int len;
+        copyStream(in, out, null);
+    }
+
+    private static void copyStream(InputStream in, ByteArrayOutputStream out, LineCallback lineCallback) {
         try {
-            while ((len = in.read(buf)) != -1) {
-                out.write(buf, 0, len);
+            BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                out.write((line + "\n").getBytes(StandardCharsets.UTF_8));
+                if (lineCallback != null) lineCallback.onLine(line);
             }
         } catch (IOException ignored) {
         } finally {
@@ -175,12 +156,16 @@ public class MagicaRootHelper {
         } catch (Throwable ignore) {}
     }
 
-    private static void postResultOnce(Context context, AtomicBoolean finished, ResultCallback callback, String result) {
+    private static void emitLine(LineCallback lineCallback, String line) {
+        if (lineCallback != null) lineCallback.onLine(line);
+    }
+
+    private static void postCompleteOnce(Context context, AtomicBoolean finished, CompletionCallback callback) {
         if (!finished.compareAndSet(false, true)) return;
         if (Looper.myLooper() == Looper.getMainLooper()) {
-            callback.onResult(result);
+            callback.onComplete();
         } else {
-            context.getMainExecutor().execute(() -> callback.onResult(result));
+            context.getMainExecutor().execute(callback::onComplete);
         }
     }
 }

@@ -5,10 +5,11 @@
 
 namespace skroot_env {
 
-// 定义 SKRoot 环境安装策略
+// SKRoot 环境安装策略
 enum class InstallMode : uint32_t {
-    Boot    = 0, // 刷Boot模式 (固化到内核，自动重启)
-    HotLoad = 1  // 热加载模式 (LKM内核注入，立刻生效不重启)
+    Boot            = 0, // 刷 Boot 模式（固化到内核，自动重启）
+    HotLoadReboot   = 1, // 热启动模式（自动重启）
+    HotLoadNoReboot = 2, // 热启动模式（不自动重启）
 };
 
 /***************************************************************************

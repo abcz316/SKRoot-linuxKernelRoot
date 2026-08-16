@@ -13,9 +13,9 @@ import org.json.JSONObject;
 
 import java.util.List;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 public class SkrModUpdateChecker {
-
     private final Activity activity;
 
     public SkrModUpdateChecker(Activity activity) {
@@ -25,20 +25,17 @@ public class SkrModUpdateChecker {
     /**
      * 单个模块：请求更新信息（在子线程下载，回调已切回 UI 线程）
      */
-    public void requestModuleUpdate(
-            SkrModInstalledItem item,
+    public void requestModuleUpdate(SkrModInstalledItem item,
+            Consumer<SkrModInstalledItem> onNoUpdateUrlUi,
             BiConsumer<SkrModInstalledItem, SkrModUpdateInfo> onSuccessUi,
-            BiConsumer<SkrModInstalledItem, Exception> onErrorUi
-    ) {
+            BiConsumer<SkrModInstalledItem, Exception> onErrorUi) {
         if (item == null) return;
-
         String updateUrl = item.getUpdateJson();
         if (TextUtils.isEmpty(updateUrl)) {
             // 没有配置更新地址，直接回调「无更新信息」
-            if (onSuccessUi != null) activity.runOnUiThread(() -> onSuccessUi.accept(item, null));
+            if (onNoUpdateUrlUi != null) activity.runOnUiThread(() -> onNoUpdateUrlUi.accept(item));
             return;
         }
-
         NetUtils.downloadText(updateUrl, new NetUtils.TextDownloadCallback() {
             @Override
             public void onSuccess(String content) {
@@ -50,7 +47,6 @@ public class SkrModUpdateChecker {
                     onError(e);
                 }
             }
-
             @Override
             public void onError(Exception e) {
                 if (onErrorUi != null) activity.runOnUiThread(() -> onErrorUi.accept(item, e));
@@ -94,24 +90,12 @@ public class SkrModUpdateChecker {
      * 批量检查所有模块更新
      */
     public void checkAllModulesUpdate(List<SkrModInstalledItem> allModules,
+            Consumer<SkrModInstalledItem> onEachNoUpdateUrlUi,
             BiConsumer<SkrModInstalledItem, SkrModUpdateInfo> onEachSuccessUi,
-            BiConsumer<SkrModInstalledItem, Exception> onEachErrorUi
-    ) {
+            BiConsumer<SkrModInstalledItem, Exception> onEachErrorUi) {
         if (allModules == null || allModules.isEmpty()) return;
-
         for (SkrModInstalledItem item : allModules) {
-            // 没有配置 updateJson 的直接跳过
-            if (item.getUpdateJson() == null || item.getUpdateJson().isEmpty()) continue;
-            requestModuleUpdate(
-                    item,
-                    (mod, info) -> {
-                        if (onEachSuccessUi != null) onEachSuccessUi.accept(mod, info);
-                    },
-                    (mod, e) -> {
-                        Log.w("SkrModUpdate", "check update failed: " + mod.getName(), e);
-                        if (onEachErrorUi != null) onEachErrorUi.accept(mod, e);
-                    }
-            );
+            requestModuleUpdate(item, onEachNoUpdateUrlUi, onEachSuccessUi, onEachErrorUi);
         }
     }
 

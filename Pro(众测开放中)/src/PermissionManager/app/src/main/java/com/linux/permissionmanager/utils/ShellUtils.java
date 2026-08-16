@@ -10,71 +10,68 @@ import java.nio.charset.StandardCharsets;
 
 public class ShellUtils {
 
-    public static String executeScript(Context context, String scriptContent) {
-        File defaultFile = new File(context.getCacheDir(), "temp_script.sh");
+    public interface LineCallback {
+        void onLine(String line);
+    }
+
+    private static final String SCRIPT_FILE_NAME = "temp_script.sh";
+
+    public static boolean executeScript(Context context, String scriptContent) {
+        File defaultFile = new File(context.getCacheDir(), SCRIPT_FILE_NAME);
         return executeScript( scriptContent, defaultFile.getAbsolutePath());
     }
 
-    public static String executeScript(String scriptContent, String scriptPath) {
+    public static boolean executeScript(Context context, String scriptContent, LineCallback callback) {
+        File defaultFile = new File(context.getCacheDir(), SCRIPT_FILE_NAME);
+        return executeScript(scriptContent, defaultFile.getAbsolutePath(), callback);
+    }
+
+    public static boolean executeScript(String scriptContent, String scriptPath) {
+        return executeScript(scriptContent, scriptPath, null);
+    }
+
+    public static boolean executeScript(String scriptContent, String scriptPath, LineCallback callback) {
         StringBuilder outputBuilder = new StringBuilder();
         Process process = null;
         File scriptFile = null;
-
         try {
             if (scriptPath == null || scriptPath.trim().isEmpty()) {
                 throw new IllegalArgumentException("scriptPath is null or empty");
             }
-
             scriptFile = new File(scriptPath);
-
-            File parent = scriptFile.getParentFile();
-            if (parent != null && !parent.exists()) {
-                boolean mkdirsOk = parent.mkdirs();
-                if (!mkdirsOk && !parent.exists()) {
-                    throw new RuntimeException("Failed to create parent directory: " + parent.getAbsolutePath());
-                }
-            }
-
             try (FileOutputStream fos = new FileOutputStream(scriptFile)) {
                 fos.write(scriptContent.getBytes(StandardCharsets.UTF_8));
                 fos.flush();
             }
-
             boolean chmodOk = scriptFile.setExecutable(true, false);
             outputBuilder.append("[Script Path] ").append(scriptFile.getAbsolutePath()).append("\n");
             outputBuilder.append("[setExecutable] ").append(chmodOk).append("\n");
-
             ProcessBuilder processBuilder = new ProcessBuilder("sh", scriptFile.getAbsolutePath());
             processBuilder.redirectErrorStream(true);
             process = processBuilder.start();
-
-            try (BufferedReader reader = new BufferedReader(
-                    new InputStreamReader(process.getInputStream()))) {
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
                 String line;
                 while ((line = reader.readLine()) != null) {
                     outputBuilder.append(line).append("\n");
+                    if (callback != null) callback.onLine(line);
                 }
             }
-
             int exitCode = process.waitFor();
             outputBuilder.append("\n[Exit Code: ").append(exitCode).append("]");
+            if (callback != null) callback.onLine("[Exit Code: " + exitCode + "]");
         } catch (Exception e) {
             e.printStackTrace();
             outputBuilder.append("\n[Execution Error: ").append(e.getMessage()).append("]");
+            if (callback != null) callback.onLine("[Execution Error: " + e.getMessage() + "]");
             if (e instanceof InterruptedException) {
                 Thread.currentThread().interrupt();
             }
+            return false;
         } finally {
             if (process != null) {
                 process.destroy();
             }
-
-            if (scriptFile != null && scriptFile.exists()) {
-                boolean deleted = scriptFile.delete();
-                outputBuilder.append("\n[Delete Script] ").append(deleted);
-            }
         }
-
-        return outputBuilder.toString();
+        return true;
     }
 }

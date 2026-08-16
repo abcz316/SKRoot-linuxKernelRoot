@@ -27,25 +27,20 @@ import com.linux.permissionmanager.model.SkrModInstalledItem;
 import com.linux.permissionmanager.model.SkrModMarketItem;
 import com.linux.permissionmanager.update.SkrModDownloader;
 import com.linux.permissionmanager.update.SkrModInstaller;
+import com.linux.permissionmanager.update.SkrModMarketFetcher;
+import com.linux.permissionmanager.update.SkrModUpdateChecker;
 import com.linux.permissionmanager.utils.DialogUtils;
-import com.linux.permissionmanager.utils.NetUtils;
 import com.linux.permissionmanager.utils.UrlIntentUtils;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.function.Consumer;
 
 public class SkrModMarketPage {
     private Activity mActivity;
     private String mRootKey = "";
+    private boolean mIsHotload = false;
 
-    private final String marketJsonUrl = "https://abcz316.github.io/SKRoot-linuxKernelRoot/skroot_pro_app/module_market.json";
 
     private EditText mSearchEdit;
     private RecyclerView mSkrModMarketRecyclerView;
@@ -57,9 +52,10 @@ public class SkrModMarketPage {
 
     private SkrModMarketAdapter mAdapter;
 
-    public SkrModMarketPage(Activity activity, String rootKey) {
+    public SkrModMarketPage(Activity activity, String rootKey, boolean isHotload) {
         mActivity = activity;
         mRootKey = rootKey;
+        mIsHotload = isHotload;
     }
 
     public void bindPage(@NonNull View view) {
@@ -96,7 +92,7 @@ public class SkrModMarketPage {
     }
 
     private void onAddSkrMod(String zipFilePath) {
-        SkrModInstaller.installFromZip(mActivity, mRootKey, zipFilePath, false);
+        SkrModInstaller.installFromZip(mActivity, mRootKey, mIsHotload, zipFilePath, false);
         refreshPage();
     }
 
@@ -169,7 +165,7 @@ public class SkrModMarketPage {
     private void initMarketList() {
         mTextLoadingTips.setVisibility(View.VISIBLE);
         mErrorContainer.setVisibility(View.GONE);
-        requestMarketJson(
+        SkrModMarketFetcher.getInstance().request(
                 (modArr) -> {
                     mTextLoadingTips.setVisibility(View.GONE);
                     if (modArr != null && modArr.size() > 0) mModList = modArr;
@@ -180,61 +176,6 @@ public class SkrModMarketPage {
                     setupSkrModRecyclerView(mModList);
                 }
         );
-    }
-
-    private void requestMarketJson(Consumer<List<SkrModMarketItem>> onSuccessUi, Consumer<Exception> onErrorUi) {
-        NetUtils.downloadText(marketJsonUrl, new NetUtils.TextDownloadCallback() {
-            @Override
-            public void onSuccess(String content) {
-                try {
-                    List<SkrModMarketItem> modArr = parseMarketJson(content);
-                    if (onSuccessUi != null) mActivity.runOnUiThread(() -> onSuccessUi.accept(modArr));
-                } catch (Exception e) { onError(e); }
-            }
-            @Override
-            public void onError(Exception e) {
-                if (onErrorUi != null) mActivity.runOnUiThread(() -> onErrorUi.accept(e));
-            }
-        });
-    }
-
-    private List<SkrModMarketItem> parseMarketJson(String jsonStr) throws JSONException {
-        if (jsonStr == null || jsonStr.trim().isEmpty()) return Collections.emptyList();
-        JSONObject root = new JSONObject(jsonStr);
-        JSONArray list = root.optJSONArray("module_list");
-        if (list == null || list.length() == 0) return Collections.emptyList();
-        List<SkrModMarketItem> result = new ArrayList<>(list.length());
-        for (int i = 0; i < list.length(); i++) {
-            JSONObject it = list.optJSONObject(i);
-            if (it == null) continue;
-            String chnName     = it.optString("chn_name", "");
-            String engName     = it.optString("eng_name", "");
-            String desc        = it.optString("desc", "");
-            String ver         = it.optString("ver", "");
-            String id32        = it.optString("id32", "");
-            String author      = it.optString("author", "");
-            String updateDate  = it.optString("update_date", "");
-            boolean ban  = it.optBoolean("ban", false);
-            if(ban) continue;
-            String sourceUrl = it.optString("source_url", "");
-            String downloadUrl = it.optString("download_url", "");
-            String downloadChnAlert = it.optString("download_chn_alert", "");
-            String downloadEngAlert = it.optString("download_eng_alert", "");
-            result.add(new SkrModMarketItem(
-                    chnName,
-                    engName,
-                    desc,
-                    ver,
-                    id32,
-                    author,
-                    updateDate,
-                    sourceUrl,
-                    downloadUrl,
-                    downloadChnAlert,
-                    downloadEngAlert
-            ));
-        }
-        return result;
     }
 
     private void applyFilter(String key) {

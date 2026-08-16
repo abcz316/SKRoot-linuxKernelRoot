@@ -1,13 +1,13 @@
 package com.linux.permissionmanager.fragment;
 
 import static com.linux.permissionmanager.AppSettings.HOTLOAD_SHELL_PATH;
-import static com.linux.permissionmanager.AppSettings.KEY_IS_HOTLOAD_MODE;
 
 import android.app.Activity;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -32,6 +32,8 @@ import org.json.JSONObject;
 public class HomeFragment extends Fragment implements View.OnClickListener {
     private Activity mActivity;
     private String mRootKey = "";
+    private boolean mIsHotload = false;
+    private String mHotloadMethod = "";
     private String lastInputCmd = "id";
     private String lastInputRootExecPath = "";
 
@@ -40,9 +42,11 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
     private TextView tvAdbStatus;
     private TextView tvOneplusBypassStatus;
     private EditText mConsoleEdit;
-    public HomeFragment(Activity activity, String rootKey) {
+    public HomeFragment(Activity activity, String rootKey, boolean isHotload, String hotloadMethod) {
         mActivity = activity;
         mRootKey = rootKey;
+        mIsHotload = isHotload;
+        mHotloadMethod = hotloadMethod;
     }
     @Nullable
     @Override
@@ -117,7 +121,6 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
         String curState = NativeBridge.getSkrootEnvState(mRootKey);
         String installedVer = NativeBridge.getInstalledSkrootEnvVersion(mRootKey);
         String sdkVer = NativeBridge.getSdkVersion();
-        boolean isHotload = AppSettings.getBoolean(KEY_IS_HOTLOAD_MODE, false);
         boolean isFault = false;
         if(curState.indexOf("NotInstalled") != -1) {
             appendConsoleMsg("SKRoot环境未安装！"); isFault = true;
@@ -131,7 +134,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
                 appendConsoleMsg("升级方式：请重新安装 SKRoot 环境。");
             }
         }
-        if(isHotload && isFault) {
+        if(mIsHotload && isFault) {
             appendConsoleMsg(isSkrootChannelOK(mRootKey) ? "当前为热启动模式，请立即安装SKRoot环境。" : "当前为热启动模式，正在等待热启动补丁响应，请稍候…");
         }
     }
@@ -184,11 +187,38 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
         DialogUtils.showInputDlg(mActivity, lastInputCmd, "请输入ROOT命令", null, inputCallback, null);
     }
 
+    enum InstallMode {
+        BOOT("Boot"),
+        HOTLOAD_REBOOT("HotLoadReboot"),
+        HOTLOAD_NO_REBOOT("HotLoadNoReboot");
+        private final String nativeValue;
+        InstallMode(String nativeValue) { this.nativeValue = nativeValue; }
+        public String getNativeValue() { return nativeValue; }
+    }
+
     private void onClickInstallSkrootEnvBtn() {
-        boolean isHotload = AppSettings.getBoolean(KEY_IS_HOTLOAD_MODE, false);
-        String err = NativeBridge.installSkrootEnv(mRootKey, isHotload);
+        String insMode = InstallMode.BOOT.getNativeValue();
+        boolean isCve2026_43499 = TextUtils.equals(mHotloadMethod, "CVE-2026-43499");
+        if(mIsHotload) {
+            insMode = isCve2026_43499 ? InstallMode.HOTLOAD_NO_REBOOT.getNativeValue() : InstallMode.HOTLOAD_REBOOT.getNativeValue();
+        }
+        String err = NativeBridge.installSkrootEnv(mRootKey, insMode);
         appendConsoleMsg(err);
-        if(isHotload && err.indexOf("OK") != -1) NativeBridge.runRootCmd(mRootKey, "rm -f " + HOTLOAD_SHELL_PATH);
+        if(mIsHotload && err.indexOf("OK") != -1) {
+            NativeBridge.runRootCmd(mRootKey, "rm -f " + HOTLOAD_SHELL_PATH);
+
+            if(isCve2026_43499) {
+                DialogUtils.showCustomDialog(mActivity, "确认", "请问要软重启吗？\n\n提示：当前环境已安装完成！模块也已激活。一般不需要软重启，当使用特殊模块（如改机型）才需要进行软重启。",null,
+                "不需要", (dialog, which) -> {
+                        dialog.dismiss();
+                        showSkrootStatus();
+                    }, "软重启", (dialog, which) -> {
+                        dialog.dismiss();
+                        NativeBridge.restartZygote64(mRootKey);
+                    }
+                );
+            }
+        }
     }
 
     private void onClickUninstallSkrootEnvBtn() {

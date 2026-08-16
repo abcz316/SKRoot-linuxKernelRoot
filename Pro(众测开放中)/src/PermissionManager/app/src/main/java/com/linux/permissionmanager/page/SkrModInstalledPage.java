@@ -23,10 +23,13 @@ import com.linux.permissionmanager.adapter.SkrModPrinter;
 import com.linux.permissionmanager.bridge.NativeBridge;
 import com.linux.permissionmanager.fragment.SettingsFragment;
 import com.linux.permissionmanager.model.SkrModInstalledItem;
+import com.linux.permissionmanager.model.SkrModMarketItem;
 import com.linux.permissionmanager.model.SkrModRunState;
 import com.linux.permissionmanager.model.SkrModUpdateInfo;
 import com.linux.permissionmanager.update.SkrModDownloader;
 import com.linux.permissionmanager.update.SkrModInstaller;
+import com.linux.permissionmanager.update.SkrModMarketFetcher;
+import com.linux.permissionmanager.update.SkrModUpdateCache;
 import com.linux.permissionmanager.update.SkrModUpdateChecker;
 import com.linux.permissionmanager.utils.DialogUtils;
 import com.linux.permissionmanager.utils.FileUtils;
@@ -42,11 +45,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class SkrModInstalledPage {
     private Activity mActivity;
     private String mRootKey = "";
+    private boolean mIsHotload = false;
 
     private RecyclerView mSkrModInstalledRecyclerView;
     private TextView mTextEmptyTips;
@@ -54,9 +59,10 @@ public class SkrModInstalledPage {
     private SkrModInstalledAdapter mAdapter;
     private SkrModUpdateChecker mUpdateManager;
 
-    public SkrModInstalledPage(Activity activity, String rootKey) {
+    public SkrModInstalledPage(Activity activity, String rootKey, boolean isHotload) {
         mActivity = activity;
         mRootKey = rootKey;
+        mIsHotload = isHotload;
     }
 
     public void bindPage(@NonNull View view) {
@@ -87,7 +93,7 @@ public class SkrModInstalledPage {
         mTextEmptyTips.setVisibility(listAll.size() == 0 ? View.VISIBLE : View.GONE);
         RecyclerView.ItemAnimator animator = mSkrModInstalledRecyclerView.getItemAnimator();
         if (animator instanceof SimpleItemAnimator) ((SimpleItemAnimator) animator).setSupportsChangeAnimations(false);
-        checkAllModulesUpdate(listAll);
+        refreshAllModulesUpdate(listAll);
     }
 
     private SkrModRunState parseRunState(String state) {
@@ -169,7 +175,7 @@ public class SkrModInstalledPage {
     }
 
     private void onAddSkrMod(String zipFilePath, boolean isDevRunOnceMode) {
-        SkrModInstaller.installFromZip(mActivity, mRootKey, zipFilePath, isDevRunOnceMode);
+        SkrModInstaller.installFromZip(mActivity, mRootKey, mIsHotload, zipFilePath, isDevRunOnceMode);
         refreshPage();
     }
 
@@ -199,19 +205,45 @@ public class SkrModInstalledPage {
     private void onUpdateSkrMod(SkrModInstalledItem skrMod) {
         mUpdateManager.requestModuleUpdate(
                 skrMod,
-                (item, info) -> {
-                    if (info != null) mAdapter.updateModuleUpdateInfo(item.getId32(), info);
-                    if (info == null || !info.isHasNewVersion()) {
-                        DialogUtils.showMsgDlg(mActivity, "提示", "当前已是最新版本", null);
-                        return;
-                    }
-                    String message = "检测到新版本：" + info.getLatestVer() + "\n\n是否下载并更新该模块？";
-                    DialogUtils.showCustomDialog(mActivity,"模块更新", message,null,"立即更新", (dialog, which) -> {
-                        dialog.dismiss();
-                        onDownloadNewSkrMod(item, info);
-                    },"取消", (dialog, which) -> dialog.dismiss());
-                },
+                (item) -> checkModUpdateFromMarket(item, (info) -> showModUpdateResult(item, info)),
+                this::showModUpdateResult,
                 (item, e) -> DialogUtils.showMsgDlg(mActivity,"提示","检查模块 \"" + item.getName() + "\" 更新失败：" + e.getMessage(),null)
+        );
+    }
+
+    private void showModUpdateResult(SkrModInstalledItem item, SkrModUpdateInfo info) {
+        if (info != null && mAdapter != null) mAdapter.updateModuleUpdateInfo(item.getId32(), info);
+        if (info == null || !info.isHasNewVersion()) {
+            DialogUtils.showMsgDlg(mActivity, "提示", "当前已是最新版本", null);
+            return;
+        }
+        String message = "检测到新版本：" + info.getLatestVer() + "\n\n是否下载并更新该模块？";
+        DialogUtils.showCustomDialog(mActivity,"模块更新", message,null,"立即更新", (dialog, which) -> {
+            dialog.dismiss();
+            onDownloadNewSkrMod(item, info);
+        },"取消", (dialog, which) -> dialog.dismiss());
+    }
+
+    private void checkModUpdateFromMarket(SkrModInstalledItem skrMod, Consumer<SkrModUpdateInfo> onResult) {
+        SkrModMarketFetcher.getInstance().request(
+            (modArr) -> {
+                SkrModUpdateInfo info = null;
+                if (modArr != null) {
+                    for (SkrModMarketItem it : modArr) {
+                        if (skrMod.getId32().equals(it.getId32())) {
+                            if (!skrMod.getVer().equals(it.getVer())) {
+                                info = new SkrModUpdateInfo(true, it.getVer(), it.getDownloadUrl(), "");
+                                SkrModUpdateCache.saveModuleUpdateResponseCache(skrMod, info);
+                            }
+                            break;
+                        }
+                    }
+                }
+                if (onResult != null) onResult.accept(info);
+            },
+            (e) -> {
+                // 忽略市场数据拉取失败
+            }
         );
     }
 
@@ -222,7 +254,7 @@ public class SkrModInstalledPage {
         );
     }
 
-    private void checkAllModulesUpdate(List<SkrModInstalledItem> listAll) {
+    private void refreshAllModulesUpdate(List<SkrModInstalledItem> listAll) {
         if (listAll == null || listAll.isEmpty()) return;
         mUpdateManager.getAllModulesUpdateCache(
                 listAll,
@@ -232,6 +264,9 @@ public class SkrModInstalledPage {
         );
         mUpdateManager.checkAllModulesUpdate(
                 listAll,
+                (mod) -> checkModUpdateFromMarket(mod, (info) -> {
+                    if (info != null && mAdapter != null) mAdapter.updateModuleUpdateInfo(mod.getId32(), info);
+                }),
                 (mod, info) -> {
                     if (info != null && mAdapter != null) mAdapter.updateModuleUpdateInfo(mod.getId32(), info);
                 },

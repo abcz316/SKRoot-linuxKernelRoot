@@ -30,9 +30,9 @@ public class SkrModFragment extends Fragment {
     private SkrModInstalledPage mModInstalledPage;
     private SkrModMarketPage mModMarketPage;
 
-    public SkrModFragment(Activity activity, String rootKey) {
-        mModInstalledPage = new SkrModInstalledPage(activity, rootKey);
-        mModMarketPage = new SkrModMarketPage(activity, rootKey);
+    public SkrModFragment(Activity activity, String rootKey, boolean isHotload) {
+        mModInstalledPage = new SkrModInstalledPage(activity, rootKey, isHotload);
+        mModMarketPage = new SkrModMarketPage(activity, rootKey, isHotload);
     }
 
     @Nullable

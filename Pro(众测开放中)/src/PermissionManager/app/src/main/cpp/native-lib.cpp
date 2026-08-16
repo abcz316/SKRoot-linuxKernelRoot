@@ -85,24 +85,23 @@ static cJSON * moduleRecordToJsonObj(module_record & record) {
 }
 
 extern "C" JNIEXPORT jstring JNICALL
-Java_com_linux_permissionmanager_bridge_NativeBridge_installSkrootEnv(
-        JNIEnv* env, jclass /* this */, jstring rootKey, jboolean isHotload) {
+Java_com_linux_permissionmanager_bridge_NativeBridge_installSkrootEnv(JNIEnv* env, jclass /* this */, jstring rootKey, jstring installMode) {
     string strRootKey = jstringToStr(env, rootKey);
-
-    KModErr err = install_skroot_environment(strRootKey.c_str(), isHotload ? InstallMode::HotLoad : InstallMode::Boot);
+    string strInstallMode = jstringToStr(env, installMode);
+    InstallMode mode = InstallMode::Boot;
+    if(strInstallMode == "Boot") mode = InstallMode::Boot;
+    if(strInstallMode == "HotLoadReboot") mode = InstallMode::HotLoadReboot;
+    if(strInstallMode == "HotLoadNoReboot") mode = InstallMode::HotLoadNoReboot;
+    KModErr err = install_skroot_environment(strRootKey.c_str(), mode);
     stringstream sstr;
     sstr << "install_skroot_environment: " << to_string(err).c_str();
-	if(is_ok(err)) sstr  << "，将在重启后生效";
+	if(is_ok(err) && mode != InstallMode::HotLoadNoReboot) sstr  << "，将在重启后生效";
     return env->NewStringUTF(sstr.str().c_str());
 }
 
 extern "C" JNIEXPORT jstring JNICALL
-Java_com_linux_permissionmanager_bridge_NativeBridge_uninstallSkrootEnv(
-        JNIEnv* env,
-        jclass /* this */,
-        jstring rootKey) {
+Java_com_linux_permissionmanager_bridge_NativeBridge_uninstallSkrootEnv(JNIEnv* env, jclass /* this */, jstring rootKey) {
     string strRootKey = jstringToStr(env, rootKey);
-
     KModErr err = uninstall_skroot_environment(strRootKey.c_str());
     stringstream sstr;
     sstr << "uninstall_skroot_environment: " << to_string(err).c_str();
@@ -111,10 +110,8 @@ Java_com_linux_permissionmanager_bridge_NativeBridge_uninstallSkrootEnv(
 }
 
 extern "C" JNIEXPORT jstring JNICALL
-Java_com_linux_permissionmanager_bridge_NativeBridge_getSkrootEnvState(
-        JNIEnv* env, jclass /* this */, jstring rootKey) {
+Java_com_linux_permissionmanager_bridge_NativeBridge_getSkrootEnvState(JNIEnv* env, jclass /* this */, jstring rootKey) {
     string strRootKey = jstringToStr(env, rootKey);
-
 	using SkrootEnvState = SkrootEnvState;
 	static std::map<SkrootEnvState, const char*> m = {
         {SkrootEnvState::NotInstalled, "NotInstalled"},
@@ -136,52 +133,35 @@ extern "C" JNIEXPORT jstring JNICALL Java_com_linux_permissionmanager_bridge_Nat
 }
 
 extern "C" JNIEXPORT jstring JNICALL
-Java_com_linux_permissionmanager_bridge_NativeBridge_getInstalledSkrootEnvVersion(
-        JNIEnv* env,
-        jclass /* this */,
-        jstring rootKey) {
+Java_com_linux_permissionmanager_bridge_NativeBridge_getInstalledSkrootEnvVersion(JNIEnv* env, jclass /* this */, jstring rootKey) {
     string strRootKey = jstringToStr(env, rootKey);
-
     SkrootSdkVersion ver;
     KModErr err = get_installed_skroot_environment_version(strRootKey.c_str(), ver);
     if(is_failed(err)) return env->NewStringUTF(to_string(err).c_str());
-
     stringstream sstr;
     sstr << ver.major << "." << ver.minor << "." << ver.patch;
     return env->NewStringUTF(sstr.str().c_str());
 }
 
 extern "C" JNIEXPORT jstring JNICALL
-Java_com_linux_permissionmanager_bridge_NativeBridge_getSdkVersion(
-        JNIEnv* env,
-        jclass /* this */) {
+Java_com_linux_permissionmanager_bridge_NativeBridge_getSdkVersion(JNIEnv* env, jclass /* this */) {
     SkrootSdkVersion ver = get_sdk_version();
     stringstream sstr;
     sstr << ver.major << "." << ver.minor << "." << ver.patch;
     return env->NewStringUTF(sstr.str().c_str());
 }
 
-
 extern "C" JNIEXPORT jstring JNICALL
-Java_com_linux_permissionmanager_bridge_NativeBridge_testRoot(
-        JNIEnv* env,
-        jclass /* this */,
-        jstring rootKey) {
+Java_com_linux_permissionmanager_bridge_NativeBridge_testRoot(JNIEnv* env, jclass /* this */, jstring rootKey) {
     string strRootKey = jstringToStr(env, rootKey);
-
     string result = get_root_status_report(strRootKey.c_str());
     return env->NewStringUTF(result.c_str());
 }
 
 extern "C" JNIEXPORT jstring JNICALL
-Java_com_linux_permissionmanager_bridge_NativeBridge_runRootCmd(
-        JNIEnv* env,
-        jclass /* this */,
-        jstring rootKey,
-        jstring cmd) {
+Java_com_linux_permissionmanager_bridge_NativeBridge_runRootCmd(JNIEnv* env, jclass /* this */, jstring rootKey, jstring cmd) {
     string strRootKey = jstringToStr(env, rootKey);
     string strCmd = jstringToStr(env, cmd);
-
     string result;
     KModErr err = run_root_cmd(strRootKey.c_str(), strCmd.c_str(), result);
     stringstream sstr;
@@ -190,14 +170,9 @@ Java_com_linux_permissionmanager_bridge_NativeBridge_runRootCmd(
 }
 
 extern "C" JNIEXPORT jstring JNICALL
-Java_com_linux_permissionmanager_bridge_NativeBridge_addSuAuth(
-        JNIEnv* env,
-        jclass /* this */,
-        jstring rootKey,
-        jstring appPackageName) {
+Java_com_linux_permissionmanager_bridge_NativeBridge_addSuAuth(JNIEnv* env, jclass /* this */, jstring rootKey, jstring appPackageName) {
     string strRootKey = jstringToStr(env, rootKey);
     string strAppPackageName = jstringToStr(env, appPackageName);
-
     KModErr err = add_su_auth_list(strRootKey.c_str(), strAppPackageName.c_str());
     stringstream sstr;
     sstr << "add_su_auth_list: " << to_string(err).c_str();
@@ -205,11 +180,7 @@ Java_com_linux_permissionmanager_bridge_NativeBridge_addSuAuth(
 }
 
 extern "C" JNIEXPORT jstring JNICALL
-Java_com_linux_permissionmanager_bridge_NativeBridge_removeSuAuth(
-        JNIEnv* env,
-        jclass /* this */,
-        jstring rootKey,
-        jstring modUuid) {
+Java_com_linux_permissionmanager_bridge_NativeBridge_removeSuAuth(JNIEnv* env, jclass /* this */, jstring rootKey, jstring modUuid) {
     string strRootKey = jstringToStr(env, rootKey);
     string strModUuid = jstringToStr(env, modUuid);
 
@@ -220,12 +191,8 @@ Java_com_linux_permissionmanager_bridge_NativeBridge_removeSuAuth(
 }
 
 extern "C" JNIEXPORT jstring JNICALL
-Java_com_linux_permissionmanager_bridge_NativeBridge_getSuAuthList(
-        JNIEnv* env,
-        jclass /* this */,
-        jstring rootKey) {
+Java_com_linux_permissionmanager_bridge_NativeBridge_getSuAuthList(JNIEnv* env, jclass /* this */, jstring rootKey) {
     string strRootKey = jstringToStr(env, rootKey);
-
     stringstream ss;
     vector<su_auth_item> pkgs;
     KModErr err = get_su_auth_list(strRootKey.c_str(), pkgs);
@@ -233,7 +200,6 @@ Java_com_linux_permissionmanager_bridge_NativeBridge_getSuAuthList(
         ss << "get_su_auth_list: " << to_string(err).c_str();
         return env->NewStringUTF(ss.str().c_str());
     }
-
     cJSON *root = cJSON_CreateArray();
     for (auto & iter : pkgs) {
         cJSON *item = suAuthToJsonObj(iter);
@@ -245,12 +211,8 @@ Java_com_linux_permissionmanager_bridge_NativeBridge_getSuAuthList(
 }
 
 extern "C" JNIEXPORT jstring JNICALL
-Java_com_linux_permissionmanager_bridge_NativeBridge_clearSuAuthList(
-        JNIEnv* env,
-        jclass /* this */,
-        jstring rootKey) {
+Java_com_linux_permissionmanager_bridge_NativeBridge_clearSuAuthList(JNIEnv* env, jclass /* this */, jstring rootKey) {
     string strRootKey = jstringToStr(env, rootKey);
-
     KModErr err = clear_su_auth_list(strRootKey.c_str());
     stringstream sstr;
     sstr << "clear_su_auth_list: " << to_string(err).c_str();
@@ -258,8 +220,7 @@ Java_com_linux_permissionmanager_bridge_NativeBridge_clearSuAuthList(
 }
 
 extern "C" JNIEXPORT jstring JNICALL
-Java_com_linux_permissionmanager_bridge_NativeBridge_installSkrootModule(
-        JNIEnv* env, jclass /* this */, jstring rootKey, jstring zipFilePath, jboolean isDevRunOnceMode) {
+Java_com_linux_permissionmanager_bridge_NativeBridge_installSkrootModule(JNIEnv* env, jclass /* this */, jstring rootKey, jstring zipFilePath, jboolean isDevRunOnceMode) {
     string strRootKey = jstringToStr(env, rootKey);
     string strZipFilePath = jstringToStr(env, zipFilePath);
 
@@ -278,14 +239,9 @@ Java_com_linux_permissionmanager_bridge_NativeBridge_installSkrootModule(
 }
 
 extern "C" JNIEXPORT jstring JNICALL
-Java_com_linux_permissionmanager_bridge_NativeBridge_uninstallSkrootModule(
-        JNIEnv* env,
-        jclass /* this */,
-        jstring rootKey,
-        jstring modUuid) {
+Java_com_linux_permissionmanager_bridge_NativeBridge_uninstallSkrootModule(JNIEnv* env, jclass /* this */, jstring rootKey, jstring modUuid) {
     string strRootKey = jstringToStr(env, rootKey);
     string strModUuid = jstringToStr(env, modUuid);
-
     KModErr err = uninstall_module(strRootKey.c_str(), strModUuid.c_str());
     stringstream sstr;
     sstr << "uninstall_module: " << to_string(err).c_str();
@@ -315,11 +271,7 @@ Java_com_linux_permissionmanager_bridge_NativeBridge_getSkrootModuleList(JNIEnv*
 }
 
 extern "C" JNIEXPORT jstring JNICALL
-Java_com_linux_permissionmanager_bridge_NativeBridge_parseSkrootModuleDesc(
-        JNIEnv* env,
-        jclass /* this */,
-        jstring rootKey,
-        jstring zipFilePath) {
+Java_com_linux_permissionmanager_bridge_NativeBridge_parseSkrootModuleDesc(JNIEnv* env, jclass /* this */, jstring rootKey, jstring zipFilePath) {
     string strRootKey = jstringToStr(env, rootKey);
     string strZipFilePath = jstringToStr(env, zipFilePath);
 
@@ -338,11 +290,7 @@ Java_com_linux_permissionmanager_bridge_NativeBridge_parseSkrootModuleDesc(
 }
 
 extern "C" JNIEXPORT jstring JNICALL
-Java_com_linux_permissionmanager_bridge_NativeBridge_openSkrootModuleWebUI(
-        JNIEnv* env,
-        jclass /* this */,
-        jstring rootKey,
-        jstring modUuid) {
+Java_com_linux_permissionmanager_bridge_NativeBridge_openSkrootModuleWebUI(JNIEnv* env, jclass /* this */, jstring rootKey, jstring modUuid) {
     string strRootKey = jstringToStr(env, rootKey);
     string strModUuid = jstringToStr(env, modUuid);
 
@@ -354,11 +302,7 @@ Java_com_linux_permissionmanager_bridge_NativeBridge_openSkrootModuleWebUI(
 }
 
 extern "C" JNIEXPORT jstring JNICALL
-Java_com_linux_permissionmanager_bridge_NativeBridge_setBootFailProtectEnabled(
-        JNIEnv* env,
-        jclass /* this */,
-        jstring rootKey,
-        jboolean enable) {
+Java_com_linux_permissionmanager_bridge_NativeBridge_setBootFailProtectEnabled(JNIEnv* env, jclass /* this */, jstring rootKey, jboolean enable) {
     string strRootKey = jstringToStr(env, rootKey);
 
     KModErr err = set_boot_fail_protect_enabled(strRootKey.c_str(), enable);
@@ -369,43 +313,27 @@ Java_com_linux_permissionmanager_bridge_NativeBridge_setBootFailProtectEnabled(
 }
 
 extern "C" JNIEXPORT jboolean JNICALL
-Java_com_linux_permissionmanager_bridge_NativeBridge_isBootFailProtectEnabled(
-        JNIEnv* env,
-        jclass /* this */,
-        jstring rootKey) {
+Java_com_linux_permissionmanager_bridge_NativeBridge_isBootFailProtectEnabled(JNIEnv* env, jclass /* this */, jstring rootKey) {
     string strRootKey = jstringToStr(env, rootKey);
     return is_boot_fail_protect_enabled(strRootKey.c_str()) ? JNI_TRUE : JNI_FALSE;
 }
 extern "C" JNIEXPORT jstring JNICALL
-Java_com_linux_permissionmanager_bridge_NativeBridge_setAdbForcedDisabled(
-        JNIEnv* env,
-        jclass /* this */,
-        jstring rootKey,
-        jboolean enable) {
+Java_com_linux_permissionmanager_bridge_NativeBridge_setAdbForcedDisabled(JNIEnv* env, jclass /* this */, jstring rootKey, jboolean enable) {
     string strRootKey = jstringToStr(env, rootKey);
-
     KModErr err = set_adb_forced_disabled(strRootKey.c_str(), enable);
-
     stringstream sstr;
     sstr << "set_adb_forced_disabled: " << to_string(err).c_str();
     return env->NewStringUTF(sstr.str().c_str());
 }
 
 extern "C" JNIEXPORT jboolean JNICALL
-Java_com_linux_permissionmanager_bridge_NativeBridge_isAdbForcedDisabled(
-        JNIEnv* env,
-        jclass /* this */,
-        jstring rootKey) {
+Java_com_linux_permissionmanager_bridge_NativeBridge_isAdbForcedDisabled(JNIEnv* env, jclass /* this */,jstring rootKey) {
     string strRootKey = jstringToStr(env, rootKey);
     return is_adb_forced_disabled(strRootKey.c_str()) ? JNI_TRUE : JNI_FALSE;
 }
 
 extern "C" JNIEXPORT jstring JNICALL
-Java_com_linux_permissionmanager_bridge_NativeBridge_testSkrootBasics(
-        JNIEnv* env,
-        jclass /* this */,
-        jstring rootKey,
-        jstring item) {
+Java_com_linux_permissionmanager_bridge_NativeBridge_testSkrootBasics(JNIEnv* env, jclass /* this */, jstring rootKey, jstring item) {
     string strRootKey = jstringToStr(env, rootKey);
     string strItem = jstringToStr(env, item);
 
@@ -427,11 +355,7 @@ Java_com_linux_permissionmanager_bridge_NativeBridge_testSkrootBasics(
 }
 
 extern "C" JNIEXPORT jstring JNICALL
-Java_com_linux_permissionmanager_bridge_NativeBridge_testSkrootDefaultModule(
-        JNIEnv* env,
-        jclass /* this */,
-        jstring rootKey,
-        jstring name) {
+Java_com_linux_permissionmanager_bridge_NativeBridge_testSkrootDefaultModule(JNIEnv* env, jclass /* this */, jstring rootKey, jstring name) {
     string strRootKey = jstringToStr(env, rootKey);
     string strName = jstringToStr(env, name);
 
@@ -451,10 +375,7 @@ Java_com_linux_permissionmanager_bridge_NativeBridge_testSkrootDefaultModule(
 }
 
 extern "C" JNIEXPORT jstring JNICALL
-Java_com_linux_permissionmanager_bridge_NativeBridge_restartZygote64(
-        JNIEnv* env,
-        jclass /* this */,
-        jstring rootKey) {
+Java_com_linux_permissionmanager_bridge_NativeBridge_restartZygote64(JNIEnv* env, jclass /* this */, jstring rootKey) {
     string strRootKey = jstringToStr(env, rootKey);
     KModErr err = restart_zygote64(strRootKey.c_str());
     stringstream sstr;
@@ -463,36 +384,23 @@ Java_com_linux_permissionmanager_bridge_NativeBridge_restartZygote64(
 }
 
 extern "C" JNIEXPORT jstring JNICALL
-Java_com_linux_permissionmanager_bridge_NativeBridge_setSkrootLogEnabled(
-        JNIEnv* env,
-        jclass /* this */,
-        jstring rootKey,
-        jboolean enable) {
+Java_com_linux_permissionmanager_bridge_NativeBridge_setSkrootLogEnabled(JNIEnv* env, jclass /* this */, jstring rootKey, jboolean enable) {
     string strRootKey = jstringToStr(env, rootKey);
-
     KModErr err = set_skroot_log_enabled(strRootKey.c_str(), enable);
-
     stringstream sstr;
     sstr << "set_skroot_log_enabled: " << to_string(err).c_str();
     return env->NewStringUTF(sstr.str().c_str());
 }
 
 extern "C" JNIEXPORT jboolean JNICALL
-Java_com_linux_permissionmanager_bridge_NativeBridge_isSkrootLogEnabled(
-        JNIEnv* env,
-        jclass /* this */,
-        jstring rootKey) {
+Java_com_linux_permissionmanager_bridge_NativeBridge_isSkrootLogEnabled(JNIEnv* env, jclass /* this */, jstring rootKey) {
     string strRootKey = jstringToStr(env, rootKey);
     return is_skroot_log_enabled(strRootKey.c_str()) ? JNI_TRUE : JNI_FALSE;
 }
 
 extern "C" JNIEXPORT jstring JNICALL
-Java_com_linux_permissionmanager_bridge_NativeBridge_readSkrootLog(
-        JNIEnv* env,
-        jclass /* this */,
-        jstring rootKey) {
+Java_com_linux_permissionmanager_bridge_NativeBridge_readSkrootLog(JNIEnv* env, jclass /* this */, jstring rootKey) {
     string strRootKey = jstringToStr(env, rootKey);
-
     string log;
     KModErr err = read_skroot_log(strRootKey.c_str(), log);
     if(is_failed(err)) log = to_string(err);
@@ -500,10 +408,7 @@ Java_com_linux_permissionmanager_bridge_NativeBridge_readSkrootLog(
 }
 
 extern "C" JNIEXPORT jstring JNICALL
-Java_com_linux_permissionmanager_bridge_NativeBridge_clearSkrootLog(
-        JNIEnv* env,
-        jclass /* this */,
-        jstring rootKey) {
+Java_com_linux_permissionmanager_bridge_NativeBridge_clearSkrootLog(JNIEnv* env, jclass /* this */, jstring rootKey) {
     string strRootKey = jstringToStr(env, rootKey);
 
     KModErr err = clear_skroot_log(strRootKey.c_str());
@@ -513,8 +418,7 @@ Java_com_linux_permissionmanager_bridge_NativeBridge_clearSkrootLog(
 }
 
 KModErr oneplus_bypass_stage1_and_2(const char* root_key, void (*cb)(const char* info));
-extern "C" JNIEXPORT jstring JNICALL Java_com_linux_permissionmanager_bridge_NativeBridge_oneplusBypassWriteStage1(
-        JNIEnv* env, jclass /* this */, jstring rootKey) {
+extern "C" JNIEXPORT jstring JNICALL Java_com_linux_permissionmanager_bridge_NativeBridge_oneplusBypassWriteStage1(JNIEnv* env, jclass /* this */, jstring rootKey) {
     string strRootKey = jstringToStr(env, rootKey);
     if(!device_detect::is_oplus_device()) return env->NewStringUTF("not oplus device");
     thread_local std::string tls_result;
@@ -524,8 +428,7 @@ extern "C" JNIEXPORT jstring JNICALL Java_com_linux_permissionmanager_bridge_Nat
 }
 
 bool oneplus_bypass_is_work_normal(const char* root_key);
-extern "C" JNIEXPORT jboolean JNICALL Java_com_linux_permissionmanager_bridge_NativeBridge_oneplusBypassIsWorkNormal(
-        JNIEnv* env, jclass /* this */, jstring rootKey) {
+extern "C" JNIEXPORT jboolean JNICALL Java_com_linux_permissionmanager_bridge_NativeBridge_oneplusBypassIsWorkNormal(JNIEnv* env, jclass /* this */, jstring rootKey) {
     string strRootKey = jstringToStr(env, rootKey);
     if(!device_detect::is_oplus_device()) return false;
     return oneplus_bypass_is_work_normal(strRootKey.c_str());
