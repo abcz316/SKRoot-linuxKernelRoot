@@ -56,9 +56,8 @@ int skroot_module_main(const char* root_key, const char* module_private_dir) {
     uint64_t result = 0;
 	KModErr err = run_kernel_shellcode(result);
     printf("run_kernel_shellcode err: %s\n", to_string(err).c_str());
-    printf(result == 0x12345 ? "OK" : "FAILED");
-    printf("\n");
-    return (int)result;
+    printf(result == 0x12345 ? "OK\n" : "FAILED\n");
+    return 0;
 }
 
 // SKRoot 模块名片

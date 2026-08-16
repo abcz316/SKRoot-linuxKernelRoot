@@ -3,7 +3,7 @@ package com.linux.permissionmanager.bridge;
 public final class NativeBridge {
     static { System.loadLibrary("permissionmanager"); }
 
-    public static native String installSkrootEnv(String rootKey, boolean isHotload);
+    public static native String installSkrootEnv(String rootKey, String installMode);
     public static native String uninstallSkrootEnv(String rootKey);
     public static native String getSkrootEnvState(String rootKey);
     public static native String getSystemStatusJson();

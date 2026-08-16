@@ -1,7 +1,6 @@
 package com.linux.permissionmanager;
 
 import static com.linux.permissionmanager.AppSettings.HOTLOAD_SHELL_PATH;
-import static com.linux.permissionmanager.AppSettings.KEY_IS_HOTLOAD_MODE;
 import static com.linux.permissionmanager.helper.MagicaRootHelper.executeMagicaRootScript;
 
 import android.app.Activity;
@@ -9,6 +8,7 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
+import android.content.pm.ApplicationInfo;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -44,14 +44,14 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.util.function.Consumer;
 
 public class MainActivity extends AppCompatActivity {
     private String mRootKey = "";
+    private boolean mIsHotloadMode = false;
     private String mHotloadCmd = "";
-    private String mHotloadMethod = "SHELL";
-    private String mHotloadResult = "";
+    private String mHotloadMethod = "";
     private String mOneplusBypassResult = "";
-    private Dialog mLoadingDialog;
 
     private HomeFragment mHomeFragm;
     private SuAuthFragment mSuAuthFragm;
@@ -68,6 +68,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         AppSettings.init(this);
         mRootKey = AppSettings.getString("rootKey", mRootKey);
+        mIsHotloadMode = AppSettings.getBoolean("isHotloadMode", mIsHotloadMode);
         mHotloadCmd = AppSettings.getString("hotloadCmd", mHotloadCmd);
         mHotloadMethod = AppSettings.getString("hotloadMethod", mHotloadMethod);
         checkGetAppListPermission();
@@ -76,8 +77,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showInputRootKeyDlg() {
-        boolean isHotload = AppSettings.getBoolean(KEY_IS_HOTLOAD_MODE, false);
-        if (isHotload) showHotloadModeInputDlg();
+        if (mIsHotloadMode) showHotloadModeInputDlg();
         else showBootModeInputDlg();
     }
 
@@ -87,13 +87,14 @@ public class MainActivity extends AppCompatActivity {
                 (dialog, which) -> {
                     if(which == 0) {
                         if (!currentIsHotload) return;
-                        AppSettings.setBoolean(KEY_IS_HOTLOAD_MODE, false);
+                        mIsHotloadMode = false;
                         onSelectBoot.run();
                     } else if(which == 1) {
                         if (currentIsHotload) return;
-                        AppSettings.setBoolean(KEY_IS_HOTLOAD_MODE, true);
+                        mIsHotloadMode = true;
                         onSelectHotload.run();
                     }
+                    AppSettings.setBoolean("isHotloadMode", mIsHotloadMode);
                 }
         );
     }
@@ -179,7 +180,6 @@ public class MainActivity extends AppCompatActivity {
                     mRootKey = inputTxt.getText().toString().trim();
                     if(TextUtils.isEmpty(mRootKey)) return;
                     AppSettings.setString("rootKey", mRootKey);
-                    AppSettings.setBoolean(KEY_IS_HOTLOAD_MODE, false);
                     setupFragment(mRootKey);
                     switchPage(0);
                 }).create();
@@ -197,36 +197,62 @@ public class MainActivity extends AppCompatActivity {
         return matcher.find() ? matcher.group(1).trim() : "";
     }
 
+    private String getCVE2026_43499GuideScript() {
+        ApplicationInfo appInfo = getApplicationInfo();
+        File ghostFile = new File(appInfo.nativeLibraryDir, "libcve2026_43499_ghostlock.so");
+        String absPath = ghostFile.getAbsolutePath();
+        return "#!/system/bin/sh\n" +
+                "SCRIPT_PATH=$(realpath \"$0\")\n" +
+                "echo \"[DEBUG] SCRIPT_PATH=[$SCRIPT_PATH]\"\n" +
+                "echo \"[DEBUG] size=$(wc -c < \"$SCRIPT_PATH\")\"\n" +
+                "if [ \"$(id -u)\" -ne 0 ]; then\n" +
+                "    echo \"[+] Currently not in root privileges, requesting root authorization to rerun the script...\"\n" +
+                "    echo \"[DEBUG] argv1 pre-check: $(stat -c '%s' \"$SCRIPT_PATH\" 2>&1)\"\n" +
+                "    " + absPath + " \"$SCRIPT_PATH\" \"$SCRIPT_PATH\"\n" +
+                "    exit 0\n" +
+                "fi\n";
+    }
+
     private void executeHotloadScript(String script, String method) {
         if(TextUtils.isEmpty(script)) return;
-        DialogUtils.dismissDialog(mLoadingDialog);
-        mLoadingDialog = DialogUtils.showLoadingDialog(this, "正在加载热启动补丁，预计需要 1 分钟…");
+        DialogUtils.LogDialog logDlg = new DialogUtils.LogDialog(this, "正在加载热启动补丁，预计需要 1 分钟");
+        logDlg.appendLine("[开始执行热启动补丁]");
         if (TextUtils.equals(method, "MAGICA")) {
-            executeMagicaRootScript(this, script, result -> {
-                oneplusBypassWriteStage1(true);
-                handleHotloadResult(mOneplusBypassResult + result);
-            });
-        } else new Thread(() ->handleHotloadResult(ShellUtils.executeScript(this, script))).start();
+            executeMagicaRootScript(this, script, () -> {
+                onHotloadCompletionResult(logDlg::appendLine);
+            }, logDlg::appendLine);
+        } else if (TextUtils.equals(method, "SHELL")) {
+            new Thread(() -> {
+                ShellUtils.executeScript(this, script, logDlg::appendLine);
+                onHotloadCompletionResult(logDlg::appendLine);
+            }).start();
+        } else if (TextUtils.equals(method, "CVE-2026-43499")) {
+            new Thread(() -> {
+                ShellUtils.executeScript(this, getCVE2026_43499GuideScript() + script, logDlg::appendLine);
+                onHotloadCompletionResult(logDlg::appendLine);
+            }).start();
+        }
     }
 
     private boolean isSkrootChannelOK(String rootKey) { return NativeBridge.testSkrootBasics(rootKey, "Channel").contains("OK"); }
 
-    private void handleHotloadResult(String result) {
+    private void onHotloadCompletionResult(Consumer<String> log) {
         runOnUiThread(() -> {
-            mHotloadResult = result;
+            oneplusBypassWriteStage1();
+            if(!TextUtils.isEmpty(mOneplusBypassResult)) log.accept("一加Oppo内部接口拦截日志（仅用于异常排查）：\n" + mOneplusBypassResult);
             new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                DialogUtils.dismissDialog(mLoadingDialog);
-                mLoadingDialog = null;
                 if(isSkrootChannelOK(mRootKey)) {
                     DialogUtils.showMsgDlg(this, "提示","加载完成", null);
                     setupFragment(mRootKey);
                     switchPage(0);
-                } else DialogUtils.showLogDialog(this, mHotloadResult, true);
+                } else {
+                    DialogUtils.showMsgDlg(this, "提示","加载出错，请重试或保存日志反馈", null);
+                }
             }, 3000);
         });
     }
 
-    private void oneplusBypassWriteStage1(boolean showLog) {
+    private void oneplusBypassWriteStage1() {
         try {
             String json = NativeBridge.getSystemStatusJson();
             JSONObject obj = new JSONObject(json);
@@ -235,10 +261,6 @@ public class MainActivity extends AppCompatActivity {
             mOneplusBypassResult += NativeBridge.oneplusBypassWriteStage1(mRootKey);
         } catch (Throwable e) {
             e.printStackTrace();
-        }
-        if(!TextUtils.isEmpty(mOneplusBypassResult)) {
-            mOneplusBypassResult += "\n";
-            if(showLog) DialogUtils.showLogDialog(this, "一加Oppo内部接口拦截日志（仅用于异常排查）：\n" + mOneplusBypassResult, true);
         }
     }
 
@@ -284,12 +306,11 @@ public class MainActivity extends AppCompatActivity {
                     mRootKey = inputTxt.getText().toString().trim();
                     if(TextUtils.isEmpty(mRootKey)) return;
                     AppSettings.setString("rootKey", mRootKey);
-                    AppSettings.setBoolean(KEY_IS_HOTLOAD_MODE, true);
                     setupFragment(mRootKey);
                     switchPage(0);
                     if (!TextUtils.isEmpty(mHotloadCmd)) {
                         if (!isSkrootChannelOK(mRootKey)) executeHotloadScript(mHotloadCmd, mHotloadMethod);
-                        else oneplusBypassWriteStage1(true);
+                        else oneplusBypassWriteStage1();
                     }
                 }).create();
         modeRow.tvSwitch.setOnClickListener(v -> {
@@ -311,7 +332,7 @@ public class MainActivity extends AppCompatActivity {
             String method = extractConfigValue(scriptText, "METHOD");
             if (TextUtils.isEmpty(rootKey)) return;
             mRootKey = rootKey;
-            mHotloadMethod = TextUtils.isEmpty(method) ? "SHELL" : method;
+            mHotloadMethod = method;
             mHotloadCmd = scriptText;
             inputTxt.setText(mRootKey);
             inputTxt.setEnabled(false);
@@ -328,7 +349,7 @@ public class MainActivity extends AppCompatActivity {
             if (!TextUtils.isEmpty(mHotloadCmd)) exportHotloadToSdcard(this, mHotloadCmd);
         });
         dialog.show();
-        if (!TextUtils.isEmpty(mHotloadCmd)) oneplusBypassWriteStage1(false);
+        if (!TextUtils.isEmpty(mHotloadCmd)) oneplusBypassWriteStage1();
     }
     
     private void checkGetAppListPermission() {
@@ -347,9 +368,9 @@ public class MainActivity extends AppCompatActivity {
         mBottomTab.addTab(mBottomTab.newTab().setText("授权"));
         mBottomTab.addTab(mBottomTab.newTab().setText("模块"));
         mBottomTab.addTab(mBottomTab.newTab().setText("设置"));
-        mHomeFragm = new HomeFragment(MainActivity.this, rootKey);
+        mHomeFragm = new HomeFragment(MainActivity.this, rootKey, mIsHotloadMode, mHotloadMethod);
         mSuAuthFragm = new SuAuthFragment(MainActivity.this, rootKey);
-        mSkrModFragm = new SkrModFragment(MainActivity.this, rootKey);
+        mSkrModFragm = new SkrModFragment(MainActivity.this, rootKey, mIsHotloadMode);
         mSettingsFragm = new SettingsFragment(MainActivity.this, rootKey);
         switchPage(0);
         mBottomTab.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {

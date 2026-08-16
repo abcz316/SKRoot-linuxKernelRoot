@@ -1,26 +1,14 @@
 package com.linux.permissionmanager.update;
 
-import static com.linux.permissionmanager.AppSettings.KEY_IS_HOTLOAD_MODE;
-
 import android.app.Activity;
-import android.net.Uri;
-import android.text.TextUtils;
 import android.util.Log;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 
 import com.linux.permissionmanager.AppSettings;
 import com.linux.permissionmanager.bridge.NativeBridge;
 import com.linux.permissionmanager.utils.DialogUtils;
-import com.linux.permissionmanager.utils.DownloadDialogHelper;
-import com.linux.permissionmanager.utils.FileUtils;
-
-import java.io.File;
 
 public class SkrModInstaller {
-    public static void installFromZip(Activity activity, String rootKey, String zipFilePath, boolean isDevRunOnceMode) {
-        boolean isHotload = AppSettings.getBoolean(KEY_IS_HOTLOAD_MODE, false);
+    public static void installFromZip(Activity activity, String rootKey, boolean isHotload, String zipFilePath, boolean isDevRunOnceMode) {
         Log.d("SkrModFragment", "Add skr module file path: " + zipFilePath);
         String tip = NativeBridge.installSkrootModule(rootKey, zipFilePath, isDevRunOnceMode);
         if(tip.indexOf("OK") != -1) tip += isHotload ? "，已生效" : "，重启后生效";
