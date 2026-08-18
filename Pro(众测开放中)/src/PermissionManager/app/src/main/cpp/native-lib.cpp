@@ -85,17 +85,18 @@ static cJSON * moduleRecordToJsonObj(module_record & record) {
 }
 
 extern "C" JNIEXPORT jstring JNICALL
-Java_com_linux_permissionmanager_bridge_NativeBridge_installSkrootEnv(JNIEnv* env, jclass /* this */, jstring rootKey, jstring installMode) {
+Java_com_linux_permissionmanager_bridge_NativeBridge_installSkrootEnv(JNIEnv* env, jclass /* this */, jstring rootKey, jstring insMode, jstring insExploitMethod) {
     string strRootKey = jstringToStr(env, rootKey);
-    string strInstallMode = jstringToStr(env, installMode);
-    InstallMode mode = InstallMode::Boot;
-    if(strInstallMode == "Boot") mode = InstallMode::Boot;
-    if(strInstallMode == "HotLoadReboot") mode = InstallMode::HotLoadReboot;
-    if(strInstallMode == "HotLoadNoReboot") mode = InstallMode::HotLoadNoReboot;
-    KModErr err = install_skroot_environment(strRootKey.c_str(), mode);
+    string strInsMode = jstringToStr(env, insMode);
+    string strExploitMethod = jstringToStr(env, insExploitMethod);
+    InstallMode mode = strInsMode == "Boot" ? InstallMode::Boot : InstallMode::HotLoad;
+    InstallConfig insConfig{};
+    if(strExploitMethod == "MAGICA") insConfig.exploit = ExploitMethod::Magica;
+    if(strExploitMethod == "CVE-2026-43499") insConfig.exploit = ExploitMethod::CVE2026_43499;
+    KModErr err = install_skroot_environment(strRootKey.c_str(), mode, insConfig);
     stringstream sstr;
     sstr << "install_skroot_environment: " << to_string(err).c_str();
-	if(is_ok(err) && mode != InstallMode::HotLoadNoReboot) sstr  << "，将在重启后生效";
+	if(is_ok(err)) sstr  << "，可能会自动重启";
     return env->NewStringUTF(sstr.str().c_str());
 }
 

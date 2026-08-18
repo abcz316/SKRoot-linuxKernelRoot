@@ -7,19 +7,31 @@ namespace skroot_env {
 
 // SKRoot 环境安装策略
 enum class InstallMode : uint32_t {
-    Boot            = 0, // 刷 Boot 模式（固化到内核，自动重启）
-    HotLoadReboot   = 1, // 热启动模式（自动重启）
-    HotLoadNoReboot = 2, // 热启动模式（不自动重启）
+    Boot      = 0, // 刷 Boot 模式（固化到内核，自动重启）
+    HotLoad   = 1, // 热启动模式
+};
+
+// 使用的漏洞策略
+enum class ExploitMethod : uint32_t {
+    None          = 0, // 无（默认，不使用特定漏洞）
+    Magica        = 1, // Magica 漏洞方式
+    CVE2026_43499 = 2, // CVE-2026-43499 漏洞方式
+};
+
+// SKRoot 环境安装配置
+struct InstallConfig {
+    ExploitMethod exploit = ExploitMethod::None; // 使用的漏洞策略
 };
 
 /***************************************************************************
  * 安装 SKRoot 环境
  * 说明: 首次使用前必须调用此函数，用于创建 SKRoot 所需的环境文件。
- * 参数: root_key   ROOT权限密钥文本
- *      mode        部署模式 (默认为刷 Boot 模式)
+ * 参数: root_key  ROOT权限密钥文本
+ *      mode      部署模式 (默认为刷 Boot 模式)
+ *      config    安装配置 (默认为无特定漏洞)
  * 返回: OK 表示成功；其它值为错误码
  ***************************************************************************/
-KModErr install_skroot_environment(const char* root_key, InstallMode mode = InstallMode::Boot);
+KModErr install_skroot_environment(const char* root_key, InstallMode mode = InstallMode::Boot, const InstallConfig& config = InstallConfig());
 
 /***************************************************************************
  * 卸载 SKRoot 环境

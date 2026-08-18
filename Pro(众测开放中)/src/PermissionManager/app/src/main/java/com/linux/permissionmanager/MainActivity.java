@@ -34,6 +34,7 @@ import com.linux.permissionmanager.fragment.SuAuthFragment;
 import com.linux.permissionmanager.fragment.HomeFragment;
 import com.linux.permissionmanager.fragment.SettingsFragment;
 import com.linux.permissionmanager.fragment.SkrModFragment;
+import com.linux.permissionmanager.model.HotloadMethod;
 import com.linux.permissionmanager.utils.DialogUtils;
 import com.linux.permissionmanager.utils.FileUtils;
 import com.linux.permissionmanager.utils.GetAppListPermissionHelper;
@@ -50,7 +51,7 @@ public class MainActivity extends AppCompatActivity {
     private String mRootKey = "";
     private boolean mIsHotloadMode = false;
     private String mHotloadCmd = "";
-    private String mHotloadMethod = "";
+    private HotloadMethod mHotloadMethod = null;
     private String mOneplusBypassResult = "";
 
     private HomeFragment mHomeFragm;
@@ -70,7 +71,7 @@ public class MainActivity extends AppCompatActivity {
         mRootKey = AppSettings.getString("rootKey", mRootKey);
         mIsHotloadMode = AppSettings.getBoolean("isHotloadMode", mIsHotloadMode);
         mHotloadCmd = AppSettings.getString("hotloadCmd", mHotloadCmd);
-        mHotloadMethod = AppSettings.getString("hotloadMethod", mHotloadMethod);
+        mHotloadMethod = HotloadMethod.fromConfig(AppSettings.getString("hotloadMethod", ""));
         checkGetAppListPermission();
         showInputRootKeyDlg();
         setupFragment("");
@@ -213,35 +214,34 @@ public class MainActivity extends AppCompatActivity {
                 "fi\n";
     }
 
-    private void executeHotloadScript(String script, String method) {
+    private void executeHotloadScript(String script, HotloadMethod method) {
         if(TextUtils.isEmpty(script)) return;
         DialogUtils.LogDialog logDlg = new DialogUtils.LogDialog(this, "正在加载热启动补丁，预计需要 1 分钟");
         logDlg.appendLine("[开始执行热启动补丁]");
-        if (TextUtils.equals(method, "MAGICA")) {
-            executeMagicaRootScript(this, script, () -> {
-                onHotloadCompletionResult(logDlg::appendLine);
-            }, logDlg::appendLine);
-        } else if (TextUtils.equals(method, "SHELL")) {
+        if (method == HotloadMethod.MAGICA) {
+            executeMagicaRootScript(this, script, () -> onHotloadCompletionResult(logDlg), logDlg::appendLine);
+        } else if (method == HotloadMethod.SHELL) {
             new Thread(() -> {
                 ShellUtils.executeScript(this, script, logDlg::appendLine);
-                onHotloadCompletionResult(logDlg::appendLine);
+                onHotloadCompletionResult(logDlg);
             }).start();
-        } else if (TextUtils.equals(method, "CVE-2026-43499")) {
+        } else if (method == HotloadMethod.CVE_2026_43499) {
             new Thread(() -> {
                 ShellUtils.executeScript(this, getCVE2026_43499GuideScript() + script, logDlg::appendLine);
-                onHotloadCompletionResult(logDlg::appendLine);
+                onHotloadCompletionResult(logDlg);
             }).start();
         }
     }
 
     private boolean isSkrootChannelOK(String rootKey) { return NativeBridge.testSkrootBasics(rootKey, "Channel").contains("OK"); }
 
-    private void onHotloadCompletionResult(Consumer<String> log) {
+    private void onHotloadCompletionResult(DialogUtils.LogDialog logDlg) {
         runOnUiThread(() -> {
             oneplusBypassWriteStage1();
-            if(!TextUtils.isEmpty(mOneplusBypassResult)) log.accept("一加Oppo内部接口拦截日志（仅用于异常排查）：\n" + mOneplusBypassResult);
+            if(!TextUtils.isEmpty(mOneplusBypassResult)) logDlg.appendLine("一加Oppo内部接口拦截日志（仅用于异常排查）：\n" + mOneplusBypassResult);
             new Handler(Looper.getMainLooper()).postDelayed(() -> {
                 if(isSkrootChannelOK(mRootKey)) {
+                    logDlg.dismiss();
                     DialogUtils.showMsgDlg(this, "提示","加载完成", null);
                     setupFragment(mRootKey);
                     switchPage(0);
@@ -332,13 +332,13 @@ public class MainActivity extends AppCompatActivity {
             String method = extractConfigValue(scriptText, "METHOD");
             if (TextUtils.isEmpty(rootKey)) return;
             mRootKey = rootKey;
-            mHotloadMethod = method;
+            mHotloadMethod = HotloadMethod.fromConfig(method);
             mHotloadCmd = scriptText;
             inputTxt.setText(mRootKey);
             inputTxt.setEnabled(false);
             AppSettings.setString("rootKey", mRootKey);
             AppSettings.setString("hotloadCmd", mHotloadCmd);
-            AppSettings.setString("hotloadMethod", mHotloadMethod);
+            AppSettings.setString("hotloadMethod", mHotloadMethod.getConfigValue());
         });
 
         exportBtn.setOnClickListener(v -> {
