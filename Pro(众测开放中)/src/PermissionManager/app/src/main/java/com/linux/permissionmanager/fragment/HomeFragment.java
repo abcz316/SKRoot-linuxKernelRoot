@@ -188,8 +188,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
     }
 
     private void onClickInstallSkrootEnvBtn() {
-        String err = NativeBridge.installSkrootEnv(mRootKey, mIsHotload ? "HotLoad" : "Boot",
-                mHotloadMethod != null ? mHotloadMethod.getConfigValue() : "");
+        String err = NativeBridge.installSkrootEnv(mRootKey, mIsHotload ? "HotLoad" : "Boot", mHotloadMethod != null ? mHotloadMethod.getConfigValue() : "");
         appendConsoleMsg(err);
         if(mIsHotload && err.indexOf("OK") != -1) NativeBridge.runRootCmd(mRootKey, "rm -f " + HOTLOAD_SHELL_PATH);
         if(mHotloadMethod == HotloadMethod.CVE_2026_43499) {
@@ -197,7 +196,10 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
             "不需要", (dialog, which) -> {
                     dialog.dismiss();
                     appendConsoleMsg("启动中，请稍后");
-                    new Handler(Looper.getMainLooper()).postDelayed(() -> showSkrootStatus(), 2000);
+                    new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                        showSkrootStatus();
+                        showSystemStatus();
+                    }, 2000);
                 }, "软重启", (dialog, which) -> {
                     dialog.dismiss();
                     NativeBridge.restartZygote64(mRootKey);
