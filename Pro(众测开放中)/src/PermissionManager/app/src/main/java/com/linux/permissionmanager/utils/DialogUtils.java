@@ -140,6 +140,10 @@ public class DialogUtils {
     }
 
     private static void showLogSaveSelectMenu(Activity activity, View anchor, String logs) {
+        if(!GetSdcardPermissionsHelper.getPermissions(activity, activity, activity.getPackageName())) {
+            DialogUtils.showNeedPermissionDialog(activity);
+            return;
+        }
         final String[] items = { "1.复制文本", "2.导出到文件", };
         DialogUtils.showSingleChoiceDialog(activity, null, items, -1,
                 (dialog, which) -> {
