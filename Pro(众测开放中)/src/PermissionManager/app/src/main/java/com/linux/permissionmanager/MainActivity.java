@@ -204,8 +204,6 @@ public class MainActivity extends AppCompatActivity {
         String absPath = ghostFile.getAbsolutePath();
         return "#!/system/bin/sh\n" +
                 "SCRIPT_PATH=$(realpath \"$0\")\n" +
-                "echo \"[DEBUG] SCRIPT_PATH=[$SCRIPT_PATH]\"\n" +
-                "echo \"[DEBUG] size=$(wc -c < \"$SCRIPT_PATH\")\"\n" +
                 "if [ \"$(id -u)\" -ne 0 ]; then\n" +
                 "    echo \"[+] Currently not in root privileges, requesting root authorization to rerun the script...\"\n" +
                 "    echo \"[DEBUG] argv1 pre-check: $(stat -c '%s' \"$SCRIPT_PATH\" 2>&1)\"\n" +

