@@ -156,10 +156,6 @@ void log_slide_child_context(void) {
              attr, enforce);
 }
 
-void disable_rseq_for_thread(void) {
-  return;
-}
-
 long futex_op(uint32_t *uaddr, int op, uint32_t val,
               const struct timespec *timeout, uint32_t *uaddr2,
               uint32_t val3) {
