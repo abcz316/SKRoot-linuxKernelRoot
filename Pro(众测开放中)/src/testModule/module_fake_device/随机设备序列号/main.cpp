@@ -240,7 +240,10 @@ int skroot_module_main(const char* root_key, const char* module_private_dir) {
     if(!new_soc_sn.empty()) {
         KModErr err = patch_kernel_handler(new_soc_sn);
         if(is_failed(err)) return -1;
-
+        if(old_soc_sn != new_soc_sn) {
+            printf("ERROR, SOC SN are different.\n");
+            return -1;
+        }   
     }
     return 0;
 }
