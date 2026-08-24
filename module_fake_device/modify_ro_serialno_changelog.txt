@@ -1,3 +1,7 @@
+1.0.2：
+  1.修复天玑显示异常
+  2.新增ro.boot.emmcid、ro.boot.bootload_sn伪装。
+  
 1.0.1：
   修复显示错误
 
