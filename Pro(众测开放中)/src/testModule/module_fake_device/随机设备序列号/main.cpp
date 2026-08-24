@@ -13,114 +13,19 @@
 
 #define MODULE_DESC_CN_TEXT "随机伪装硬件序列号(ro.serialno)、内核级伪装高通serial_number，无挂载"
 
-static KModErr patch_kernel_handler(const std::string& fake_soc_sn) {
-    using SymbolMatchMode = kernel_module::SymbolMatchMode;
-	using SymbolHit = kernel_module::SymbolHit;
-    uint64_t soc_info_show = 0;
-    SymbolHit msm_get_serial_number = {0};
-    kernel_module::kallsyms_lookup_name("soc_info_show", soc_info_show);
-	kernel_module::kallsyms_lookup_name("socinfo:msm_get_serial_number", msm_get_serial_number, SymbolMatchMode::Prefix);
-	printf("soc_info_show: %lx\n", soc_info_show);
-	printf("%s: %lx\n", msm_get_serial_number.name[0] ? msm_get_serial_number.name : "socinfo:msm_get_serial_number",
-       msm_get_serial_number.addr);
-
-    if(!soc_info_show && !msm_get_serial_number.addr) return KModErr::ERR_MODULE_SYMBOL_NOT_EXIST;
-
-    PatchBase patchBase;
-    if(soc_info_show) {
-        PatchSocInfoShow patchSocInfoShow(patchBase, soc_info_show);
-        KModErr err = patchSocInfoShow.patch_soc_info_show(fake_soc_sn);
-        printf("patch soc_info_show ret: %s\n", to_string(err).c_str());
-        RETURN_IF_ERROR(err);
-    }
-    if(msm_get_serial_number.addr) {
-        PatchMsmGetSerialNumber patchMsmGetSerialNumber(patchBase, msm_get_serial_number.addr);
-        KModErr err = patchMsmGetSerialNumber.patch_msm_get_serial_number(fake_soc_sn);
-        printf("patch msm_get_serial_number ret: %s\n", to_string(err).c_str());
-        RETURN_IF_ERROR(err);
-    }
-    return KModErr::OK;
-}
-
-static std::string read_soc_sn() {
-    constexpr const char* kPath = "/sys/devices/soc0/serial_number";
-    int fd = ::open(kPath, O_RDONLY | O_CLOEXEC);
-    if (fd < 0) return {};
-    std::string sn;
-    char buf[256];
-    while (true) {
-        ssize_t n = ::read(fd, buf, sizeof(buf));
-        if (n > 0) {
-            sn.append(buf, static_cast<size_t>(n));
-            continue;
-        }
-        if (n == 0) break;
-        if (errno == EINTR) continue;
-        ::close(fd);
-        return {};
-    }
-    ::close(fd);
-    while (!sn.empty() && (sn.back() == '\n' || sn.back() == '\r')) sn.pop_back();
-    return sn;
-}
-
-static bool verify_sn(const std::string& old_sn, const std::string& new_sn, 
-    const std::string& old_soc_sn, const std::string& new_soc_sn) {
-    if(old_sn.empty() || new_sn.empty() || new_sn == old_sn) return false;
-
-    std::string real_sn = get_system_property("ro.serialno");
-    if(real_sn != new_sn) return false;
-
-    if(!old_soc_sn.empty()) {
-        if(new_soc_sn.empty() || new_soc_sn == old_soc_sn) return false;
-        std::string real_soc_sn = read_soc_sn();
-        if(real_soc_sn != new_soc_sn) return false;
-    }
-    return true;
-}
-
-// SKRoot模块入口函数
-int skroot_module_main(const char* root_key, const char* module_private_dir) {
-    std::string first_install_boot_session;
-    kernel_module::read_string_disk_storage("first_install_boot_session", first_install_boot_session);
-    if(boot_session_utils::read_boot_session() == first_install_boot_session) {
-        printf("Please restart your phone and try again\n");
-        return -1;
-    }
-    
-    kernel_module::set_current_module_description(MODULE_DESC_CN_TEXT);
-    std::string resetprop_bin_path = std::string(module_private_dir) + "resetprop";
-    resetprop::init(resetprop_bin_path);
-
-    std::string old_sn = get_system_property("ro.serialno"); 
-    std::string new_sn;
-    kernel_module::read_string_disk_storage("new_sn", new_sn);
-    printf("old serial: %s\n", old_sn.c_str());
-    printf("new serial: %s\n", new_sn.c_str());
-    if (old_sn.empty() || new_sn.empty()) {
-        printf("error: unable to read the current serial number!\n");
-        return -1;
-    }
-    resetprop::set_property_value("ro.serialno", new_sn.c_str(), ResetPropMode::kNoTrigger);
-    
-    std::string old_soc_sn = read_soc_sn();
-    std::string new_soc_sn;
-    kernel_module::read_string_disk_storage("new_soc_sn", new_soc_sn);
-    printf("old soc sn: %s\n", old_soc_sn.c_str());
-    printf("new soc sn: %s\n", new_soc_sn.c_str());
-    if(!new_soc_sn.empty()) {
-        KModErr err = patch_kernel_handler(new_soc_sn);
-        if(is_failed(err)) return -1;
-    }
-    if(!verify_sn(old_sn, new_sn, old_soc_sn, new_soc_sn)) {
-        printf("verify sn failed\n");
-        kernel_module::set_current_module_description("设置失败，请查看日志");
-        return -1;
-    }
-    printf("verify sn: success\n");
-    return 0;
-}
-
+static std::string generate_new_sn(std::string_view original_sn);
+static std::string generate_new_sn_safe_numeric(std::string_view original_sn);
+using SnGenerator = std::string (*)(std::string_view);
+struct PropertySpoofItem {
+    const char* property_name;
+    const char* storage_key;
+    SnGenerator generator;
+};
+static constexpr PropertySpoofItem kPropertySpoofItems[] = {
+    { "ro.serialno",           "new_sn",          generate_new_sn },
+    { "ro.boot.emmcid",        "new_emmcid",      generate_new_sn },
+    { "ro.boot.bootload_sn",   "new_bootload_sn", generate_new_sn },
+};
 
 // 生成新序列号的核心函数
 static std::string generate_new_sn(std::string_view original_sn) {
@@ -215,17 +120,139 @@ static std::string generate_new_sn_safe_numeric(std::string_view original_sn) {
     return new_sn;
 }
 
-std::string module_on_install(const char* root_key, const char* module_private_dir) {
-    printf("welcome modify sn module!\n");
-    std::string old_sn = get_system_property("ro.serialno"); 
-    if (old_sn.empty()) return "error: unable to read the current serial number!";
-    std::string new_sn = generate_new_sn(old_sn);
-    printf("old serial: %s\n", old_sn.c_str());
-    printf("new serial: %s\n", new_sn.c_str());
-    kernel_module::write_string_disk_storage("new_sn", new_sn.c_str());
+static void generate_and_store_property(const PropertySpoofItem& item) {
+    const std::string old_value = get_system_property(item.property_name);
+    if (old_value.empty()) {
+        printf("%s is empty, skip\n", item.property_name);
+        return;
+    }
+    const std::string new_value = item.generator(old_value);
+    printf("old %s: %s\n", item.property_name, old_value.c_str());
+    printf("new %s: %s\n", item.property_name, new_value.c_str());
+    kernel_module::write_string_disk_storage(item.storage_key, new_value.c_str());
+}
+
+static void load_and_apply_property(const PropertySpoofItem& item) {
+    const std::string old_value = get_system_property(item.property_name);
+    std::string new_value;
+    kernel_module::read_string_disk_storage(item.storage_key, new_value);
+    printf("old %s: %s\n", item.property_name, old_value.c_str());
+    printf("new %s: %s\n", item.property_name, new_value.c_str());
+    if (new_value.empty()) return;
+    resetprop::set_property_value(item.property_name, new_value.c_str(), ResetPropMode::kNoTrigger);
+}
+
+static KModErr patch_kernel_handler(const std::string& fake_soc_sn) {
+    using SymbolMatchMode = kernel_module::SymbolMatchMode;
+	using SymbolHit = kernel_module::SymbolHit;
+    uint64_t soc_info_show = 0;
+    SymbolHit msm_get_serial_number = {0};
+    kernel_module::kallsyms_lookup_name("soc_info_show", soc_info_show);
+	kernel_module::kallsyms_lookup_name("socinfo:msm_get_serial_number", msm_get_serial_number, SymbolMatchMode::Prefix);
+	printf("soc_info_show: %lx\n", soc_info_show);
+	printf("%s: %lx\n", msm_get_serial_number.name[0] ? msm_get_serial_number.name : "socinfo:msm_get_serial_number",
+       msm_get_serial_number.addr);
+
+    if(!soc_info_show && !msm_get_serial_number.addr) return KModErr::ERR_MODULE_SYMBOL_NOT_EXIST;
+
+    PatchBase patchBase;
+    if(soc_info_show) {
+        PatchSocInfoShow patchSocInfoShow(patchBase, soc_info_show);
+        KModErr err = patchSocInfoShow.patch_soc_info_show(fake_soc_sn);
+        printf("patch soc_info_show ret: %s\n", to_string(err).c_str());
+        RETURN_IF_ERROR(err);
+    }
+    if(msm_get_serial_number.addr) {
+        PatchMsmGetSerialNumber patchMsmGetSerialNumber(patchBase, msm_get_serial_number.addr);
+        KModErr err = patchMsmGetSerialNumber.patch_msm_get_serial_number(fake_soc_sn);
+        printf("patch msm_get_serial_number ret: %s\n", to_string(err).c_str());
+        RETURN_IF_ERROR(err);
+    }
+    return KModErr::OK;
+}
+
+static std::string read_soc_sn() {
+    constexpr const char* kPath = "/sys/devices/soc0/serial_number";
+    int fd = ::open(kPath, O_RDONLY | O_CLOEXEC);
+    if (fd < 0) return {};
+    std::string sn;
+    char buf[256];
+    while (true) {
+        ssize_t n = ::read(fd, buf, sizeof(buf));
+        if (n > 0) {
+            sn.append(buf, static_cast<size_t>(n));
+            continue;
+        }
+        if (n == 0) break;
+        if (errno == EINTR) continue;
+        ::close(fd);
+        return {};
+    }
+    ::close(fd);
+    while (!sn.empty() && (sn.back() == '\n' || sn.back() == '\r')) sn.pop_back();
+    return sn;
+}
+
+static bool verify_properties() {
+    for (const auto& item : kPropertySpoofItems) {
+        std::string expected_value;
+        kernel_module::read_string_disk_storage(item.storage_key, expected_value);
+        // 这个属性本来就不存在 / 安装时没有生成，直接跳过
+        if (expected_value.empty()) continue;
+
+        const std::string actual_value = get_system_property(item.property_name);
+        if (actual_value != expected_value) {
+            printf("verify %s failed, expected: %s, actual: %s\n", item.property_name, expected_value.c_str(), actual_value.c_str());
+            return false;
+        }
+    }
+    return true;
+}
+
+// SKRoot模块入口函数
+int skroot_module_main(const char* root_key, const char* module_private_dir) {
+    std::string first_install_boot_session;
+    kernel_module::read_string_disk_storage("first_install_boot_session", first_install_boot_session);
+    if(boot_session_utils::read_boot_session() == first_install_boot_session) {
+        printf("Please restart your phone and try again\n");
+        return -1;
+    }
+    
+    kernel_module::set_current_module_description(MODULE_DESC_CN_TEXT);
+    std::string resetprop_bin_path = std::string(module_private_dir) + "resetprop";
+    resetprop::init(resetprop_bin_path);
+
+    for (const auto& item : kPropertySpoofItems) {
+        load_and_apply_property(item);
+    }
+    if(!verify_properties()) {
+        printf("verify properties failed\n");
+        kernel_module::set_current_module_description("设置失败，请查看日志");
+        return -1;
+    }
+    printf("verify properties success\n");
 
     std::string old_soc_sn = read_soc_sn();
-    if (!old_sn.empty()) {
+    std::string new_soc_sn;
+    kernel_module::read_string_disk_storage("new_soc_sn", new_soc_sn);
+    printf("old soc sn: %s\n", old_soc_sn.c_str());
+    printf("new soc sn: %s\n", new_soc_sn.c_str());
+    if(!new_soc_sn.empty()) {
+        KModErr err = patch_kernel_handler(new_soc_sn);
+        if(is_failed(err)) return -1;
+
+    }
+    return 0;
+}
+
+
+std::string module_on_install(const char* root_key, const char* module_private_dir) {
+    printf("welcome modify sn module!\n");
+    for (const auto& item : kPropertySpoofItems) {
+        generate_and_store_property(item);
+    }
+    std::string old_soc_sn = read_soc_sn();
+    if (!old_soc_sn.empty()) {
         std::string new_soc_sn = generate_new_sn_safe_numeric(old_soc_sn);
         printf("old soc sn: %s\n", old_soc_sn.c_str());
         printf("new soc sn: %s\n", new_soc_sn.c_str());
@@ -239,7 +266,7 @@ std::string module_on_install(const char* root_key, const char* module_private_d
 // SKRoot 模块名片
 // 字段说明见 module_descriptor.h
 SKROOT_MODULE_NAME("随机设备序列号")
-SKROOT_MODULE_VERSION("1.0.1")
+SKROOT_MODULE_VERSION("1.0.2")
 SKROOT_MODULE_DESC(MODULE_DESC_CN_TEXT)
 SKROOT_MODULE_AUTHOR("SKRoot & 蜃 & 杨")
 SKROOT_MODULE_ON_INSTALL(module_on_install)
