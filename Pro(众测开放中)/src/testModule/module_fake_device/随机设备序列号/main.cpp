@@ -240,7 +240,7 @@ int skroot_module_main(const char* root_key, const char* module_private_dir) {
     if(!new_soc_sn.empty()) {
         KModErr err = patch_kernel_handler(new_soc_sn);
         if(is_failed(err)) return -1;
-        if(old_soc_sn != new_soc_sn) {
+        if(read_soc_sn() != new_soc_sn) {
             printf("ERROR, SOC SN are different.\n");
             return -1;
         }   
@@ -269,7 +269,7 @@ std::string module_on_install(const char* root_key, const char* module_private_d
 // SKRoot 模块名片
 // 字段说明见 module_descriptor.h
 SKROOT_MODULE_NAME("随机设备序列号")
-SKROOT_MODULE_VERSION("1.0.2")
+SKROOT_MODULE_VERSION("1.0.3")
 SKROOT_MODULE_DESC(MODULE_DESC_CN_TEXT)
 SKROOT_MODULE_AUTHOR("SKRoot & 蜃 & 杨")
 SKROOT_MODULE_ON_INSTALL(module_on_install)
