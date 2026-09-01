@@ -3,11 +3,11 @@
         {
             "chn_name": "隐藏/data目录",
             "eng_name": "",
-            "ver": "2.0.1",
+            "ver": "2.0.2",
             "desc": "内核级隐藏 /data 指定目录，彻底阻断文件扫描；底层拦截机制，免疫各类基于漏洞的暴力扫盘。",
             "author": "SKRoot",
             "id32": "ae12076c010ebabbb233affdd0239c14",
-            "update_date": "2026-7-26",
+            "update_date": "2026-9-1",
             "source_url": "https://github.com/abcz316/SKRoot-linuxKernelRoot/tree/master/Pro(%E4%BC%97%E6%B5%8B%E5%BC%80%E6%94%BE%E4%B8%AD)/src/testModule/module_hide_data_dir",
             "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_hide_data_dir/module.zip",
             "download_chn_alert": "",
