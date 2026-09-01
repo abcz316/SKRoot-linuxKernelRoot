@@ -29,11 +29,11 @@
         {
             "chn_name": "隐蔽的系统终端",
             "eng_name": "",
-            "ver": "3.1.0",
+            "ver": "3.1.1",
             "desc": "提供隐蔽的 sh 执行通道，彻底替代终端类 App，避免终端类 App 带来的特征暴露。",
             "author": "SKRoot",
             "id32": "zse9vkTjLjWXbafvx8Mlh1MTf8SMTUEL",
-            "update_date": "2026-7-5",
+            "update_date": "2026-9-1",
             "source_url": "https://github.com/abcz316/SKRoot-linuxKernelRoot/tree/master/Pro(%E4%BC%97%E6%B5%8B%E5%BC%80%E6%94%BE%E4%B8%AD)/src/testModule/module_hide_sh_exec",
             "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_hide_sh_exec/module.zip",
             "download_chn_alert": "",
