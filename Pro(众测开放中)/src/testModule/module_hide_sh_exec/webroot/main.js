@@ -10,6 +10,8 @@
   const sheetOverlay = document.getElementById("sheetOverlay");
   const pageExitOverlay = document.getElementById("pageExitOverlay");
   const terminalKeepSwitch = document.getElementById("terminalKeepSwitch");
+  const terminalRestartBtn = document.getElementById("terminalRestartBtn");
+  const transportRadios = document.querySelectorAll('input[name="terminalTransport"]');
 
   const terminalCore = window.SKTerminalCore?.createTerminalCore({
     out,
@@ -91,13 +93,73 @@
       try {
         await RequestApi.saveTerminalKeepMode(nextValue);
         app.savedTerminalKeepMode = nextValue;
-        window.SKUiUtils?.showToast?.("设置已保存，下次打开 WebUI 生效", 1800);
+        window.SKUiUtils?.showToast?.("设置已保存，重启模块后生效", 1800);
       } catch (e) {
         terminalKeepSwitch.checked = app.savedTerminalKeepMode;
         window.SKUiUtils?.showToast?.("设置保存失败，请稍后重试", 1800);
         console.warn("save terminal settings failed:", e);
       } finally {
         terminalKeepSwitch.disabled = false;
+      }
+    });
+  }
+
+  async function initTerminalTransportMode() {
+    if (!transportRadios.length) return;
+    let savedMode = "pty";
+
+    function setRadioChecked(mode, disabled) {
+      transportRadios.forEach(radio => {
+        if (radio.value === mode) radio.checked = true;
+        radio.disabled = !!disabled;
+      });
+    }
+
+    try {
+      const mode = await RequestApi.getTerminalTransportMode();
+      if (mode === "pipe" || mode === "pty") savedMode = mode;
+      setRadioChecked(savedMode, false);
+    } catch (e) {
+      console.warn("load terminal transport mode failed:", e);
+    }
+
+    transportRadios.forEach(radio => {
+      radio.addEventListener("change", async () => {
+        if (!radio.checked) return;
+        const nextMode = radio.value;
+        setRadioChecked(nextMode, true);
+        try {
+          await RequestApi.saveTerminalTransportMode(nextMode);
+          savedMode = nextMode;
+          window.SKUiUtils?.showToast?.("设置已保存，重启模块后生效", 1800);
+        } catch (e) {
+          setRadioChecked(savedMode, false);
+          window.SKUiUtils?.showToast?.("设置保存失败，请稍后重试", 1800);
+          console.warn("save terminal transport mode failed:", e);
+        } finally {
+          setRadioChecked(savedMode, false);
+        }
+      });
+    });
+  }
+
+  async function initTerminalRestartBtn() {
+    if (!terminalRestartBtn) return;
+    terminalRestartBtn.addEventListener("click", async () => {
+      terminalRestartBtn.disabled = true;
+      const oldText = terminalRestartBtn.textContent;
+      terminalRestartBtn.textContent = "正在重启…";
+      try {
+        await RequestApi.restartModule();
+        out.innerHTML = "";
+        terminalCore.scrollBottom?.();
+        window.SKUiUtils?.showToast?.("模块已重启，当前模式已生效", 1800);
+      } catch (e) {
+        window.SKUiUtils?.showToast?.("重启失败，请稍后重试", 1800);
+        console.warn("restart module failed:", e);
+      } finally {
+        terminalRestartBtn.disabled = false;
+        terminalRestartBtn.textContent = oldText;
       }
     });
   }
@@ -122,6 +184,8 @@
   sendBtn.addEventListener("click", sendCommand);
   terminalCore.setConn(null, "连接中");
   initTerminalSettings();
+  initTerminalTransportMode();
+  initTerminalRestartBtn();
   refreshHistory();
   cmd.focus();
   setInterval(terminalCore.tick, 1000);

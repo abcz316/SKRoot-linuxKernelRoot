@@ -57,18 +57,42 @@
 
               <div class="terminal-setting-card">
                 <div class="terminal-setting-head">
-                  <div class="terminal-setting-title">兼容模式</div>
-                  <label class="sk-switch terminal-setting-switch" title="兼容模式">
+                  <div class="terminal-setting-title">会话保持模式</div>
+                  <label class="sk-switch terminal-setting-switch" title="会话保持模式">
                     <input id="terminalKeepSwitch" type="checkbox" />
                     <span></span>
                   </label>
                 </div>
                 <div class="terminal-setting-subtitle">遇到后台脚本自动退出？</div>
                 <div class="terminal-setting-desc">
-                  可尝试开启兼容模式，用于兼容少数依赖 sh / TTY 的脚本或程序。开启后关闭 WebUI 时不会立即释放终端。如非必要，建议不要开启。
+                  可尝试开启会话保持模式，用于兼容少数依赖会话存活的脚本或程序。开启后关闭 WebUI 时不会立即释放终端。如非必要，建议不要开启。
                 </div>
-                <div class="terminal-setting-note">修改后下次打开 WebUI 生效。</div>
+                <div class="terminal-setting-note">修改后需重启模块后生效。</div>
               </div>
+
+              <div class="terminal-setting-card terminal-setting-divider">
+                <div class="terminal-setting-head">
+                  <div class="terminal-setting-title">终端传输模式</div>
+                </div>
+                <div class="terminal-transport-options">
+                  <label class="transport-option" title="PTY 模式">
+                    <input type="radio" name="terminalTransport" value="pty" />
+                    <span class="transport-dot" aria-hidden="true"></span>
+                    <span class="transport-label">PTY</span>
+                  </label>
+                  <label class="transport-option" title="匿名管道模式">
+                    <input type="radio" name="terminalTransport" value="pipe" />
+                    <span class="transport-dot" aria-hidden="true"></span>
+                    <span class="transport-label">匿名管道</span>
+                  </label>
+                </div>
+                <div class="terminal-setting-desc">
+                  PTY 适合依赖 TTY 的程序；匿名管道不会创建 PTS。
+                  <span class="terminal-setting-note">切换后需重启模块后生效。</span>
+                </div>
+              </div>
+
+              <button type="button" class="terminal-restart-btn" id="terminalRestartBtn">立即重启模块</button>
             </div>
           </details>
         </div>

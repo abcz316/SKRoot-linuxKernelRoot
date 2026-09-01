@@ -84,6 +84,21 @@
     return resp.ok ? await resp.text() : ('HTTP ' + resp.status);
   }
 
+  async function getTerminalTransportMode() {
+    const resp = await postText('/getTerminalTransportMode');
+    return resp.ok ? await resp.text() : ('HTTP ' + resp.status);
+  }
+
+  async function saveTerminalTransportMode(mode) {
+    const resp = await postText('/saveTerminalTransportMode', mode === "pipe" ? "pipe" : "pty");
+    return resp.ok ? await resp.text() : ('HTTP ' + resp.status);
+  }
+
+  async function restartModule() {
+    const resp = await postText('/restartModule', "", { keepalive: true });
+    return resp.ok ? await resp.text() : ('HTTP ' + resp.status);
+  }
+
   return {
     sendCommand,
     getNewOutput,
@@ -96,6 +111,9 @@
     checkExecMount,
     getTerminalKeepMode,
     saveTerminalKeepMode,
+    getTerminalTransportMode,
+    saveTerminalTransportMode,
+    restartModule,
     exitWebui
   };
 })();

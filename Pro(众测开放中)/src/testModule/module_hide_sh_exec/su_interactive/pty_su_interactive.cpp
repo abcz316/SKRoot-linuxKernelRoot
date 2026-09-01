@@ -1,4 +1,4 @@
-﻿#include "su_interactive.h"
+﻿#include "pty_su_interactive.h"
 
 #include <unistd.h>
 #include <sys/wait.h>
@@ -14,22 +14,22 @@
 #include <chrono>
 #include <thread>
 
-SuInteractive::SuInteractive() = default;
+PtySuInteractive::PtySuInteractive() = default;
 
-SuInteractive::~SuInteractive() {
+PtySuInteractive::~PtySuInteractive() {
     stop(true);
 }
 
-void SuInteractive::setCloExec(int fd) {
+void PtySuInteractive::setCloExec(int fd) {
     int flags = ::fcntl(fd, F_GETFD);
     if (flags >= 0) ::fcntl(fd, F_SETFD, flags | FD_CLOEXEC);
 }
 
-void SuInteractive::safeClose(int& fd) {
+void PtySuInteractive::safeClose(int& fd) {
     if (fd >= 0) { ::close(fd); fd = -1; }
 }
 
-bool SuInteractive::start(std::string_view shell_rc_dir) {
+bool PtySuInteractive::start(std::string_view shell_rc_dir) {
     stop(true); // 支持重复 start：先清理干净
     return startPty_(shell_rc_dir);
 }
@@ -42,7 +42,7 @@ static void ignore_sighup() {
     ::sigaction(SIGHUP, &sa, nullptr);
 }
 
-void SuInteractive::setupShellPromptEnv_(std::string_view rc_dir) {
+void PtySuInteractive::setupShellPromptEnv_(std::string_view rc_dir) {
     if (rc_dir.empty()) return;
 
     std::string dir(rc_dir);
@@ -100,7 +100,7 @@ void SuInteractive::setupShellPromptEnv_(std::string_view rc_dir) {
 }
 
 
-bool SuInteractive::startPty_(std::string_view shell_rc_dir) {
+bool PtySuInteractive::startPty_(std::string_view shell_rc_dir) {
     int master = ::posix_openpt(O_RDWR | O_NOCTTY);
     if (master < 0) {
         return false;
@@ -183,7 +183,7 @@ bool SuInteractive::startPty_(std::string_view shell_rc_dir) {
     return true;
 }
 
-void SuInteractive::readerLoop_() {
+void PtySuInteractive::readerLoop_() {
     // 注意：这里读的是“合并后的输出”
     char buf[4096];
     for (;;) {
@@ -208,7 +208,7 @@ void SuInteractive::readerLoop_() {
     safeClose(m_out_r);
 }
 
-bool SuInteractive::send(const std::string& s) {
+bool PtySuInteractive::send(const std::string& s) {
     if (m_in_w < 0) return false;
 
     const char* p = s.data();
@@ -226,20 +226,20 @@ bool SuInteractive::send(const std::string& s) {
     return true;
 }
 
-bool SuInteractive::sendLine(const std::string& line) {
+bool PtySuInteractive::sendLine(const std::string& line) {
     if (!send(line)) return false;
     if (!line.empty() && line.back() == '\n') return true;
     return send("\n");
 }
 
-void SuInteractive::closeInput() {
+void PtySuInteractive::closeInput() {
     // PTY master 被 dup 成 m_in_w/m_out_r 两个 fd。
     // 只关写端不会让对端收到挂断，所以这里一起关闭读端。
     safeClose(m_in_w);
     safeClose(m_out_r);
 }
 
-int SuInteractive::wait() {
+int PtySuInteractive::wait() {
     if (m_pid <= 0) return -1;
 
     closeInput();
@@ -263,7 +263,7 @@ int SuInteractive::wait() {
     return -1;
 }
 
-void SuInteractive::stop(bool force) {
+void PtySuInteractive::stop(bool force) {
     // 先关输入，让对端有机会优雅退出
     closeInput();
 
@@ -300,23 +300,23 @@ void SuInteractive::stop(bool force) {
     }
 }
 
-std::string SuInteractive::output() const {
+std::string PtySuInteractive::output() const {
     std::lock_guard<std::mutex> lk(m_mu);
     return m_out;
 }
 
-std::string SuInteractive::takeOutput() {
+std::string PtySuInteractive::takeOutput() {
     std::lock_guard<std::mutex> lk(m_mu);
     std::string ret = std::move(m_out);
     m_out.clear();
     return ret;
 }
 
-pid_t SuInteractive::get_shell_pid() {
+pid_t PtySuInteractive::get_shell_pid() {
     return m_pid;
 }
 
-bool SuInteractive::isShellForeground() const {
+bool PtySuInteractive::isShellForeground() const {
     if (m_pid <= 0) return false;
 
     int fd = m_in_w;
