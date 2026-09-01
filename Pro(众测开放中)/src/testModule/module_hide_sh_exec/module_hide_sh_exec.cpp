@@ -17,54 +17,20 @@
 
 #include "kernel_module_kit_umbrella.h"
 
-#include "su_interactive.h"
+#include "su_interactive/su_interactive.h"
 #include "idle_killer.h"
+#include "quick_actions/quick_actions.h"
 #include "json_helper.h"
 #include "url_encode_utils.h"
 #include "list_dir_helper.h"
 #include "simple_hash_util.h"
 
+#define MODID32 "zse9vkTjLjWXbafvx8Mlh1MTf8SMTUEL"
 #define WORK_DIR_NAME "work"
-#define MAX_QUICK_ACTIONS 10
-#define RECORD_CMD_LEN 100
 
 namespace fs = std::filesystem;
 
 int skroot_module_main(const char* root_key, const char* module_private_dir) { return 0; }
-
-static void append_or_move_to_back(std::vector<std::string>& vec, const std::string& target) {
-    auto it = std::find(vec.begin(), vec.end(), target);
-    if (it != vec.end()) {
-        if (it + 1 != vec.end()) std::rotate(it, it + 1, vec.end());
-    } else {
-        vec.push_back(target);
-    }
-}
-
-static void add_quick_actions(const std::vector<std::string>& cmd) {
-    if (!cmd.size()) return;
-    std::string json;
-    kernel_module::read_string_disk_storage("quick_actions", json);
-    std::vector<std::string> cmd_arr = parse_json(json);
-    for(auto & c : cmd) {
-        std::vector<char> encoded_buf(c.size() * 3 + 1, '\0');
-        url_encode(c.c_str(), encoded_buf.data());
-        std::string encoded_str(encoded_buf.data(), std::strlen(encoded_buf.data()));
-        append_or_move_to_back(cmd_arr, encoded_str);
-    }
-    while (cmd_arr.size() > MAX_QUICK_ACTIONS) {
-        cmd_arr.erase(cmd_arr.begin());
-    }
-    json = json_array_from_set(cmd_arr);
-    kernel_module::write_string_disk_storage("quick_actions", json.c_str());
-}
-
-static std::string read_quick_actions_json() {
-    std::string json;
-    kernel_module::read_string_disk_storage("quick_actions", json);
-    if(json.empty()) json = "[]";
-    return json;
-}
 
 static void write_terminal_keep_mode(bool enabled) {
     kernel_module::write_bool_disk_storage("terminal_keep_mode", enabled);
@@ -74,6 +40,16 @@ static bool read_terminal_keep_mode() {
     bool enabled = false;
     kernel_module::read_bool_disk_storage("terminal_keep_mode", enabled);
     return enabled;
+}
+
+static void save_transport_mode(SuInteractiveMode mode) {
+    kernel_module::write_string_disk_storage("terminal_transport_mode", su_interactive_mode_name(mode));
+}
+
+static SuInteractiveMode read_su_interactive_mode() {
+    std::string name;
+    kernel_module::read_string_disk_storage("terminal_transport_mode", name);
+    return su_interactive_mode_from_name(name);
 }
 
 static void create_work_dir(const char* module_private_dir, const char* work_dir_name) {
@@ -86,7 +62,7 @@ static void create_work_dir(const char* module_private_dir, const char* work_dir
 }
 
 std::string module_on_install(const char* root_key, const char* module_private_dir) {
-    add_quick_actions({"getenforce", "ls /", "id"});
+    QuickActions().add({"getenforce", "ls /", "id"});
     create_work_dir(module_private_dir, WORK_DIR_NAME);
     return "";
 }
@@ -113,14 +89,16 @@ public:
         m_root_key = root_key;
 
         m_hide_dir = (fs::path(module_private_dir) / WORK_DIR_NAME).string();
+        m_module_dir = module_private_dir ? module_private_dir : "";
         m_keep_terminal = read_terminal_keep_mode();
-        m_su_interactive.start(module_private_dir);
+        m_su_interactive = std::make_unique<SuInteractive>(read_su_interactive_mode());
+        m_su_interactive->start(module_private_dir);
         if (!m_keep_terminal) {
             fork_sh_process_daemon();
         }
         m_idle_killer.start(std::chrono::seconds(20), [this]() -> bool {
             if (m_keep_terminal) {
-                if (!m_su_interactive.isShellForeground()) {
+                if (!m_su_interactive->isShellForeground()) {
                     // 当前 shell 不在前台，说明可能有用户后台程序在跑。
                     // 这次不杀，IdleKiller 继续监控。
                     return false;
@@ -130,7 +108,7 @@ public:
                 printf("[module_hide_sh_exec] idle kill!\n");
             }
             if (m_server) m_server->close();
-            m_su_interactive.stop(true);
+            m_su_interactive->stop(true);
             _exit(0);
             return true;
         });
@@ -154,6 +132,9 @@ public:
         else if(path == "/checkExecMount") resp = handle_check_exec_mount(body);
         else if(path == "/getTerminalKeepMode") resp = handle_get_terminal_keep_mode();
         else if(path == "/saveTerminalKeepMode") resp = handle_save_terminal_keep_mode(body);
+        else if(path == "/getTerminalTransportMode") resp = handle_get_terminal_transport_mode();
+        else if(path == "/saveTerminalTransportMode") resp = handle_save_terminal_transport_mode(body);
+        else if(path == "/restartModule") resp = handle_restart_module();
         else if(path == "/exitWebui") resp = handle_exit_webui();
 
         kernel_module::webui::send_text(conn, 200, resp);
@@ -164,7 +145,7 @@ public:
 
 private:
     void fork_sh_process_daemon() {
-        pid_t shell_pid = m_su_interactive.get_shell_pid();
+        pid_t shell_pid = m_su_interactive->get_shell_pid();
         if (shell_pid <= 0) return;
 
         pid_t ppid = getpid();
@@ -180,21 +161,21 @@ private:
     std::string handle_send_command(const std::string& body) {
         m_idle_killer.touch();
         if(body == "su") return "OK";
-        m_su_interactive.sendLine(body);
-        if (!body.empty() && body.length() < RECORD_CMD_LEN) {
-            add_quick_actions({body});
+        m_su_interactive->sendLine(body);
+        if (!body.empty() && body.length() < QuickActions::kRecordCmdLen) {
+            m_quick_actions.add({body});
         }
         return "OK";
     }
 
     std::string handle_get_new_output(const std::string& body) {
         m_idle_killer.touch();
-        return m_su_interactive.takeOutput();
+        return m_su_interactive->takeOutput();
     }
 
     std::string handle_get_quick_actions(const std::string& body) {
         m_idle_killer.touch();
-        return read_quick_actions_json();
+        return m_quick_actions.toJson();
     }
 
     std::string handle_list_dir(const std::string& body) {
@@ -262,9 +243,25 @@ private:
         return "OK";
     }
 
+    std::string handle_get_terminal_transport_mode() {
+        return su_interactive_mode_name(read_su_interactive_mode());
+    }
+
+    std::string handle_save_terminal_transport_mode(const std::string& body) {
+        save_transport_mode(su_interactive_mode_from_name(body));
+        return "OK";
+    }
+
+    std::string handle_restart_module() {
+        int port = 0;
+        skroot_env::features::web_ui::start_module_web_ui_server_async(m_root_key.c_str(), MODID32, port);
+        handle_exit_webui();
+        return "OK";
+    }
+
 	std::string handle_exit_webui() {
         if(m_server) m_server->close();
-        m_su_interactive.stop(true);
+        m_su_interactive->stop(true);
         _exit(0);
         return "OK";
     }
@@ -272,18 +269,20 @@ private:
     std::string m_root_key;
     CivetServer* m_server = nullptr;
     std::string m_hide_dir;
+    std::string m_module_dir;
     bool m_keep_terminal = false;
-    SuInteractive m_su_interactive;
+    std::unique_ptr<SuInteractive> m_su_interactive;
     IdleKiller m_idle_killer;
+    QuickActions m_quick_actions;
 };
 
 // SKRoot 模块名片
 // 字段说明见 module_descriptor.h
 SKROOT_MODULE_NAME("隐蔽的系统终端")
-SKROOT_MODULE_VERSION("3.1.0")
+SKROOT_MODULE_VERSION("3.1.1")
 SKROOT_MODULE_DESC("提供独立隐蔽的 sh 执行通道，彻底替代终端类 App，避免终端类 App 带来的特征暴露。")
 SKROOT_MODULE_AUTHOR("SKRoot、斓梦语")
-SKROOT_MODULE_ID32("zse9vkTjLjWXbafvx8Mlh1MTf8SMTUEL")
+SKROOT_MODULE_ID32(MODID32)
 SKROOT_MODULE_ON_INSTALL(module_on_install)
 SKROOT_MODULE_WEB_UI(MyWebHttpHandler)
 SKROOT_MODULE_UPDATE_JSON("https://abcz316.github.io/SKRoot-linuxKernelRoot/module_hide_sh_exec/update.json")

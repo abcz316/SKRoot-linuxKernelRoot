@@ -7,45 +7,44 @@
 #include <string_view>
 #include <thread>
 
-#include "kernel_module_kit_umbrella.h"
+#include "isu_interactive.h"
 
-class SuInteractive {
+// PTY 版 su 交互：提供 controlling tty，适合交互脚本/程序
+class PtySuInteractive : public ISuInteractive {
 public:
-    SuInteractive();
-    ~SuInteractive();
+    PtySuInteractive();
+    ~PtySuInteractive() override;
 
-    DISABLE_COPY_MOVE(SuInteractive);
-
-    // 启动 su。默认使用 PTY，提供 controlling tty，适合交互脚本/程序。
+    // 启动 su。提供 controlling tty。
     // shell_rc_dir 非空时，会在该目录生成 .skroot_mkshrc，并设置 ENV/PS1/PS2/PROMPT。
-    bool start(std::string_view shell_rc_dir = {});
+    bool start(std::string_view shell_rc_dir = {}) override;
 
     // 发送数据/发送一行（自动补 '\n'）
-    bool send(const std::string& s);
-    bool sendLine(const std::string& line);
+    bool send(const std::string& s) override;
+    bool sendLine(const std::string& line) override;
 
     // 关闭输入（PTY 模式会关闭 master，让前台程序退出）
-    void closeInput();
+    void closeInput() override;
 
     // 等待子进程退出（返回 exit code；信号：128+sig；失败 -1）
-    int wait();
+    int wait() override;
 
     // 停止并清理：
     // force=false：不强杀，只关输入/输出fd并回收线程（对方若不退出可能 wait 会卡）
     // force=true ：SIGTERM + 短暂等待 + SIGKILL，确保回收
-    void stop(bool force = true);
+    void stop(bool force = true) override;
 
     // 获取累积输出（拷贝）
-    std::string output() const;
+    std::string output() const override;
 
     // 取走并清空累积输出（更适合“增量取日志”）
-    std::string takeOutput();
+    std::string takeOutput() override;
 
     // 获取shell进程PID
-    pid_t get_shell_pid();
+    pid_t get_shell_pid() override;
 
     // 当前 PTY 前台进程组是否已经回到 shell 自己
-    bool isShellForeground() const;
+    bool isShellForeground() const override;
 private:
     static void setCloExec(int fd);
     static void safeClose(int& fd);

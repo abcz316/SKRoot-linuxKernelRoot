@@ -989,6 +989,11 @@ input.auto-cmd:focus, input.auto-delay:focus { border-color: var(--accent); back
   font-weight: 700;
 }
 
+.terminal-setting-desc .terminal-setting-note {
+  margin-top: 3px;
+  display: inline-block;
+}
+
 .terminal-setting-switch {
   margin-left: auto;
 }
@@ -1043,4 +1048,219 @@ input.auto-cmd:focus, input.auto-delay:focus { border-color: var(--accent); back
 
 .sk-switch input:disabled + span {
   opacity: 0.58;
+}
+
+.terminal-transport-options {
+  display: flex;
+  justify-content: flex-start;
+  gap: 8px;
+  margin: 6px 0 5px;
+}
+
+.transport-option {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 14px 5px 11px;
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.6);
+  font-size: 11px;
+  font-weight: 800;
+  color: #64748b;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.18s ease;
+}
+
+.transport-option::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  border: 1.5px solid #94a3b8;
+  background: transparent;
+  box-sizing: border-box;
+  flex: none;
+  transition: all 0.18s ease;
+}
+
+.transport-option input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.transport-option input:checked + span {
+  color: var(--accent);
+}
+
+.terminal-restart-btn {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  padding: 7px 0;
+  border: 1px solid rgba(239, 68, 68, 0.28);
+  border-radius: 9px;
+  background: rgba(239, 68, 68, 0.05);
+  color: #ef4444;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .2px;
+  cursor: pointer;
+  user-select: none;
+  transition: background .18s ease, opacity .18s ease;
+}
+
+.terminal-restart-btn:active {
+  background: rgba(239, 68, 68, 0.12);
+}
+
+.terminal-restart-btn:disabled {
+  opacity: 0.58;
+  cursor: default;
+}
+
+/* ===== terminal settings final ===== */
+
+.terminal-setting-card {
+    margin-top: 12px;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+}
+
+.terminal-setting-section-title {
+    margin-top: 14px;
+    margin-bottom: 8px;
+    font-size: 11px;
+    font-weight: 800;
+    color: #94a3b8;
+    letter-spacing: .2px;
+}
+
+.terminal-setting-note {
+    margin-top: 5px;
+    color: var(--accent);
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.terminal-restart-btn {
+    display: block;
+    width: 100%;
+    margin-top: 12px;
+    padding: 7px 0;
+    border: 1px solid rgba(22,119,255,.25);
+    border-radius: 9px;
+    background: rgba(22,119,255,.06);
+    color: var(--accent);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .2px;
+    cursor: pointer;
+    user-select: none;
+}
+
+/* terminal transport radio */
+.terminal-transport-options {
+    display: flex;
+    gap: 24px;
+    width: auto;
+    margin: 8px 0;
+}
+
+.transport-option {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 4px 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.transport-option::before {
+    content: "";
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid #cbd5e1;
+    background: transparent;
+    box-sizing: border-box;
+}
+
+/* terminal settings divider */
+.terminal-setting-divider {
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid #f1f5f9;
+}
+
+
+/* keep switch closer to title instead of right aligned */
+.terminal-setting-head {
+    justify-content: flex-start;
+}
+
+.terminal-setting-switch {
+    margin-left: 12px;
+}
+
+
+/* compact keep-mode switch */
+.terminal-setting-switch,
+.sk-switch {
+    width: 34px;
+    height: 20px;
+}
+
+.sk-switch span {
+    width: 34px;
+    height: 20px;
+}
+
+.sk-switch span::before {
+    width: 14px;
+    height: 14px;
+    left: 3px;
+    top: 3px;
+}
+
+.sk-switch input:checked + span::before {
+    transform: translateX(14px);
+}
+
+
+/* ===== robust transport radio: real DOM dot, no :has / pseudo-state dependency ===== */
+.transport-option::before {
+    display: none;
+}
+
+.transport-dot {
+    display: inline-block;
+    flex: 0 0 auto;
+    width: 12px;
+    height: 12px;
+    border: 2px solid #cbd5e1;
+    border-radius: 50%;
+    background: transparent;
+    box-sizing: border-box;
+    transition: border-color .16s ease, background .16s ease, box-shadow .16s ease;
+}
+
+.transport-option input:checked + .transport-dot {
+    border-color: var(--accent);
+    background: var(--accent);
+    box-shadow: 0 0 0 2px rgba(22,119,255,.15);
+}
+
+.transport-option input:checked ~ .transport-label {
+    color: var(--accent);
 }
