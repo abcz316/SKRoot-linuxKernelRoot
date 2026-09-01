@@ -3,7 +3,7 @@
         {
             "chn_name": "隐藏/data目录",
             "eng_name": "",
-            "ver": "2.0.2",
+            "ver": "2.0.3",
             "desc": "内核级隐藏 /data 指定目录，彻底阻断文件扫描；底层拦截机制，免疫各类基于漏洞的暴力扫盘。",
             "author": "SKRoot",
             "id32": "ae12076c010ebabbb233affdd0239c14",
