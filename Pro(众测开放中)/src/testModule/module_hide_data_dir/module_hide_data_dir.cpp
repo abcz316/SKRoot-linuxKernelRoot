@@ -1,58 +1,18 @@
 ﻿#include <sys/stat.h>
+#include <cerrno>
+#include <map>
 #include <set>
 #include <fstream>
+#include <thread>
 #include "patch_filldir64.h"
 #include "patch_compat_filldir.h"
+#include "patch_mtk_hbt_filldir64.h"
+#include "patch_iterate_dir.h"
 #include "kernel_module_kit_umbrella.h"
+#include "hide_dir_json_utils.h"
 #include "simple_hash_util.h"
-#include "cJSON.h"
 
 namespace fs = std::filesystem;
-
-struct HideDirConfig {
-    // 按目录名称隐藏
-    std::set<std::string> names;
-    // 按完整路径隐藏
-    std::set<std::string> paths;
-    bool empty() const { return names.empty() && paths.empty(); }
-    size_t size() const { return names.size() + paths.size(); }
-};
-
-// 解析：
-// [
-//   {"type":"name","value":"local123"},
-//   {"type":"path","value":"/data/aaa/bbb"}
-// ]
-static HideDirConfig parse_json(const std::string& json) {
-    HideDirConfig result;
-    cJSON* root = cJSON_Parse(json.c_str());
-    if (!root) return result;
-    if (!cJSON_IsArray(root)) {
-        cJSON_Delete(root);
-        return result;
-    }
-    const int size = cJSON_GetArraySize(root);
-    for (int i = 0; i < size; ++i) {
-        cJSON* item = cJSON_GetArrayItem(root, i);
-        if (!cJSON_IsObject(item)) continue;
-        cJSON* type_item = cJSON_GetObjectItemCaseSensitive(item, "type");
-        cJSON* value_item = cJSON_GetObjectItemCaseSensitive(item, "value");
-        if (!cJSON_IsString(type_item) || !type_item->valuestring) continue;
-        if (!cJSON_IsString(value_item) || !value_item->valuestring) continue;
-        const std::string type = type_item->valuestring;
-        const std::string value = value_item->valuestring;
-        if (value.empty()) continue;
-        if (type == "name") {
-            result.names.insert(value);
-        } else if (type == "path") {
-            result.paths.insert(value);
-        } else {
-            printf("unknown hide rule type: %s\n", type.c_str());
-        }
-    }
-    cJSON_Delete(root);
-    return result;
-}
 
 static bool get_path_inode(const char* path, uint64_t& inode) {
     inode = 0;
@@ -66,6 +26,39 @@ static bool get_path_inode(const char* path, uint64_t& inode) {
     return true;
 }
 
+// 把path集合解析成ino集合：stat获取；stat失败的path回退用备用json里存的历史ino兜底
+static std::set<uint64_t> collect_ino_set(const std::set<std::string>& paths) {
+    std::set<uint64_t> ino_set;
+    const std::map<std::string, uint64_t> backup_ino_map = hide_dir_json::load_ino_backup();
+    for (const auto& path : paths) {
+        uint64_t ino = 0;
+        if(!get_path_inode(path.c_str(), ino)) {
+            const auto it = backup_ino_map.find(path);
+            if (it != backup_ino_map.end() && it->second != 0) {
+                printf("stat failed, use backup ino: %s -> %llu\n", path.c_str(), (unsigned long long)it->second);
+                ino_set.insert(it->second);
+            }
+            continue;
+        }
+        ino_set.insert(ino);
+    }
+    return ino_set;
+}
+
+static KModErr patch_mtk_hbt_filldir64(const PatchBase& patchBase, const std::set<std::string>& names, const std::set<uint64_t>& ino_set, uint64_t original_hbt_filldir64, uint64_t iterate_dir) {
+    KModErr err = KModErr::OK;
+    PatchMtkHbtFilldir64 patchMtkHbtFilldir64(patchBase, original_hbt_filldir64);
+    PatchIterateDir patchIterateDir(patchBase, iterate_dir);
+
+    uint64_t fake_hbt_filldir64 = 0;
+    RETURN_IF_ERROR(patchMtkHbtFilldir64.generate_hook_fake_filldir64(names, ino_set, fake_hbt_filldir64));
+    
+    err = patchIterateDir.patch_iterate_dir(original_hbt_filldir64, fake_hbt_filldir64);
+    printf("patch iterate_dir: %s\n", to_string(err).c_str());
+    RETURN_IF_ERROR(err);
+    return err;
+}
+
 // 开始修补内核
 static KModErr patch_kernel_handler(const HideDirConfig& config, const std::string& whitelist_comm_name) {
     kernel_module::SymbolHit filldir64;
@@ -75,6 +68,14 @@ static KModErr patch_kernel_handler(const HideDirConfig& config, const std::stri
     kernel_module::SymbolHit compat_filldir;
     RETURN_IF_ERROR(kernel_module::kallsyms_lookup_name("compat_filldir", compat_filldir, kernel_module::SymbolMatchMode::Prefix));
     printf("%s, addr: %p\n", compat_filldir.name, (void*)compat_filldir.addr);
+
+    uint64_t mtk_hbt_filldir64 = 0;
+    kernel_module::kallsyms_lookup_name("hbt:filldir64", mtk_hbt_filldir64);
+    printf("hbt_filldir64, addr: %p\n", (void*)mtk_hbt_filldir64);
+   
+	uint64_t iterate_dir = 0;
+    kernel_module::kallsyms_lookup_name("iterate_dir", iterate_dir);
+    printf("iterate_dir, addr: %p\n", (void*)iterate_dir);
 
     uint32_t cred_offset = 0;
     uint32_t cred_euid_offset = 0;
@@ -86,32 +87,30 @@ static KModErr patch_kernel_handler(const HideDirConfig& config, const std::stri
     RETURN_IF_ERROR(kernel_module::get_task_struct_comm_offset(comm_offset));
     printf("comm offset: 0x%x\n", comm_offset);
 
-    std::set<uint64_t> ino_set;
-    for (const auto& path : config.paths) {
-        uint64_t ino = 0;
-        if(!get_path_inode(path.c_str(), ino)) continue;
-        ino_set.insert(ino);
+    const std::set<uint64_t> ino_set = collect_ino_set(config.paths);
+    if(config.names.empty() && ino_set.empty()) {
+        printf("no names and ino_set, skip\n");
+        return KModErr::OK;
     }
 
     PatchBase patchBase(cred_offset, cred_euid_offset, comm_offset, whitelist_comm_name);
     PatchFilldir64 patchFilldir64(patchBase, filldir64.addr);
     PatchCompatFilldir patchCompatFilldir(patchBase, compat_filldir.addr);
-
-
     KModErr err = patchFilldir64.patch_filldir64(config.names, ino_set);
     printf("patch filldir64 ret: %s\n", to_string(err).c_str());
     RETURN_IF_ERROR(err);
     err = patchCompatFilldir.patch_compat_filldir(config.names, ino_set);
     printf("patch compat_filldir ret: %s\n", to_string(err).c_str());
     RETURN_IF_ERROR(err);
+    if(mtk_hbt_filldir64 && iterate_dir) {
+        RETURN_IF_ERROR(patch_mtk_hbt_filldir64(patchBase, config.names, ino_set, mtk_hbt_filldir64, iterate_dir));
+    }
     return err;
 }
 
 // SKRoot模块入口函数
 int skroot_module_main(const char* root_key, const char* module_private_dir) {
-    std::string json;
-    kernel_module::read_string_disk_storage("hide_dir_json", json);
-    HideDirConfig config = parse_json(json);
+    HideDirConfig config = hide_dir_json::load_config();
     printf("hide dir rules (%zu total, %zu names, %zu paths):\n", config.size(), config.names.size(), config.paths.size());
     if (config.empty()) return 0;
     for (const auto& name : config.names) {
@@ -133,14 +132,28 @@ public:
         printf("[module_hide_data_dir] POST request\nPath: %s\nBody: %s\n", path.c_str(), body.c_str());
 
         std::string resp;
-        if(path == "/getHiddenDirsJson") kernel_module::read_string_disk_storage("hide_dir_json", resp);
-        else if(path == "/setHiddenDirsJson") resp = is_ok(kernel_module::write_string_disk_storage("hide_dir_json", body.c_str())) ? "OK" : "FAILED";
+        if(path == "/getHiddenDirsJson") hide_dir_json::read_config_json(resp);
+        else if(path == "/setHiddenDirsJson") resp = handle_set_hidden_dirs_json(body);
         else if(path == "/checkFileExist") resp = handle_check_file_exist(body);
         kernel_module::webui::send_text(conn, 200, resp);
         return true;
     }
 
 private:
+    std::string handle_set_hidden_dirs_json(const std::string& body) {
+        HideDirConfig config = hide_dir_json::parse_config(body);
+        // 收集path对应的ino，一次性写入备用json（下次启动stat失败时兜底）
+        std::map<std::string, uint64_t> ino_map;
+        for (const auto& path : config.paths) {
+            uint64_t ino = 0;
+            if(!get_path_inode(path.c_str(), ino)) continue;
+            if(ino == 0) continue;
+            ino_map[path] = ino;
+        }
+        if (!hide_dir_json::save_ino_backup(ino_map)) printf("write ino backup json failed\n");
+        return hide_dir_json::save_config_json(body) ? "OK" : "FAILED";
+    }
+
     std::string handle_check_file_exist(const std::string& filepath) {
         if (filepath.empty()) return "false";
         std::error_code ec;
@@ -152,7 +165,7 @@ private:
 // SKRoot 模块名片
 // 字段说明见 module_descriptor.h
 SKROOT_MODULE_NAME("隐藏/data目录")
-SKROOT_MODULE_VERSION("2.0.1")
+SKROOT_MODULE_VERSION("2.0.6")
 SKROOT_MODULE_DESC("内核级隐藏 /data 指定目录，彻底阻断文件扫描；底层拦截机制，免疫各类基于漏洞的暴力扫盘。")
 SKROOT_MODULE_AUTHOR("SKRoot")
 SKROOT_MODULE_ID32("ae12076c010ebabbb233affdd0239c14")

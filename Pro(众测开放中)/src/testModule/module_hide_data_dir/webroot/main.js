@@ -7,6 +7,7 @@ const RULE_TYPE = Object.freeze({
 const FORBIDDEN_KEYWORDS = ['system', 'vendor', 'data', 'app'];
 const NAME_RULE = /^[A-Za-z0-9._\-+]+$/;
 const PATH_SEGMENT_RULE = /^[A-Za-z0-9._\-+]+$/;
+const PATH_PREFIXES = ['/data/', '/sdcard/'];
 
 // ====== DOM ======
 const $list = document.getElementById('list');
@@ -125,12 +126,13 @@ function sanitizePath(raw) {
 
   if (!value) return { error: '完整路径不能为空' };
   if (value.length > 512) return { error: '完整路径不能超过 512 个字符' };
-  if (!value.startsWith('/data/')) {
-    return { error: '路径必须以 /data/ 开头' };
+  const prefix = PATH_PREFIXES.find(item => value.startsWith(item));
+  if (!prefix) {
+    return { error: `路径必须以 ${PATH_PREFIXES.join(' 或 ')} 开头` };
   }
 
-  const relativePath = value.slice('/data/'.length);
-  if (!relativePath) return { error: '不能隐藏 /data 根目录' };
+  const relativePath = value.slice(prefix.length);
+  if (!relativePath) return { error: `不能隐藏 ${prefix.slice(0, -1)} 根目录` };
 
   const segments = relativePath.split('/');
   if (segments.some(segment => !segment)) {
@@ -249,7 +251,7 @@ function setMode(mode) {
     $fieldNote.textContent = '作用范围：/data 下所有同名目录';
   } else {
     $inputLabel.textContent = '完整路径';
-    $ruleInput.placeholder = '例如：/data/aaa/bbb';
+    $ruleInput.placeholder = '例如：/data/a/b 或 /sdcard/a/b';
     $ruleInput.maxLength = 512;
     $fieldNote.textContent = '作用范围：指定的完整路径';
   }
