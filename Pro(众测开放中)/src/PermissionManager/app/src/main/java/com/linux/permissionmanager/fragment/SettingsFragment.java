@@ -53,6 +53,9 @@ public class SettingsFragment extends Fragment {
     private TextView mTvUpdateDownload;
     private AppUpdateManager mUpdateManager;
 
+    // 进程级标志：整个 APP 打开过程中，更新弹窗只弹一次
+    private static boolean sAppUpdateDialogShown = false;
+
     public SettingsFragment(Activity activity, String rootKey) {
         mActivity = activity;
         mRootKey = rootKey;
@@ -278,6 +281,8 @@ public class SettingsFragment extends Fragment {
 
     private void showAppUpdateDialog(AppUpdateInfo info) {
         if (info == null || !info.isHasNewVersion()) return;
+        if (sAppUpdateDialogShown) return;
+        sAppUpdateDialogShown = true;
         DialogUtils.showCustomDialog(mActivity, "提示", "发现新版本：" + info.getLatestVer(), null, "确定",
                 (dialog, which) -> {
                     UrlIntentUtils.openUrl(mActivity, info.getDownloadUrl());

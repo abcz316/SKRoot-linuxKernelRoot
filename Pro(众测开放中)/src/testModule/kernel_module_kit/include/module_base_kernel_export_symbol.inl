@@ -8,6 +8,28 @@
 /***************************************************************************
  * 这是 module_base_kernel_export_symbol.h 的实现部分
  ***************************************************************************/
+#define RETURN_ERR_IF_KERNEL_VERSION_LESS(ver)                             \
+    do {                                                                   \
+        static_assert(std::is_same<decltype(out_err), KModErr&>::value,    \
+            "RETURN_ERR_IF_KERNEL_VERSION_LESS: out_err 必须是 KModErr&"    \
+        );                                                                 \
+        if (kernel_module::is_kernel_version_less(ver)) {                  \
+            out_err = KModErr::ERR_MODULE_SYMBOL_NOT_MATCH_LINUX_VER;      \
+            return;                                                        \
+        }                                                                  \
+    } while (0)
+
+#define RETURN_ERR_IF_KERNEL_VERSION_AT_LEAST(ver)                         \
+    do {                                                                   \
+        static_assert(std::is_same<decltype(out_err), KModErr&>::value,    \
+            "RETURN_ERR_IF_KERNEL_VERSION_AT_LEAST: out_err 必须是 KModErr&"\
+        );                                                                 \
+        if (!kernel_module::is_kernel_version_less(ver)) {                 \
+            out_err = KModErr::ERR_MODULE_SYMBOL_NOT_MATCH_LINUX_VER;      \
+            return;                                                        \
+        }                                                                  \
+    } while (0)
+
 namespace kernel_module {
 KModErr hardware_virt_to_phys(uint64_t virt_kaddr, uint64_t & result);
 KModErr __get_PAGE_OFFSET(uint64_t & result);
@@ -353,18 +375,12 @@ inline KModErr kfree(uint64_t objp) {
 
 namespace linux_above_6_12_0 {
 inline void execmem_alloc(Assembler* a, KModErr& out_err, GpW type, GpX size) {
-	if(kernel_module::is_kernel_version_less("6.12.0")) {
-		out_err = KModErr::ERR_MODULE_SYMBOL_NOT_MATCH_LINUX_VER;
-		return;
-	}
+	RETURN_ERR_IF_KERNEL_VERSION_LESS("6.12.0");
 	out_err = CallHelper::callNameAuto(a, "execmem_alloc", NeedReturnX0::Yes, type, size);
 }
 
 inline void execmem_alloc(Assembler* a, KModErr& out_err, ExecmemTypes type, uint64_t size) {
-	if(kernel_module::is_kernel_version_less("6.12.0")) {
-		out_err = KModErr::ERR_MODULE_SYMBOL_NOT_MATCH_LINUX_VER;
-		return;
-	}
+	RETURN_ERR_IF_KERNEL_VERSION_LESS("6.12.0");
 	out_err = CallHelper::callNameAuto(a, "execmem_alloc", NeedReturnX0::Yes, (uint32_t)type, size);
 }
 
@@ -386,10 +402,7 @@ inline KModErr execmem_alloc(ExecmemTypes type, uint64_t size, uint64_t& out_ptr
 }
 
 inline void execmem_free(Assembler* a, KModErr& out_err, GpX ptr) {
-	if(kernel_module::is_kernel_version_less("6.12.0")) {
-		out_err = KModErr::ERR_MODULE_SYMBOL_NOT_MATCH_LINUX_VER;
-		return;
-	}
+	RETURN_ERR_IF_KERNEL_VERSION_LESS("6.12.0");
 	out_err = CallHelper::callNameAuto(a, "execmem_free", NeedReturnX0::No, ptr);
 }
 
@@ -411,18 +424,12 @@ inline KModErr execmem_free(uint64_t ptr) {
 
 namespace linux_older {
 inline void module_alloc(Assembler* a, KModErr & out_err, GpX size) {
-	if(!kernel_module::is_kernel_version_less("6.12.0")) {
-		out_err = KModErr::ERR_MODULE_SYMBOL_NOT_MATCH_LINUX_VER;
-		return;
-	}
+	RETURN_ERR_IF_KERNEL_VERSION_AT_LEAST("6.12.0");
 	out_err = CallHelper::callNameAuto(a, "module_alloc", NeedReturnX0::Yes, size);
 }
 
 inline void module_alloc(Assembler* a, KModErr & out_err, uint64_t size) {
-	if(!kernel_module::is_kernel_version_less("6.12.0")) {
-		out_err = KModErr::ERR_MODULE_SYMBOL_NOT_MATCH_LINUX_VER;
-		return;
-	}
+	RETURN_ERR_IF_KERNEL_VERSION_AT_LEAST("6.12.0");
 	out_err = CallHelper::callNameAuto(a, "module_alloc", NeedReturnX0::Yes, size);
 }
 
@@ -443,10 +450,7 @@ inline KModErr module_alloc(uint64_t size, uint64_t& out_module_region) {
 }
 
 inline void module_memfree(Assembler* a, KModErr & out_err, GpX module_region) {
-	if(!kernel_module::is_kernel_version_less("6.12.0")) {
-		out_err = KModErr::ERR_MODULE_SYMBOL_NOT_MATCH_LINUX_VER;
-		return;
-	}
+	RETURN_ERR_IF_KERNEL_VERSION_AT_LEAST("6.12.0");
     out_err = CallHelper::callNameAuto(a, "module_memfree", NeedReturnX0::No, module_region);
 }
 
@@ -468,34 +472,22 @@ inline KModErr module_memfree(uint64_t module_region) {
 
 namespace linux_above_4_9_0 {
 inline void access_process_vm(Assembler* a, KModErr& out_err, GpX tsk, GpX addr, GpX buf, GpW len, GpW gup_flags) {
-	if (is_kernel_version_less("4.9.0")) {
-		out_err = KModErr::ERR_MODULE_SYMBOL_NOT_MATCH_LINUX_VER;
-		return;
-	}
+	RETURN_ERR_IF_KERNEL_VERSION_LESS("4.9.0");
 	out_err = CallHelper::callNameAuto(a, "access_process_vm", NeedReturnX0::Yes, tsk, addr, buf, len, gup_flags);
 }
 inline void access_process_vm(Assembler* a, KModErr& out_err, GpX tsk, GpX addr, GpX buf, uint32_t len, GpW gup_flags) {
-	if (is_kernel_version_less("4.9.0")) {
-		out_err = KModErr::ERR_MODULE_SYMBOL_NOT_MATCH_LINUX_VER;
-		return;
-	}
+	RETURN_ERR_IF_KERNEL_VERSION_LESS("4.9.0");
 	out_err = CallHelper::callNameAuto(a, "access_process_vm", NeedReturnX0::Yes, tsk, addr, buf, len, gup_flags);
 }
 }
 
 namespace linux_older {
 inline void access_process_vm(Assembler* a, KModErr& out_err, GpX tsk, GpX addr, GpX buf, GpW len, GpW write) {
-	if (!is_kernel_version_less("4.9.0")) {
-		out_err = KModErr::ERR_MODULE_SYMBOL_NOT_MATCH_LINUX_VER;
-		return;
-	}
+	RETURN_ERR_IF_KERNEL_VERSION_AT_LEAST("4.9.0");
 	out_err = CallHelper::callNameAuto(a, "access_process_vm", NeedReturnX0::Yes, tsk, addr, buf, len, write);
 }
 inline void access_process_vm(Assembler* a, KModErr& out_err, GpX tsk, GpX addr, GpX buf, uint32_t len, GpW write) {
-	if (!is_kernel_version_less("4.9.0")) {
-		out_err = KModErr::ERR_MODULE_SYMBOL_NOT_MATCH_LINUX_VER;
-		return;
-	}
+	RETURN_ERR_IF_KERNEL_VERSION_AT_LEAST("4.9.0");
 	out_err = CallHelper::callNameAuto(a, "access_process_vm", NeedReturnX0::Yes, tsk, addr, buf, len, write);
 }
 }
@@ -560,29 +552,20 @@ inline void sysfs_emit(Assembler* a, KModErr & out_err, char *buf, const char *f
 
 namespace linux_above_5_6_0 {
 inline void pin_user_pages_fast(Assembler* a, KModErr& out_err, GpX start, GpW nr_pages, GpW gup_flags, GpX pages) {
-	if (is_kernel_version_less("5.6.0")) {
-		out_err = KModErr::ERR_MODULE_SYMBOL_NOT_MATCH_LINUX_VER;
-		return;
-	}
+	RETURN_ERR_IF_KERNEL_VERSION_LESS("5.6.0");
 	out_err = CallHelper::callNameAuto(a, "pin_user_pages_fast", NeedReturnX0::Yes, start, nr_pages, gup_flags, pages);
 }
 }
 
 namespace linux_above_5_2_0 {
 inline void get_user_pages_fast(Assembler* a, KModErr& out_err, GpX start, GpW nr_pages, GpW gup_flags, GpX pages) {
-	if (is_kernel_version_less("5.2.0")) {
-		out_err = KModErr::ERR_MODULE_SYMBOL_NOT_MATCH_LINUX_VER;
-		return;
-	}
+	RETURN_ERR_IF_KERNEL_VERSION_LESS("5.2.0");
 	out_err = CallHelper::callNameAuto(a, "get_user_pages_fast", NeedReturnX0::Yes, start, nr_pages, gup_flags, pages);
 }
 }
 namespace linux_older {
 inline void get_user_pages_fast(Assembler* a, KModErr& out_err, GpX start, GpW nr_pages, GpW write, GpX pages) {
-	if (!is_kernel_version_less("5.2.0")) {
-		out_err = KModErr::ERR_MODULE_SYMBOL_NOT_MATCH_LINUX_VER;
-		return;
-	}
+	RETURN_ERR_IF_KERNEL_VERSION_AT_LEAST("5.2.0");
 	out_err = CallHelper::callNameAuto(a, "get_user_pages_fast", NeedReturnX0::Yes, start, nr_pages, write, pages);
 }
 }
@@ -641,34 +624,22 @@ inline void pid_vnr(Assembler* a, KModErr& out_err, GpX pid) {
 
 namespace linux_above_4_19_0 {
 inline void pid_task(Assembler* a, KModErr& out_err, GpX pid, GpW type) {
-	if (is_kernel_version_less("4.19.0")) {
-		out_err = KModErr::ERR_MODULE_SYMBOL_NOT_MATCH_LINUX_VER;
-		return;
-	}
+	RETURN_ERR_IF_KERNEL_VERSION_LESS("4.19.0");
 	out_err = CallHelper::callNameAuto(a, "pid_task", NeedReturnX0::Yes, pid, type);
 }
 inline void pid_task(Assembler* a, KModErr& out_err, GpX pid, PidType type) {
-	if (is_kernel_version_less("4.19.0")) {
-		out_err = KModErr::ERR_MODULE_SYMBOL_NOT_MATCH_LINUX_VER;
-		return;
-	}
+	RETURN_ERR_IF_KERNEL_VERSION_LESS("4.19.0");
 	out_err = CallHelper::callNameAuto(a, "pid_task", NeedReturnX0::Yes, pid, (uint32_t)type);
 }
 }
 
 namespace linux_older {
 inline void pid_task(Assembler* a, KModErr& out_err, GpX pid, GpW type) {
-	if (!is_kernel_version_less("4.19.0")) {
-		out_err = KModErr::ERR_MODULE_SYMBOL_NOT_MATCH_LINUX_VER;
-		return;
-	}
+	RETURN_ERR_IF_KERNEL_VERSION_AT_LEAST("4.19.0");
 	out_err = CallHelper::callNameAuto(a, "pid_task", NeedReturnX0::Yes, pid, type);
 }
 inline void pid_task(Assembler* a, KModErr& out_err, GpX pid, PidType type) {
-	if (!is_kernel_version_less("4.19.0")) {
-		out_err = KModErr::ERR_MODULE_SYMBOL_NOT_MATCH_LINUX_VER;
-		return;
-	}
+	RETURN_ERR_IF_KERNEL_VERSION_AT_LEAST("4.19.0");
 	out_err = CallHelper::callNameAuto(a, "pid_task", NeedReturnX0::Yes, pid, (uint32_t)type);
 }
 }
@@ -930,6 +901,18 @@ inline void selinux_kernel_status_page(Assembler* a, KModErr& out_err) {
 }
 }
 
+inline void security_secctx_to_secid(Assembler* a, KModErr& out_err, GpX secdata, GpW seclen, GpX secid) {
+	out_err = CallHelper::callNameAuto(a, "security_secctx_to_secid", NeedReturnX0::Yes, secdata, seclen, secid);
+}
+
+inline void security_secctx_to_secid(Assembler* a, KModErr& out_err, GpX secdata, uint32_t seclen, GpX secid) {
+	out_err = CallHelper::callNameAuto(a, "security_secctx_to_secid", NeedReturnX0::Yes, secdata, seclen, secid);
+}
+
+inline void security_secctx_to_secid(Assembler* a, KModErr& out_err, GpX secdata, uint32_t seclen, uint64_t secid) {
+	out_err = CallHelper::callNameAuto(a, "security_secctx_to_secid", NeedReturnX0::Yes, secdata, seclen, secid);
+}
+
 inline void vmap(Assembler* a, KModErr& out_err, GpX pages, GpW count, GpX flags, GpX prot) {
 	out_err = CallHelper::callNameAuto(a, "vmap", NeedReturnX0::Yes, pages, count, flags, prot);
 }
@@ -941,6 +924,61 @@ inline void vunmap(Assembler* a, KModErr& out_err, GpX addr) {
 inline void dump_stack(Assembler* a, KModErr& out_err) {
 	out_err = CallHelper::callNameAuto(a, "dump_stack", NeedReturnX0::No);
 }
+namespace linux_above_5_10_0 {
+inline void bpf_get_btf_vmlinux(Assembler* a, KModErr& out_err) {
+	RETURN_ERR_IF_KERNEL_VERSION_LESS("5.10.0");
+	out_err = CallHelper::callNameAuto(a, "bpf_get_btf_vmlinux", NeedReturnX0::Yes);
+}
+
+inline void btf_type_by_id(Assembler* a, KModErr& out_err, GpX btf, GpW type_id) {
+	RETURN_ERR_IF_KERNEL_VERSION_LESS("5.10.0");
+	out_err = CallHelper::callNameAuto(a, "btf_type_by_id", NeedReturnX0::Yes, btf, type_id);
+}
+
+inline void btf_type_by_id(Assembler* a, KModErr& out_err, GpX btf, uint32_t type_id) {
+	RETURN_ERR_IF_KERNEL_VERSION_LESS("5.10.0");
+	out_err = CallHelper::callNameAuto(a, "btf_type_by_id", NeedReturnX0::Yes, btf, type_id);
+}
+
+inline void btf_type_by_id(Assembler* a, KModErr& out_err, uint64_t btf, uint32_t type_id) {
+	RETURN_ERR_IF_KERNEL_VERSION_LESS("5.10.0");
+	out_err = CallHelper::callNameAuto(a, "btf_type_by_id", NeedReturnX0::Yes, btf, type_id);
+}
+
+inline void btf_find_by_name_kind(Assembler* a, KModErr& out_err, GpX btf, GpX name, GpW kind) {
+	RETURN_ERR_IF_KERNEL_VERSION_LESS("5.10.0");
+	out_err = CallHelper::callNameAuto(a, "btf_find_by_name_kind", NeedReturnX0::Yes, btf, name, kind);
+}
+
+inline void btf_find_by_name_kind(Assembler* a, KModErr& out_err, GpX btf, GpX name, uint32_t kind) {
+	RETURN_ERR_IF_KERNEL_VERSION_LESS("5.10.0");
+	out_err = CallHelper::callNameAuto(a, "btf_find_by_name_kind", NeedReturnX0::Yes, btf, name, kind);
+}
+
+inline void btf_find_by_name_kind(Assembler* a, KModErr& out_err, uint64_t btf, GpX name, uint32_t kind) {
+	RETURN_ERR_IF_KERNEL_VERSION_LESS("5.10.0");
+	out_err = CallHelper::callNameAuto(a, "btf_find_by_name_kind", NeedReturnX0::Yes, btf, name, kind);
+}
+
+inline void btf_name_by_offset(Assembler* a, KModErr& out_err, GpX btf, GpW name_off) {
+	RETURN_ERR_IF_KERNEL_VERSION_LESS("5.10.0");
+	out_err = CallHelper::callNameAuto(a, "btf_name_by_offset", NeedReturnX0::Yes, btf, name_off);
+}
+
+inline void btf_name_by_offset(Assembler* a, KModErr& out_err, GpX btf, uint32_t name_off) {
+	RETURN_ERR_IF_KERNEL_VERSION_LESS("5.10.0");
+	out_err = CallHelper::callNameAuto(a, "btf_name_by_offset", NeedReturnX0::Yes, btf, name_off);
+}
+
+inline void btf_name_by_offset(Assembler* a, KModErr& out_err, uint64_t btf, uint32_t name_off) {
+	RETURN_ERR_IF_KERNEL_VERSION_LESS("5.10.0");
+	out_err = CallHelper::callNameAuto(a, "btf_name_by_offset", NeedReturnX0::Yes, btf, name_off);
+}
+}
 
 } // namespace export_symbol
 } // namespace kernel_module
+
+// 收回文件内部使用的内核版本守卫宏，避免外泄污染其他翻译单元
+#undef RETURN_ERR_IF_KERNEL_VERSION_LESS
+#undef RETURN_ERR_IF_KERNEL_VERSION_AT_LEAST

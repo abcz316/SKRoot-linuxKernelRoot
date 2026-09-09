@@ -395,20 +395,43 @@ namespace linux_older {
 void selinux_kernel_status_page(Assembler* a, KModErr& out_err);
 }
 
+// 原型：int security_secctx_to_secid(char *secdata, u32 seclen, u32 *secid); 返回值为 W0 寄存器
+void security_secctx_to_secid(Assembler* a, KModErr& out_err, GpX secdata, GpW seclen, GpX secid);
+void security_secctx_to_secid(Assembler* a, KModErr& out_err, GpX secdata, uint32_t seclen, GpX secid);
+void security_secctx_to_secid(Assembler* a, KModErr& out_err, GpX secdata, uint32_t seclen, uint64_t secid);
+
 // 原型：void *vmap(struct page **pages, unsigned int count, unsigned long flags, pgprot_t prot); 返回值为 X0 寄存器
 void vmap(Assembler* a, KModErr& out_err, GpX pages, GpW count, GpX flags, GpX prot);
 
 // 原型：void vunmap(const void *addr); 无返回值
 void vunmap(Assembler* a, KModErr& out_err, GpX addr);
 
-
 // 原型：struct block_device *I_BDEV(struct inode *inode); 返回值为 X0 寄存器
 void I_BDEV(Assembler* a, KModErr& out_err, GpX inode);
 void I_BDEV(Assembler* a, KModErr& out_err, uint64_t inode_kaddr);
 
-
 // 原型：void dump_stack(void); 无返回值
 void dump_stack(Assembler* a, KModErr& out_err);
+
+namespace linux_above_5_10_0 {
+// 原型：struct btf *bpf_get_btf_vmlinux(void); 返回值为 X0 寄存器
+void bpf_get_btf_vmlinux(Assembler* a, KModErr& out_err);
+
+// 原型：const struct btf_type *btf_type_by_id(const struct btf *btf, u32 type_id); 返回值为 X0 寄存器
+void btf_type_by_id(Assembler* a, KModErr& out_err, GpX btf, GpW type_id);
+void btf_type_by_id(Assembler* a, KModErr& out_err, GpX btf, uint32_t type_id);
+void btf_type_by_id(Assembler* a, KModErr& out_err, uint64_t btf, uint32_t type_id);
+
+// 原型：int btf_find_by_name_kind(const struct btf *btf, const char *name, u8 kind); 返回值为 X0 寄存器（仅低 32 位有效：> 0 为 type_id，<= 0 为内核错误码）
+void btf_find_by_name_kind(Assembler* a, KModErr& out_err, GpX btf, GpX name, GpW kind);
+void btf_find_by_name_kind(Assembler* a, KModErr& out_err, GpX btf, GpX name, uint32_t kind);
+void btf_find_by_name_kind(Assembler* a, KModErr& out_err, uint64_t btf, GpX name, uint32_t kind);
+
+// 原型：const char *btf_name_by_offset(const struct btf *btf, u32 offset); 返回值为 X0 寄存器（NULL 表示 offset 非法）
+void btf_name_by_offset(Assembler* a, KModErr& out_err, GpX btf, GpW name_off);
+void btf_name_by_offset(Assembler* a, KModErr& out_err, GpX btf, uint32_t name_off);
+void btf_name_by_offset(Assembler* a, KModErr& out_err, uint64_t btf, uint32_t name_off);
+}
 
 } // namespace export_symbol
 } // namespace kernel_module
