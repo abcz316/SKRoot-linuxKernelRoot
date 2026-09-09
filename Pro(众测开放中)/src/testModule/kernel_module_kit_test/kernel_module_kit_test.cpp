@@ -149,7 +149,6 @@ KModErr Test_install_kernel_function_before_hook() {
 	KModErr err = kernel_module::install_kernel_function_before_hook(hit.addr, my_func_bytes);
 	printf("install_kernel_function_before_hook return: %s\n", to_string(err).c_str());
 	return err;
-	return KModErr::OK;
 }
 
 std::vector<uint8_t> make_avc_denied_after_hook_bytes() {
@@ -172,14 +171,21 @@ KModErr Test_install_kernel_function_after_hook() {
 	return err;
 }
 
+KModErr Test_btf_resolve_member_offset() {
+	uint32_t offset = 0;
+	KModErr err = kernel_module::btf_resolve_member_offset("task_struct", "cred", offset);
+	printf("btf_resolve_member_offset return: %s, offset: 0x%x\n", to_string(err).c_str(), offset);
+	return err;
+}
+
 int main(int argc, char *argv[]) {
  	//TODO: 在此修改你的Root key值。
 	fake_skroot_module_main("txEO2by4A0auZpUxL7Cji2aMR9olMylmoEyNLkoTaqYvuECE");
 
  	// 单元测试：内核模块基础能力
 	int idx = 1;
- 	TEST(idx++, Test_execute_kernel_asm_func);				// 执行shellcode并获取返回值
- 	TEST(idx++, Test_get_kernel_base_vaddr);				// 获取内核虚拟基址
+ 	TEST(idx++, Test_execute_kernel_asm_func);				// 执行shellcode并获取返回值ruct.cred）
+	TEST(idx++, Test_get_kernel_base_vaddr);				// 获取内核虚拟基址
  	TEST(idx++, Test_alloc_kernel_mem);						// 申请内核内存
  	TEST(idx++, Test_free_kernel_mem);						// 释放内核内存
  	TEST(idx++, Test_read_kernel_mem);						// 读取内核内存
@@ -188,6 +194,7 @@ int main(int argc, char *argv[]) {
  	TEST(idx++, Test_disk_storage);							// 读取、写入磁盘存储
  	TEST(idx++, Test_install_kernel_function_before_hook);	// 安装内核Hook（可在任意点位安装，执行前触发）
  	TEST(idx++, Test_install_kernel_function_after_hook);	// 安装内核Hook（在内核函数执行后触发）
+ 	TEST(idx++, Test_btf_resolve_member_offset);			// 通过BTF解析内核结构体
 
  	// 单元测试: Linux内核API调用
  	TEST(idx++, Test_kallsyms_lookup_name1);				// 调用内核API：kallsyms_lookup_name
@@ -207,6 +214,7 @@ int main(int argc, char *argv[]) {
  	//TEST(idx++, Test_kallsyms_on_each_symbol1);				// 调用内核API：kallsyms_on_each_symbol
  	//TEST(idx++, Test_kallsyms_on_each_symbol2);
  	TEST(idx++, Test_kern_path);							// 调用内核API：kern_path
+ 	TEST(idx++, Test_security_secctx_to_secid);				// 调用内核API：security_secctx_to_secid
 
  	// 单元测试：获取Linux内核结构体偏移量
  	TEST(idx++, Test_get_task_struct_state_offset);			// 获取 task_struct 结构体中 __state 字段的偏移量
@@ -254,7 +262,7 @@ int main(int argc, char *argv[]) {
  	TEST(idx++, Test_get_inode_i_ino_offset);				// 获取 inode 结构体中 i_ino 字段的偏移量
  	TEST(idx++, Test_get_inode_i_size_offset);				// 获取 inode 结构体中 i_size 字段的偏移量
  	TEST(idx++, Test_get_inode_i_fop_offset);				// 获取 inode 结构体中 i_fop 字段的偏移量
- 	TEST(idx++, Test_get_inode_i_rdev_offset);				// 获取 inode 结构体中 i_size 字段的偏移量
+ 	TEST(idx++, Test_get_inode_i_rdev_offset);				// 获取 inode 结构体中 i_rdev 字段的偏移量
 	TEST(idx++, Test_get_inode_time_offset);				// 获取 inode 结构体中 i_atime/i_mtime/i_ctime 字段的偏移量
 	TEST(idx++, Test_get_inode_i_state_offset);				// 获取 inode 结构体中 i_state 字段的偏移量
 	TEST(idx++, Test_get_inode_i_bdev_offset);				// 获取 inode 结构体中 i_bdev 字段的偏移量

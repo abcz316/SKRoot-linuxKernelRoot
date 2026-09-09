@@ -7,10 +7,10 @@ public enum HotloadMethod {
     HotloadMethod(String configValue) { this.configValue = configValue; }
     public String getConfigValue() { return configValue; }
     public static HotloadMethod fromConfig(String value) {
-        if (value == null || value.isEmpty()) return null;
+        if (value == null || value.isEmpty()) return SHELL;
         for (HotloadMethod m : values()) {
             if (m.configValue.equalsIgnoreCase(value)) return m;
         }
-        return null;
+        return SHELL;
     }
 }

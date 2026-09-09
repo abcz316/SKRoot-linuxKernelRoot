@@ -36,6 +36,7 @@
 #include "module_base_kernel_symbol_kaddr.h"
 #include "module_base_kernel_export_symbol.h"
 #include "module_base_kernel_export_symbol.inl"
+#include "module_base_kernel_btf_resolver.h"
 #include "module_base_install_callback.h"
 #include "module_base_disk_storage.h"
 #include "module_base_change_status.h"

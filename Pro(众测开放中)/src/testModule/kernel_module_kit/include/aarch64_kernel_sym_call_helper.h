@@ -146,23 +146,29 @@ public:
     // 1) 优先尝试缓存中的符号名
     if (auto it = s_last_ok.find(key); it != s_last_ok.end()) {
       err = do_call(it->second.c_str());
-      if (is_ok(err)) return;
+      if (is_ok(err)) {
+          // 缓存命中的不是首选符号
+          if (!candidates.empty() && it->second != candidates.front()) printf("fallback candidate symbol '%s' found (cached)\n", it->second.c_str());
+          return;
+      }
       if (err != KModErr::ERR_MODULE_SYMBOL_NOT_EXIST) return; // 其它错误，直接返回
-      s_last_ok.erase(it);                                     // 符号已不存在，清缓存
+      s_last_ok.erase(it); // 符号已不存在，清缓存
     }
 
     // 2) 遍历候选符号名
-    for (const auto& sym : candidates) {
-      err = do_call(sym.c_str());
-      if (is_ok(err)) {
-        s_last_ok[key] = sym;  // 记录本次成功的符号名，便于下次直达
-        return;
-      }
-      if (err != KModErr::ERR_MODULE_SYMBOL_NOT_EXIST) {
-        // 符号存在但调用出错，也缓存起来，避免下次重复遍历
-        s_last_ok[key] = sym;
-        return;
-      }
+    for (size_t i = 0; i < candidates.size(); ++i) {
+        const auto& sym = candidates[i];
+        err = do_call(sym.c_str());
+        if (is_ok(err)) {
+            if (i > 0) printf("fallback candidate symbol '%s' found\n", sym.c_str());
+            s_last_ok[key] = sym;
+            return;
+        }
+        if (err != KModErr::ERR_MODULE_SYMBOL_NOT_EXIST) {
+            // 符号存在但调用出错，也缓存起来，避免下次重复遍历
+            s_last_ok[key] = sym;
+            return;
+        }
     }
 
     // 3) 所有候选符号都不存在
