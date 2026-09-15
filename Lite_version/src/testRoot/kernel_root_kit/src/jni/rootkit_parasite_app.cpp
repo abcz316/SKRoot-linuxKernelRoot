@@ -175,7 +175,15 @@ static KRootErr write_web_server_so_file(const char* str_root_key, const char* i
 	// write root key
 	if(!replace_feature_string_in_buf(const_cast<char*>(static_inline_lib_web_server_loader_root_key), sizeof(static_inline_lib_web_server_loader_root_key),
 		str_root_key, sp_lib_web_server_loader_file_data.get(), lib_web_server_loader_file_size)) {
-		return KRootErr::ERR_WRITE_ROOT_SERVER;
+		return KRootErr::ERR_WRITE_WEB_SERVER;
+	}
+
+	// write dir
+	std::string implant_so_dir_path = std::filesystem::path(implant_so_full_path).parent_path().string();
+	if(implant_so_dir_path.empty()) implant_so_dir_path = "/";
+	if(!replace_feature_string_in_buf(const_cast<char*>(static_inline_lib_web_server_loader_dir), sizeof(static_inline_lib_web_server_loader_dir),
+		implant_so_dir_path.c_str(), sp_lib_web_server_loader_file_data.get(), lib_web_server_loader_file_size)) {
+		return KRootErr::ERR_WRITE_WEB_SERVER;
 	}
 
 	// write out disk

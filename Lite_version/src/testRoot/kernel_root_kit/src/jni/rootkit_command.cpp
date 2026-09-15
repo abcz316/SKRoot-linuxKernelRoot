@@ -30,7 +30,7 @@ KRootErr get_root(const char* str_root_key) {
 		setpgid(0, 0); 
 	}
 	signal(SIGPIPE, SIG_IGN);
-	ns_utils::enter_init_mount_ns();
+	ns_utils::clone_init_mount_ns();
 	cg_v2::migrate_self_to_root();
 	cg_v1::migrate_self_threads_v1(/*cpuset*/nullptr, /*stune*/nullptr);
     selinux_procattr::setcon("u:r:shell:s0");

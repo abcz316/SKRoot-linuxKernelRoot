@@ -51,6 +51,9 @@ if exist "%root_path%src\jni\web_server\index_html_gz_data.generated.h" (
     del "%root_path%src\jni\web_server\index_html_gz_data.generated.h"
 )
 
+if exist "%root_path%src\jni\web_server\app_label_helper_data.generated.h" (
+    del "%root_path%src\jni\web_server\app_label_helper_data.generated.h"
+)
 
 if exist "%root_path%\src\obj" (
     rmdir /S /Q "%root_path%\src\obj"

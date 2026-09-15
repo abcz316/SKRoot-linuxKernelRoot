@@ -391,3 +391,7 @@ bool KallsymsLookupName::has_kallsyms_symbol(const char* name) {
 	auto iter = syms.find(name);
 	return iter != syms.end();
 }
+
+uint64_t KallsymsLookupName::get_kallsyms_relative_base() {
+	return m_kallsyms_addresses.base_address;
+}

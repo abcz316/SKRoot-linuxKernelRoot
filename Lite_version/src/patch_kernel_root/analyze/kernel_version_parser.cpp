@@ -8,12 +8,17 @@
 
 KernelVersionParser::KernelVersionParser(const std::vector<char>& file_buf) : m_file_buf(file_buf) {
   m_ver = find_kernel_versions();
+  m_tag = find_kernel_tag();
 }
 
 KernelVersionParser::~KernelVersionParser() {}
 
 std::string KernelVersionParser::get_kernel_version() const {
 	return m_ver;
+}
+
+std::string KernelVersionParser::get_kernel_tag() const {
+	return m_tag;
 }
 
 bool KernelVersionParser::is_kernel_version_less(const std::string& ver) const {
@@ -46,6 +51,29 @@ std::string KernelVersionParser::find_kernel_versions() const {
 		}
 	}
 	return {};
+}
+
+// Function to extract the kernel tag (the full "Linux version ..." text ending at '\0').
+// Returns the longest tag found across the buffer, or empty if none is found.
+std::string KernelVersionParser::find_kernel_tag() const {
+	const char* prefix = "Linux version ";
+	const size_t prefix_len = strlen(prefix);
+	std::string longest;
+
+	for (size_t i = 0; i + prefix_len <= m_file_buf.size(); ++i) {
+		if (memcmp(m_file_buf.data() + i, prefix, prefix_len) == 0 && isdigit(m_file_buf[i + prefix_len])) {
+			// Find the end of the tag: continue forward until a '\0' terminator.
+			size_t end = i;
+			while (end < m_file_buf.size() && m_file_buf[end] != '\0') {
+				++end;
+			}
+			const size_t len = end - i;
+			if (len > longest.size()) {
+				longest.assign(m_file_buf.data() + i, len);
+			}
+		}
+	}
+	return longest;
 }
 
 

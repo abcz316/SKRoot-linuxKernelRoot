@@ -27,6 +27,12 @@ uint32_t PatchBase::skip_pac_bti_at_func_start(uint32_t addr) {
 	return addr;
 }
 
+SymbolRegion PatchBase::skip_pac_bti_at_func_start(const SymbolRegion& sym) {
+	auto new_sym = sym;
+	new_sym.consume(skip_pac_bti_at_func_start(sym.offset) - sym.offset);
+	return new_sym;
+}
+
 size_t PatchBase::patch_jump(size_t patch_addr, size_t jump_addr, std::vector<patch_bytes_data>& vec_out_patch_bytes_data) {
 	aarch64_asm_ctx asm_ctx = init_aarch64_asm();
 	auto a = asm_ctx.assembler();
@@ -108,24 +114,11 @@ void PatchBase::emit_safe_bl(Assembler* a, size_t func_base_addr, size_t target)
 	aarch64_asm_bl_raw(a, (int32_t)diff);
 }
 
-void PatchBase::emit_ret_by_entry_insn(Assembler* a, uint32_t entry_insn) {
-    if (aarch64_insn_is_paciaz(entry_insn)) {
-        aarch64_asm_autiaz(a);
-        a->ret(x30);
-    } else if (aarch64_insn_is_paciasp(entry_insn)) {
-		aarch64_asm_autiasp(a);
-		a->ret(x30);
-		//aarch64_asm_retaa(a);
-    } else if (aarch64_insn_is_pacibz(entry_insn)) {
-        aarch64_asm_autibz(a);
-        a->ret(x30);
-    } else if (aarch64_insn_is_pacibsp(entry_insn)) {
-		aarch64_asm_autibsp(a);
-		a->ret(x30);
-        //aarch64_asm_retab(a);
-    } else {
-        a->ret(x30);
-    }
+std::vector<uint8_t> PatchBase::assemble_aarch64(std::function<void(asmjit::a64::Assembler* a)> fn) {
+	aarch64_asm_ctx asm_ctx = init_aarch64_asm();
+	auto a = asm_ctx.assembler();
+	fn(a);
+	return aarch64_asm_to_bytes(a);
 }
 
 int PatchBase::count_mrs_sp_el0() {
@@ -158,6 +151,38 @@ std::vector<size_t> PatchBase::find_all_aarch64_ret_offsets(size_t offset, size_
 		v_ret_addr.push_back(i);
 	}
 	return v_ret_addr;
+}
+
+uint32_t PatchBase::find_func_epilogue_offset(uint32_t func_start_off, uint32_t func_size) {
+	constexpr uint32_t kInsnSize = sizeof(uint32_t);
+	uint32_t entry_insn = 0;
+	std::memcpy(&entry_insn, m_file_buf.data() + func_start_off, sizeof(entry_insn));
+	std::vector<std::vector<uint8_t>> vec_epilogue;
+	if (aarch64_insn_is_paciaz(entry_insn)) {
+		vec_epilogue.emplace_back(assemble_aarch64([](asmjit::a64::Assembler* a) { aarch64_asm_autiaz(a); a->ret(x30); }));
+	} else if (aarch64_insn_is_paciasp(entry_insn)) {
+		vec_epilogue.emplace_back(assemble_aarch64([](asmjit::a64::Assembler* a) { aarch64_asm_autiasp(a); a->ret(x30); }));
+		vec_epilogue.emplace_back(assemble_aarch64([](asmjit::a64::Assembler* a) { aarch64_asm_retaa(a); }));
+	} else if (aarch64_insn_is_pacibz(entry_insn)) {
+		vec_epilogue.emplace_back(assemble_aarch64([](asmjit::a64::Assembler* a) { aarch64_asm_autibz(a); a->ret(x30); }));
+	} else if (aarch64_insn_is_pacibsp(entry_insn)) {
+		vec_epilogue.emplace_back(assemble_aarch64([](asmjit::a64::Assembler* a) { aarch64_asm_autibsp(a); a->ret(x30); }));
+		vec_epilogue.emplace_back(assemble_aarch64([](asmjit::a64::Assembler* a) { aarch64_asm_retab(a); }));
+	} else {
+		vec_epilogue.emplace_back(assemble_aarch64([](asmjit::a64::Assembler* a) { a->ret(x30); }));
+	}
+	const uint32_t func_end_off = func_start_off + func_size;
+	for (const auto& epilogue : vec_epilogue) {
+		if (epilogue.empty() || epilogue.size() > func_size || epilogue.size() % kInsnSize != 0) continue;
+		uint32_t pos = func_end_off - static_cast<uint32_t>(epilogue.size());
+		pos -= (pos - func_start_off) % kInsnSize;
+		while (true) {
+			if (std::memcmp(m_file_buf.data() + pos, epilogue.data(), epilogue.size()) == 0) return pos;
+			if (pos < func_start_off + kInsnSize) break;
+			pos -= kInsnSize;
+		}
+	}
+	return 0;
 }
 
 bool PatchBase::is_huawei() {

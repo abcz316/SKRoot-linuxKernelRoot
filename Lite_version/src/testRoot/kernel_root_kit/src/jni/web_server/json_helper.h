@@ -1,6 +1,7 @@
-﻿#pragma once
+#pragma once
 #include <iostream>
 #include <map>
+#include <utility>
 #include <vector>
 #include "cJSON.h"
 
@@ -42,16 +43,21 @@ std::string convert_2_json_m(const std::string & str, const std::map<std::string
     return strJson;
 }
 
-std::string convert_2_json_v(const std::vector<std::string> &v, const std::map<std::string, std::string> & appendParam = {}) {
+std::string convert_2_json_app_list(const std::vector<std::pair<std::string, std::string>> & appList) {
     std::string strJson;
     cJSON *json = cJSON_CreateObject();
-    if (json) {
+    if(json) {
         cJSON *jsonArray = cJSON_CreateArray();
-        for (const std::string &str : v) cJSON_AddItemToArray(jsonArray, cJSON_CreateString(str.c_str()));
+        for(const auto & app: appList) {
+            cJSON *jsonApp = cJSON_CreateObject();
+            cJSON_AddStringToObject(jsonApp, "packageName", app.first.c_str());
+            cJSON_AddStringToObject(jsonApp, "labelBase64", app.second.c_str());
+            cJSON_AddItemToArray(jsonArray, jsonApp);
+        }
         cJSON_AddItemToObject(json, "content", jsonArray);
-        for(const auto & param: appendParam) cJSON_AddStringToObject(json, param.first.c_str(), param.second.c_str());
+
         char *jsonString = cJSON_Print(json);
-        if (jsonString) {
+        if(jsonString) {
             strJson = jsonString;
             free(jsonString);
         }

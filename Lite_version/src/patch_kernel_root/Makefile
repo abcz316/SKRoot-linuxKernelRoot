@@ -106,7 +106,8 @@ PROJECT_SRCS := \
   analyze/kallsyms_lookup_name_6_4_0.cpp \
   analyze/kallsyms_lookup_name_6_12_0.cpp \
   analyze/init_cred_searcher.cpp \
-  analyze/kernel_symbol_parser.cpp \
+  analyze/kernel_symbol_proxy.cpp \
+  analyze/kernel_symbol_finder.cpp \
   analyze/kernel_version_parser.cpp \
   analyze/symbol_analyze.cpp \
   patch_current_avc_check.cpp \

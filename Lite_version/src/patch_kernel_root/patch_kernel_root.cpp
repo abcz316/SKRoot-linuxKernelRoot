@@ -6,6 +6,7 @@
 #include "patch_avc_denied.h"
 #include "patch_audit_log_start.h"
 #include "patch_filldir64.h"
+#include "patch_compat_filldir.h"
 
 #include "3rdparty/find_mrs_register.h"
 #include "3rdparty/find_imm_register_offset.h"
@@ -101,6 +102,7 @@ PatchKernelResult patch_kernel_handler(const std::vector<char>& file_buf, const 
 	PatchAvcDenied patchAvcDenied(patchBase, sym.avc_denied);
 	PatchAuditLogStart patchAuditLogStart(patchBase, sym.audit_log_start);
 	PatchFilldir64 patchFilldir64(patchBase, sym.filldir64);
+	PatchCompatFilldir patchCompatFilldir(patchBase, sym.compat_filldir);
 
 	bool patched = true;
 	PatchKernelResult r;
@@ -113,6 +115,8 @@ PatchKernelResult patch_kernel_handler(const std::vector<char>& file_buf, const 
 		PATCH_AND_CONSUME(next_empty_region, patchDoExecve.patch_do_execve(next_empty_region, off.cred_offset, off.seccomp_offset, vec_patch_bytes_data));
 		PATCH_AND_CONSUME(next_empty_region, patchFilldir64.patch_filldir64_root_key_guide(r.root_key_start, next_empty_region, vec_patch_bytes_data));
 		PATCH_AND_CONSUME(next_empty_region, patchFilldir64.patch_filldir64_core(next_empty_region, vec_patch_bytes_data));
+		PATCH_AND_CONSUME(next_empty_region, patchCompatFilldir.patch_compat_filldir_root_key_guide(r.root_key_start, next_empty_region, vec_patch_bytes_data));
+		PATCH_AND_CONSUME(next_empty_region, patchCompatFilldir.patch_compat_filldir_core(next_empty_region, vec_patch_bytes_data));
 		auto current_avc_check_bl_func = next_empty_region.offset;
 		PATCH_AND_CONSUME(next_empty_region, patchCurrentAvcCheck.patch_current_avc_check_bl_func(next_empty_region, off.cred_offset, vec_patch_bytes_data));
 		PATCH_AND_CONSUME(next_empty_region, patchAvcDenied.patch_avc_denied(next_empty_region, current_avc_check_bl_func, vec_patch_bytes_data));
@@ -127,6 +131,9 @@ PatchKernelResult patch_kernel_handler(const std::vector<char>& file_buf, const 
 		PATCH_AND_CONSUME(sym.die, patchFilldir64.patch_filldir64_root_key_guide(r.root_key_start, sym.die, vec_patch_bytes_data));
 		PATCH_AND_CONSUME(sym.die, patchFilldir64.patch_jump(sym.die.offset, sym.__drm_puts_coredump.offset, vec_patch_bytes_data));
 		PATCH_AND_CONSUME(sym.__drm_puts_coredump, patchFilldir64.patch_filldir64_core(sym.__drm_puts_coredump, vec_patch_bytes_data));
+		PATCH_AND_CONSUME(sym.die, patchCompatFilldir.patch_compat_filldir_root_key_guide(r.root_key_start, sym.die, vec_patch_bytes_data));
+		PATCH_AND_CONSUME(sym.die, patchCompatFilldir.patch_jump(sym.die.offset, sym.__drm_puts_coredump.offset, vec_patch_bytes_data));
+		PATCH_AND_CONSUME(sym.__drm_puts_coredump, patchCompatFilldir.patch_compat_filldir_core(sym.__drm_puts_coredump, vec_patch_bytes_data));
 		auto current_avc_check_bl_func = sym.__drm_printfn_coredump.offset;
 		PATCH_AND_CONSUME(sym.__drm_printfn_coredump, patchCurrentAvcCheck.patch_current_avc_check_bl_func(sym.__drm_printfn_coredump, off.cred_offset, vec_patch_bytes_data));
 		PATCH_AND_CONSUME(sym.__drm_printfn_coredump, patchAvcDenied.patch_avc_denied(sym.__drm_printfn_coredump, current_avc_check_bl_func, vec_patch_bytes_data));
@@ -189,6 +196,7 @@ int main(int argc, char* argv[]) {
 		system("pause");
 		return 0;
 	}
+
 	KernelSymbolOffset sym = symbol_analyze.get_symbol_offset();
 	uint64_t anchor_off = sym.die.offset;
 

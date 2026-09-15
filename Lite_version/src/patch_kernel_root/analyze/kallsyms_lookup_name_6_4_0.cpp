@@ -689,7 +689,6 @@ std::unordered_map<std::string, uint64_t> KallsymsLookupName_6_4_0::kallsyms_on_
 			} else {
 				offset += m_kallsyms_offsets.base_off;
 			}
-
 			m_kallsyms_symbols_cache[namebuf] = offset;
 		}
 	}
@@ -700,4 +699,8 @@ bool KallsymsLookupName_6_4_0::has_kallsyms_symbol(const char* name) {
 	std::unordered_map<std::string, uint64_t> syms = kallsyms_on_each_symbol();
 	auto iter = syms.find(name);
 	return iter != syms.end();
+}
+
+uint64_t KallsymsLookupName_6_4_0::get_kallsyms_relative_base() {
+	return m_kallsyms_relative_base;
 }

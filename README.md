@@ -47,7 +47,7 @@
 2. 其中【**注入su到指定进程**】**只支持授权su到64位的APP**，老式32位App不再进行支持。
 
 ## SKRoot(Lite) 使用流程：
-1.下载源码编译或**下载编译产物**： [patch_kernel_root.exe](https://github.com/abcz316/SKRoot-linuxKernelRoot/releases/download/Lite_v2026.6.1/patch_kernel_root.2026-6-1.exe)、 [skroot_lite.apk](https://github.com/abcz316/SKRoot-linuxKernelRoot/releases/download/Lite_v2026.6.1/SKRoot_Lite.2026-6-1.apk)
+1.下载源码编译或**下载编译产物**： [patch_kernel_root.exe](https://github.com/abcz316/SKRoot-linuxKernelRoot/releases/download/Lite_v2026.9.14/patch_kernel_root.2026-9-14.exe)、 [skroot_lite.apk](https://github.com/abcz316/SKRoot-linuxKernelRoot/releases/download/Lite_v2026.9.14/SKRoot_Lite.2026-9-14.apk)
 
 2.将内核kernel文件拖拽置`patch_kernel_root.exe`即可一键自动化流程补丁内核，同时会自动生成Root密匙。
 
@@ -59,6 +59,10 @@
 *目前正在众测中。如想加入测试组织，请关注TG频道：[t.me/skrootabc](https://t.me/skrootabc)*
 
 ## 更新日志：
+2026-9：
+  * 1.修复内核痕迹泄露问题
+  * 2.寄生新增显示App名称
+  
 2026-6：
   * 1.修复 Linux 内核有金丝雀的兼容性问题。
   

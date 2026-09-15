@@ -16,6 +16,7 @@ public:
 	uint64_t kallsyms_lookup_name(const char* name) override;
 	uint64_t kallsyms_symbol_size(uint64_t cur_addr) override;
 	std::unordered_map<std::string, uint64_t> kallsyms_on_each_symbol() override;
+	uint64_t get_kallsyms_relative_base() override;
 
 private:
 	bool find_kallsyms_addresses_list(size_t& start, size_t& end);

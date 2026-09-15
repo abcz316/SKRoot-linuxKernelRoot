@@ -1,4 +1,5 @@
 ﻿#include <unistd.h>
+#include <sys/stat.h>
 #include <csignal>
 #include <cstdio>
 #include <cstdlib>
@@ -8,6 +9,7 @@
 
 #include <atomic>
 #include <filesystem>
+#include <fstream>
 #include <map>
 #include <mutex>
 #include <set>
@@ -21,13 +23,14 @@
 #include "web_server_inline.h"
 #include "civetweb-1.16/include/CivetServer.h"
 #include "index_html_gz_data.generated.h"
+#include "app_label_helper_data.generated.h"
 #include "rootkit_umbrella.h"
 #include "src/jni/common/android_open_url.h"
 #include "json_helper.h"
 
 #define MAX_HEARTBEAT_TIME_SEC 20
 constexpr const char* recommend_files[] = {"libc++_shared.so"};
-char ROOT_KEY[256] = {0};
+char ROOT_KEY[128] = {0};
 int PORT = 0;
 std::atomic<bool> g_heartbeat{true};
 
@@ -132,6 +135,65 @@ std::string handle_uninstall_su() {
     return convert_2_json(sstr.str(), param);
 }
 
+bool parse_app_label_helper_json(const std::string & json, std::map<std::string, std::string> & result) {
+    if (json.empty()) return false;
+    size_t begin = json.find('[');
+    size_t end = json.rfind(']');
+    if (begin == std::string::npos || end == std::string::npos || end <= begin) return false;
+
+    std::string json_array = json.substr(begin, end - begin + 1);
+    cJSON * root = cJSON_Parse(json_array.c_str());
+    if (!root) return false;
+    if (!cJSON_IsArray(root)) {
+        cJSON_Delete(root);
+        return false;
+    }
+
+    int size = cJSON_GetArraySize(root);
+    for (int i = 0; i < size; i++) {
+        cJSON * item = cJSON_GetArrayItem(root, i);
+        if (!item) continue;
+        cJSON * j_package_name = cJSON_GetObjectItem(item, "packageName");
+        cJSON * j_label_base64 = cJSON_GetObjectItem(item, "labelBase64");
+        if (!j_package_name || !j_package_name->valuestring) continue;
+        // 不解析 base64，原值填入
+        result[j_package_name->valuestring] = (j_label_base64 && j_label_base64->valuestring) ? j_label_base64->valuestring : "";
+    }
+    cJSON_Delete(root);
+    return true;
+}
+
+static std::map<std::string, std::string> get_all_app_display_names() {
+    char buf[1024] = {0};
+    strncpy(buf, const_cast<const char*>(static_inline_web_server_dir), sizeof(buf));
+    std::string app_label_helper_path = buf;
+    app_label_helper_path += "/app_label_helper.dex";
+    
+    remove(app_label_helper_path.c_str());
+    std::ofstream file(app_label_helper_path, std::ios::binary | std::ios::out);
+    if (!file.is_open()) return {};
+
+    file.write(reinterpret_cast<const char*>(kernel_root::app_label_helper_file_data), kernel_root::app_label_helper_file_size);
+    bool write_ok = file.good();
+    file.close();
+    if (!write_ok) return {};
+
+	if (chmod(app_label_helper_path.c_str(), 0644)) return {};
+
+    std::stringstream cmd;
+    cmd << "CLASSPATH=" << app_label_helper_path << " app_process /system/bin AppLabelsHelper";
+    
+    std::string json;
+    KRootErr err = kernel_root::run_root_cmd(ROOT_KEY, cmd.str().c_str(), json);
+    remove(app_label_helper_path.c_str());
+    if (is_failed(err)) return {};
+
+    // System.out.print("{\"packageName\":\"" + info.packageName + "\",\"labelBase64\":\"" + encoded + "\"}");
+    std::map<std::string, std::string> result;
+    parse_app_label_helper_json(json, result);
+    return result;
+}
+
 std::string handle_get_app_list(const std::string & json) {
     bool isShowSystemApp = !!get_json_int(json, "showSystemApp");
     bool isShowThirtyApp = !!get_json_int(json, "showThirdApp");
@@ -145,12 +207,12 @@ std::string handle_get_app_list(const std::string & json) {
 
     std::string packages;
     KRootErr err = kernel_root::run_root_cmd(ROOT_KEY, cmd.c_str(), packages);
-    if (is_failed(err)) return convert_2_json_v(packageNames);
+    if (is_failed(err)) return convert_2_json_app_list({});
 
     std::map<pid_t, std::string> pid_map;
     if(isShowRunningAPP) {
         err = kernel_root::get_all_cmdline_process(ROOT_KEY, pid_map);
-        if (is_failed(err)) return convert_2_json_v(packageNames);        
+        if (is_failed(err)) return convert_2_json_app_list({});        
     }    
     // remove "package:" flag
     std::istringstream iss(packages);
@@ -171,7 +233,15 @@ std::string handle_get_app_list(const std::string & json) {
         }
         packageNames.push_back(line);
     }
-    return convert_2_json_v(packageNames);
+
+    std::map<std::string, std::string> app_display_names = get_all_app_display_names();
+    std::vector<std::pair<std::string, std::string>> appList;
+    appList.reserve(packageNames.size());
+    for (const auto & packageName : packageNames) {
+        auto it = app_display_names.find(packageName);
+        appList.push_back({packageName, (it != app_display_names.end()) ? it->second : ""});
+    }
+    return convert_2_json_app_list(appList);
 }
 
 void inject_su_thread() {

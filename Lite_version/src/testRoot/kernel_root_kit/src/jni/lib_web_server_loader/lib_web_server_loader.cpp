@@ -1,6 +1,7 @@
-﻿#include <unistd.h>
+#include <unistd.h>
 #include <iostream>
 #include <string>
+#include <string_view>
 #include <random>
 #include <array>
 #include <cerrno>
@@ -19,7 +20,7 @@
 #include "web_server\web_server_data.generated.h"
 #include "web_server\web_server_inline.h"
 
-char ROOT_KEY[256] = {0};
+char ROOT_KEY[128] = {0};
 
 extern char** environ;
 
@@ -31,9 +32,7 @@ static std::string make_rand_progname() {
         ".";
     thread_local std::mt19937 rng{[]{
         std::random_device rd;
-        return std::mt19937{static_cast<uint32_t>(
-            (static_cast<uint64_t>(rd()) << 32) ^ static_cast<uint32_t>(::getpid()) ^ static_cast<uint32_t>(::time(nullptr))
-        )};
+        return std::mt19937{static_cast<uint32_t>((static_cast<uint64_t>(rd()) << 32) ^ static_cast<uint32_t>(::getpid()) ^ static_cast<uint32_t>(::time(nullptr)))};
     }()};
 
     std::uniform_int_distribution<int> len_dist(1, 16);
@@ -110,10 +109,18 @@ extern "C" void __attribute__((constructor)) lib_web_server_loader_entry() {
         kernel_root::get_root(ROOT_KEY);
 
         // write root key
-        if(replace_feature_string_in_buf(const_cast<char*>(static_inline_web_server_root_key), sizeof(static_inline_web_server_root_key), 
+        if(!replace_feature_string_in_buf(const_cast<char*>(static_inline_web_server_root_key), sizeof(static_inline_web_server_root_key), 
             ROOT_KEY, (char*)&kernel_root::web_server_file_data[0], kernel_root::web_server_file_size)) {
-            exec_from_blob_noargs(kernel_root::web_server_file_data, kernel_root::web_server_file_size);
+            _exit(0);
         }
+
+        // write dir
+        if(!replace_feature_string_in_buf(const_cast<char*>(static_inline_web_server_dir), sizeof(static_inline_web_server_dir), 
+            std::string_view(const_cast<const char*>(static_inline_lib_web_server_loader_dir)), (char*)&kernel_root::web_server_file_data[0], kernel_root::web_server_file_size)) {
+            _exit(0);
+        }
+        
+        exec_from_blob_noargs(kernel_root::web_server_file_data, kernel_root::web_server_file_size);
         _exit(0);
         printf_random_data();
     }
