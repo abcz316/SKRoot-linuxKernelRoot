@@ -6,6 +6,8 @@
 #include "kernel_struct_path_helper.h"
 #include "patch_filldir64.h"
 #include "patch_compat_filldir.h"
+#include "patch_mtk_hbt_filldir64.h"
+#include "patch_iterate_dir.h"
 #include "patch_inode_operations_getattr.h"
 #include "kernel_module_kit_umbrella.h"
 
@@ -48,6 +50,29 @@ static KModErr patch_compat_filldir(uint64_t old_ino, uint64_t new_ino) {
     PatchCompatFilldir patchCompatFilldir(patchBase, compat_filldir.addr);
     KModErr err = patchCompatFilldir.patch_compat_filldir(old_ino, new_ino);
     printf("patch compat_filldir ret: %s\n", to_string(err).c_str());
+    return err;
+}
+
+static KModErr patch_mtk_hbt_filldir64(uint64_t old_ino, uint64_t new_ino) {
+    KModErr err = KModErr::OK;
+    uint64_t original_hbt_filldir64 = 0;
+    kernel_module::kallsyms_lookup_name("hbt:filldir64", original_hbt_filldir64);
+    printf("hbt_filldir64, addr: %p\n", (void*)original_hbt_filldir64);
+   
+	uint64_t iterate_dir = 0;
+    kernel_module::kallsyms_lookup_name("iterate_dir", iterate_dir);
+    printf("iterate_dir, addr: %p\n", (void*)iterate_dir);
+
+    if(!original_hbt_filldir64 || !iterate_dir) return KModErr::OK;
+    PatchMtkHbtFilldir64 patchMtkHbtFilldir64(patchBase, original_hbt_filldir64);
+    PatchIterateDir patchIterateDir(patchBase, iterate_dir);
+
+    uint64_t fake_hbt_filldir64 = 0;
+    RETURN_IF_ERROR(patchMtkHbtFilldir64.generate_hook_fake_filldir64(names, ino_set, fake_hbt_filldir64));
+    
+    err = patchIterateDir.patch_iterate_dir(original_hbt_filldir64, fake_hbt_filldir64);
+    printf("patch iterate_dir: %s\n", to_string(err).c_str());
+    RETURN_IF_ERROR(err);
     return err;
 }
 
@@ -97,6 +122,8 @@ KModErr patch_kernel_handler(uint64_t old_ino, uint64_t new_ino) {
     KModErr err = patch_filldir64(old_ino, new_ino);
     RETURN_IF_ERROR(err);
     err = patch_compat_filldir(old_ino, new_ino);
+    RETURN_IF_ERROR(err);
+    err = patch_mtk_hbt_filldir64(old_ino, new_ino);
     RETURN_IF_ERROR(err);
     err = patch_inode_op_getattr(old_ino, new_ino);
     RETURN_IF_ERROR(err);
@@ -191,7 +218,7 @@ int skroot_module_main(const char* root_key, const char* module_private_dir) {
 // SKRoot 模块名片
 // 字段说明见 module_descriptor.h
 SKROOT_MODULE_NAME("修复/data/local/tmp目录")
-SKROOT_MODULE_VERSION("1.0.1")
+SKROOT_MODULE_VERSION("1.0.2")
 SKROOT_MODULE_DESC("如果/data/local/tmp被删除过，可用本模块进行修复，本模块是内核级修复，稳定可靠。修复inode值、权限、selinux目录标签等。")
 SKROOT_MODULE_AUTHOR("SKRoot")
 SKROOT_MODULE_ID32("o9oOZyIQPHSKmlmmh4Gt9tNZ7KMNO0vo")
