@@ -188,6 +188,20 @@
             "download_eng_alert": ""
         },
         {
+            "chn_name": "TouchBoost 欧加采样率",
+            "eng_name": "",
+            "ver": "1.0.0",
+            "desc": "基于OPPO游戏空间数据库修改，为一加/OPPO设备添加游戏内最高采样率支持，0循环0耗电，支持自定义游戏包名",
+            "author": "1021",
+            "id32": "touch_boost_oplus_1021_000000000",
+            "update_date": "2026-9-17",
+			"ban": false,
+            "source_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_tools/TouchBoost%20%E6%AC%A7%E5%8A%A0%E9%87%87%E6%A0%B7%E7%8E%87/TouchBoost%20%E6%AC%A7%E5%8A%A0%E9%87%87%E6%A0%B7%E7%8E%87%E6%BA%90%E7%A0%81.zip",
+            "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_tools/TouchBoost%20%E6%AC%A7%E5%8A%A0%E9%87%87%E6%A0%B7%E7%8E%87/TouchBoost%20%E6%AC%A7%E5%8A%A0%E9%87%87%E6%A0%B7%E7%8E%87.zip",
+            "download_chn_alert": "",
+            "download_eng_alert": ""
+        },
+        {
             "chn_name": "自定义自启动模块",
             "eng_name": "",
             "ver": "1.0.3",
