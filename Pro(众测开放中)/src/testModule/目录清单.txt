@@ -10,6 +10,7 @@ testModule 模块目录清单：
 • 安装/卸载回调 Demo (源码)............. module_install_uninstall_cb_demo
 • URL 配置更新 Demo (源码).............. module_update_demo
 • 系统文件伪造 Demo (源码).............. module_fake_system_file
+• 后台服务运行 Demo (源码).............. module_background_service_example
 
 功能模块：
 ──────────────────────────────
@@ -22,4 +23,5 @@ testModule 模块目录清单：
 • 温控解除模块（源码）............................. module_fake_thermal
 • 防格机模块（源码）................................. module_protect_device
 • 修复/data/local/tmp目录 (源码)......... module_repair_data_local_tmp
+• Magisk模块转SKRoot模块(源码)......... module_convert_magisk_to_skroot
 ──────────────────────────────
