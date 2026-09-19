@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <title>演示模块HTTP管理页面</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script>
+    function postText(path, bodyText = "") {
+      const url = new URL(path, window.location.href);
+      return fetch(url, { method: 'POST', body: bodyText });
+    }
+
+    async function getProcessInfo() {
+		  const resp1 = await postText('/getPid');
+		  const resp2 = await postText('/getUid');
+		  const pid = await resp1.text();
+		  const uid = await resp2.text();
+		  document.getElementById('process').textContent = "当前进程 PID：" + pid + ", UID：" + uid;
+    }
+
+    async function getValue() {
+		  const resp = await postText('/getValue');
+		  const text = await resp.text();
+		  document.getElementById('last').textContent = "测试读取上次的值：" + text;
+    }
+
+    async function setValue(text) {
+        const resp = await postText('/setValue', text);
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        const result = await resp.text();
+        alert(result.trim() === 'OK' ? '保存成功，请刷新网页' : ('保存失败：' + result));
+    }
+
+    function onReady() {
+      getProcessInfo();
+      getValue();
+      document.getElementById('save').addEventListener('click', () => {
+        setValue(document.getElementById('val').value);
+      });
+    }
+    document.addEventListener('DOMContentLoaded', onReady);
+  </script>
+</head>
+<body>
+  <h1>当前进程信息</h1>
+  <div id="process"></div>
+  <h1>上次的值</h1>
+  <div id="last"></div>
+  <h1>设置新值</h1>
+  <p>
+    <label for="val"><big>输入：</big></label>
+    <textarea id="val" rows="1" cols="60"></textarea>
+    <button id="save"><big>保存</big></button>
+  </p>
+</body>
+</html>
