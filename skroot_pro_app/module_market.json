@@ -202,6 +202,20 @@
             "download_eng_alert": ""
         },
         {
+            "chn_name": "ColorOS 触控优化",
+            "eng_name": "",
+            "ver": "1.0.0",
+            "desc": "ColorOS触控采样率动态调度引擎",
+            "author": "1021",
+            "id32": "a1b2c3d4e5f67890abcdef1234567890",
+            "update_date": "2026-9-20",
+			"ban": false,
+            "source_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_tools/ColorOS%20%E8%A7%A6%E6%8E%A7%E4%BC%98%E5%8C%96%E6%BA%90%E7%A0%81/src.zip",
+            "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_tools/ColorOS%20%E8%A7%A6%E6%8E%A7%E4%BC%98%E5%8C%96%E6%BA%90%E7%A0%81/module.zip",
+            "download_chn_alert": "",
+            "download_eng_alert": ""
+        },
+        {
             "chn_name": "自定义自启动模块",
             "eng_name": "",
             "ver": "1.0.3",
