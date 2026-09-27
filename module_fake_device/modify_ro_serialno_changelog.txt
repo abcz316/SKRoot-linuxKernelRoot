@@ -1,3 +1,6 @@
+1.0.4：
+  1.新增一些修改属性
+  
 1.0.3：
   1.修复天玑显示异常
   2.新增ro.boot.emmcid、ro.boot.bootload_sn伪装。
