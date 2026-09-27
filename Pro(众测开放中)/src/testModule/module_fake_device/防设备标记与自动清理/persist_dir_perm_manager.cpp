@@ -12,7 +12,7 @@
 #include "patch_selinux_inode_permission.h"
 #include "fd_guard.h"
 #include "kernel_struct_path_helper.h"
-#include "process_utils.h"
+#include "utils/process_utils.h"
 
 using namespace asmjit;
 using namespace asmjit::a64;
@@ -118,7 +118,7 @@ KModErr PersistDirPermManager::patch_inode_op_permission(uint64_t control_kaddr,
     uint64_t permission_fn_entry_kaddr = 0;
     RETURN_IF_ERROR(kernel_module::alloc_kernel_mem(permission_fn_bytes.size(), permission_fn_head_kaddr));
     RETURN_IF_ERROR(kernel_module::write_kernel_mem(permission_fn_head_kaddr, permission_fn_bytes.data(), permission_fn_bytes.size()));
-    RETURN_IF_ERROR(kernel_module::set_kernel_memory_protection(permission_fn_head_kaddr, permission_fn_bytes.size(), kernel_module::KernMemProt::KMP_X));
+    RETURN_IF_ERROR(kernel_module::set_kernel_mem_protection(permission_fn_head_kaddr, permission_fn_bytes.size(), kernel_module::KernMemProt::KMP_X));
     permission_fn_entry_kaddr = permission_fn_head_kaddr + 4;
 
     const char* persist_dir = nullptr;

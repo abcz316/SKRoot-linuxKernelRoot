@@ -20,8 +20,11 @@ body{
   color: var(--text);
   min-height:100vh;
   padding: 14px 12px 28px;
+  height: 100vh;    
+  height: 100dvh;     
+  overflow: hidden;
 }
-.wrap{ max-width:720px; margin:0 auto; }
+.wrap{ max-width:720px; margin:0 auto; height: 100%; display: flex;flex-direction: column;}
 
 .header{
   margin: 6px 2px 10px;
@@ -162,6 +165,10 @@ button.solid:disabled{
   border-radius: var(--r);
   box-shadow: var(--shadow);
   overflow:hidden;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;  
+  min-height: 0;  
 }
 .card-hd{
   padding: 12px 14px;
@@ -183,19 +190,25 @@ button.solid:disabled{
   font-size: 12px;
   white-space:nowrap;
 }
-.card-bd{ padding: 10px; }
+.card-bd{ 
+padding: 10px; 
+overflow-y: auto; 
+flex: 1 1 auto;
+min-height: 0;
+-webkit-overflow-scrolling: touch;
+}
 
 .list{
   display:flex;
   flex-direction:column;
-  gap: 8px;
+  gap: 0px;
 }
 .row-item{
   display:flex;
   align-items:center;
   justify-content:space-between;
   gap: 10px;
-  padding: 10px 10px;
+  padding: 8px 12px;
   border-radius: 14px;
   border: 1px solid var(--line);
   background: #fff;
@@ -208,8 +221,7 @@ button.solid:disabled{
   gap: 2px;
 }
 .pkg{
-  font-size: 13.5px;
-  font-weight: 950;
+  font-weight: 500;
   overflow:hidden;
   text-overflow:ellipsis;
   white-space:nowrap;
@@ -324,7 +336,7 @@ button.solid:disabled{
 .cand-list{
   display:flex;
   flex-direction:column;
-  gap: 8px;
+  gap: 0px;
   overflow: auto;
   flex: 1 1 auto;
   min-height: 0;
@@ -332,12 +344,42 @@ button.solid:disabled{
   -webkit-overflow-scrolling: touch;
 }
 
+.cand-left-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px; 
+  min-width: 0;
+}
+
+.cand-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px; 
+  background: linear-gradient(135deg, #2dd4bf 0%, #0ea5e9 100%);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.app-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .cand-item{
   display:flex;
   align-items:center;
   justify-content:space-between;
   gap: 10px;
-  padding: 10px 10px;
+  padding: 8px 12px;
   border-radius: 14px;
   border: 1px solid var(--line);
   background: #fff;
@@ -346,15 +388,16 @@ button.solid:disabled{
 .cand-item .name{
   display:flex;
   flex-direction:column;
-  gap: 3px;
+  gap: 2px;
   min-width:0;
 }
 .cand-item .pkg{
-  font-size: 13.5px;
+  font-size: 12px;
   font-weight: 950;
   overflow:hidden;
   text-overflow:ellipsis;
   white-space:nowrap;
+  color: #9ca3af;
 }
 .cand-item input[type="checkbox"]{
   width: 18px; height: 18px;

@@ -1,12 +1,17 @@
 ﻿#include <set>
 #include <unordered_map>
+#include <vector>
 
-#include "cJSON.h"
-#include "android_packages_list_utils.h"
 #include "persist_dir_perm_manager.h"
-#include "boot_session_utils.h"
-#include "file_utils.h"
-#include "pkg_process_helper.h"
+
+#include "utils/third_party/cJSON.h"
+#include "utils/android_packages_list_utils.h"
+#include "utils/boot_session_utils.h"
+#include "utils/file_utils.h"
+#include "utils/json_helper.h"
+#include "utils/pkg_process_helper.h"
+#include "utils/app_label_helper/app_label_helper_data.generated.h"
+#include "utils/app_label_helper/app_label_helper.h"
 
 using namespace file_utils;
 
@@ -33,21 +38,6 @@ static std::set<std::string> parse_json(const std::string& json) {
     }
     cJSON_Delete(root);
     return result;
-}
-
-// 把 set<string> 导出为 JSON 数组字符串：["aa","bb","cc"]
-static std::string json_array_from_set(const std::set<std::string>& s) {
-    cJSON* arr = cJSON_CreateArray();
-    for (const auto& k : s) {
-        cJSON* str = cJSON_CreateString(k.c_str());
-        cJSON_AddItemToArray(arr, str);
-    }
-    char* out = cJSON_PrintUnformatted(arr);
-    cJSON_Delete(arr);
-    if (!out) return "[]";
-    std::string ret(out);
-    cJSON_free(out);
-    return ret;
 }
 
 // 扫描 /data/user/<uid>/ 里是否存在以 prefix 开头的包目录（例如 com.android.）
@@ -230,26 +220,34 @@ std::string module_on_install(const char* root_key, const char* module_private_d
     return "";
 }
 
-static std::set<std::string> get_app_list() {
-    std::unordered_map<std::string, uint32_t> app_list = android_pkgmap::read_all_pkg_uids_exclude_system();
-    std::set<std::string> result;
-    for (const auto& kv : app_list) {
-        std::string_view pkg = kv.first;
-        if (pkg.starts_with("com.")) {
-            result.insert(kv.first);
-        }
+// 返回候选包列表 JSON：{"content":[{"packageName":"...","labelBase64":"..."}]}
+static std::string get_app_list_json(const std::string& root_key, const std::string& work_dir) {
+    std::unordered_map<std::string, uint32_t> packageNames = android_pkgmap::read_all_pkg_uids_exclude_system();
+    std::map<std::string, std::string> display_names = app_label_helper::get_all_app_display_names(root_key.c_str(), work_dir.c_str(), kernel_module::app_label_helper_file_data, kernel_module::app_label_helper_file_size);
+
+    std::vector<std::pair<std::string, std::string>> appList;
+    for (const auto& kv : packageNames) {
+        if (!kv.first.starts_with("com.")) continue;
+        auto it = display_names.find(kv.first);
+        appList.push_back({kv.first, (it != display_names.end()) ? it->second : ""});
     }
-    return result;
+    return convert_2_json_app_list(appList);
 }
 
 // WebUI HTTP服务器回调函数
 class MyWebHttpHandler : public kernel_module::WebUIHttpHandler { // HTTP服务器基于civetweb库
 public:
+    void onPrepareCreate(const char* root_key, const char* module_private_dir, uint32_t port) override {
+        (void)port;
+        m_root_key = root_key;
+        m_module_private_dir = module_private_dir;
+    }
+
     bool handlePost(CivetServer* server, struct mg_connection* conn, const std::string& path, const std::string& body) override {
         printf("[module_hide_data_dir] POST request\nPath: %s\nBody: %s\n", path.c_str(), body.c_str());
 
         std::string resp;
-        if(path == "/getCandidatesPkgJson") resp = json_array_from_set(get_app_list());
+        if(path == "/getCandidatesPkgJson") resp = get_app_list_json(m_root_key, m_module_private_dir);
         else if(path == "/getTargetPkgJson") kernel_module::read_string_disk_storage("target_pkg_json", resp);
         else if(path == "/setTargetPkgJson") resp = onSetTargetPkgJson(body);
         kernel_module::webui::send_text(conn, 200, resp);
@@ -257,6 +255,9 @@ public:
     }
 
 private:
+    std::string m_root_key;
+    std::string m_module_private_dir;
+
     std::string onSetTargetPkgJson(const std::string& body) {
         bool write_ok = is_ok(kernel_module::write_string_disk_storage("target_pkg_json", body.c_str()));
         if (!write_ok) {
