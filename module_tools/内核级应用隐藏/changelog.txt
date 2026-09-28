@@ -1,0 +1,33 @@
+二、应用自动隐藏 v1.8.5
+========================================
+
+【新增功能】
+1. 内核级进程隐藏
+   - hook proc_pid_instantiate
+   - daemon 进程在 /proc 中完全消失
+   - 与设备标识管理同款隐藏方案
+
+2. 应用目录内核级隐藏
+   - hook filldir64（64位）
+   - hook compat_filldir（32位兼容）
+   - hook 天玑 hbt:filldir64 + iterate_dir（MTK KCFI路径）
+   - 游戏扫描 /data/data/、/sdcard/Android/data/ 时看不到被隐藏应用
+
+【优化改进】
+1. 进程名伪装
+   - daemon → logd（系统日志守护）
+
+2. cmdline 清空
+   - 防止读 /proc/pid/cmdline 暴露模块路径
+
+3. cgroup 迁移
+   - fork 后 sleep 5秒等待模块加载完成
+   - 迁移到 init cgroup，防止父进程退出时被销毁
+
+4. 版本号同步
+   - 代码、UI、模块配置统一为 1.8.5
+
+【修复问题】
+1. 修复 daemon 意外退出后自动重启
+2. 修复多用户环境下应用隐藏不生效
+3. 修复前台应用检测逻辑
