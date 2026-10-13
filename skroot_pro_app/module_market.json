@@ -10,6 +10,7 @@
             "update_date": "2026-9-2",
             "source_url": "https://github.com/abcz316/SKRoot-linuxKernelRoot/tree/master/Pro(%E4%BC%97%E6%B5%8B%E5%BC%80%E6%94%BE%E4%B8%AD)/src/testModule/module_hide_data_dir",
             "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_hide_data_dir/module.zip",
+            "changelog_url": "",
             "download_chn_alert": "",
             "download_eng_alert": ""
         },
@@ -23,6 +24,7 @@
             "update_date": "2025-12-10",
             "source_url": "https://github.com/abcz316/SKRoot-linuxKernelRoot/tree/master/Pro(%E4%BC%97%E6%B5%8B%E5%BC%80%E6%94%BE%E4%B8%AD)/src/testModule/module_clear_usb_trace",
             "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_clear_usb_trace/module.zip",
+            "changelog_url": "",
             "download_chn_alert": "",
             "download_eng_alert": ""
         },
@@ -36,6 +38,7 @@
             "update_date": "2026-9-1",
             "source_url": "https://github.com/abcz316/SKRoot-linuxKernelRoot/tree/master/Pro(%E4%BC%97%E6%B5%8B%E5%BC%80%E6%94%BE%E4%B8%AD)/src/testModule/module_hide_sh_exec",
             "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_hide_sh_exec/module.zip",
+            "changelog_url": "",
             "download_chn_alert": "",
             "download_eng_alert": ""
         },
@@ -49,6 +52,7 @@
             "update_date": "2026-4-9",
             "source_url": "https://github.com/abcz316/SKRoot-linuxKernelRoot/tree/master/Pro(%E4%BC%97%E6%B5%8B%E5%BC%80%E6%94%BE%E4%B8%AD)/src/testModule/module_fake_thermal",
             "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_fake_thermal/module.zip",
+            "changelog_url": "",
             "download_chn_alert": "",
             "download_eng_alert": ""
         },
@@ -62,7 +66,8 @@
             "update_date": "2026-8-3",
             "source_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_tools/%E5%B0%8F%E7%B1%B3%E5%AE%9A%E5%88%B6%E6%B8%A9%E6%8E%A7/skp-v1.0-r4%E6%BA%90%E7%A0%81-%E5%B0%8F%E7%B1%B3%E5%AE%9A%E5%88%B6%E6%B8%A9%E6%8E%A7-%E8%9C%87.zip",
             "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_tools/%E5%B0%8F%E7%B1%B3%E5%AE%9A%E5%88%B6%E6%B8%A9%E6%8E%A7/skp%E5%B0%8F%E7%B1%B3%E5%AE%9A%E5%88%B6%E6%B8%A9%E6%8E%A7-v1.0-r4.zip",
-            "download_chn_alert": "本模块由作者【苏疫杆菌、蜃】用心开发，感谢两位作者的辛苦付出，更多信息请查看模块说明。",
+            "changelog_url": "",
+			"download_chn_alert": "本模块由作者【苏疫杆菌、蜃】用心开发，感谢两位作者的辛苦付出，更多信息请查看模块说明。",
             "download_eng_alert": ""
         },
         {
@@ -76,6 +81,7 @@
 			"ban": false,
             "source_url": "https://github.com/abcz316/SKRoot-linuxKernelRoot/tree/master/Pro(%E4%BC%97%E6%B5%8B%E5%BC%80%E6%94%BE%E4%B8%AD)/src/testModule/module_protect_device",
             "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_protect_device/module.zip",
+            "changelog_url": "",
             "download_chn_alert": "",
             "download_eng_alert": ""
         },
@@ -89,6 +95,7 @@
             "update_date": "2026-8-7",
             "source_url": "https://github.com/abcz316/SKRoot-linuxKernelRoot/tree/master/Pro(%E4%BC%97%E6%B5%8B%E5%BC%80%E6%94%BE%E4%B8%AD)/src/testModule/module_TEESimulatorRS",
             "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_TEESimulatorRS/module.zip",
+            "changelog_url": "",
             "download_chn_alert": "",
             "download_eng_alert": ""
         },
@@ -102,6 +109,7 @@
             "update_date": "2025-12-30",
             "source_url": "https://github.com/abcz316/SKRoot-linuxKernelRoot/tree/master/Pro(%E4%BC%97%E6%B5%8B%E5%BC%80%E6%94%BE%E4%B8%AD)/src/testModule/module_tricky_store",
             "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_tricky_store/module.zip",
+            "changelog_url": "",
             "download_chn_alert": "",
             "download_eng_alert": ""
         },
@@ -115,6 +123,7 @@
             "update_date": "2026-6-20",
             "source_url": "https://github.com/abcz316/SKRoot-linuxKernelRoot/tree/master/Pro(%E4%BC%97%E6%B5%8B%E5%BC%80%E6%94%BE%E4%B8%AD)/src/testModule/module_fake_device",
             "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_fake_device/sk_fake_security_date_module.zip",
+            "changelog_url": "",
             "download_chn_alert": "",
             "download_eng_alert": ""
         },
@@ -129,6 +138,7 @@
 			"ban": false,
             "source_url": "https://github.com/abcz316/SKRoot-linuxKernelRoot/tree/master/Pro(%E4%BC%97%E6%B5%8B%E5%BC%80%E6%94%BE%E4%B8%AD)/src/testModule/module_repair_data_local_tmp",
             "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_repair_data_local_tmp/module.zip",
+            "changelog_url": "",
             "download_chn_alert": "",
             "download_eng_alert": ""
         },
@@ -143,6 +153,7 @@
 			"ban": false,
             "source_url": "https://github.com/abcz316/SKRoot-linuxKernelRoot/tree/master/Pro(%E4%BC%97%E6%B5%8B%E5%BC%80%E6%94%BE%E4%B8%AD)/src/testModule/module_fake_device",
             "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_fake_device/cycle1337_bypass_device_flag_module.zip",
+            "changelog_url": "",
             "download_chn_alert": "风险警告：此模块为高风险模块，仅满足使用效果，不保证隐藏效果，若继续安装，请点击“确认”，产生一切后果请自负。",
             "download_eng_alert": ""
         },
@@ -156,6 +167,7 @@
             "update_date": "2026-7-2",
             "source_url": "https://github.com/abcz316/SKRoot-linuxKernelRoot/tree/master/Pro(%E4%BC%97%E6%B5%8B%E5%BC%80%E6%94%BE%E4%B8%AD)/src/testModule/module_fake_device",
             "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_fake_device/aling_fake_dev_module.zip",
+            "changelog_url": "",
             "download_chn_alert": "风险警告：此模块为高风险模块，仅满足使用效果，不保证隐藏效果，若继续安装，请点击“确认”，产生一切后果请自负。",
             "download_eng_alert": ""
         },
@@ -170,6 +182,7 @@
 			"ban": false,
             "source_url": "https://github.com/abcz316/SKRoot-linuxKernelRoot/tree/master/Pro(%E4%BC%97%E6%B5%8B%E5%BC%80%E6%94%BE%E4%B8%AD)/src/testModule/module_fake_device",
             "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_fake_device/modify_ro_serialno_module.zip",
+            "changelog_url": "",
             "download_chn_alert": "",
             "download_eng_alert": ""
         },
@@ -214,6 +227,7 @@
 			"ban": false,
             "source_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_tools/TouchBoost%20%E6%AC%A7%E5%8A%A0%E9%87%87%E6%A0%B7%E7%8E%87/TouchBoost%20%E6%AC%A7%E5%8A%A0%E9%87%87%E6%A0%B7%E7%8E%87%E6%BA%90%E7%A0%81.zip",
             "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_tools/TouchBoost%20%E6%AC%A7%E5%8A%A0%E9%87%87%E6%A0%B7%E7%8E%87/TouchBoost%20%E6%AC%A7%E5%8A%A0%E9%87%87%E6%A0%B7%E7%8E%87.zip",
+            "changelog_url": "",
             "download_chn_alert": "",
             "download_eng_alert": ""
         },
@@ -228,6 +242,7 @@
 			"ban": false,
             "source_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_tools/ColorOS%20%E8%A7%A6%E6%8E%A7%E4%BC%98%E5%8C%96%E6%BA%90%E7%A0%81/src.zip",
             "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_tools/ColorOS%20%E8%A7%A6%E6%8E%A7%E4%BC%98%E5%8C%96%E6%BA%90%E7%A0%81/module.zip",
+            "changelog_url": "",
             "download_chn_alert": "",
             "download_eng_alert": ""
         },
@@ -242,6 +257,7 @@
 			"ban": false,
             "source_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_tools/%E8%87%AA%E5%AE%9A%E4%B9%89%E8%87%AA%E5%90%AF%E5%8A%A8%E6%A8%A1%E5%9D%97/source.zip",
             "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_tools/%E8%87%AA%E5%AE%9A%E4%B9%89%E8%87%AA%E5%90%AF%E5%8A%A8%E6%A8%A1%E5%9D%97/module.zip",
+            "changelog_url": "",
             "download_chn_alert": "",
             "download_eng_alert": ""
         },
@@ -256,7 +272,8 @@
 			"ban": false,
             "source_url": "https://github.com/abcz316/SKRoot-linuxKernelRoot/tree/master/Pro(%E4%BC%97%E6%B5%8B%E5%BC%80%E6%94%BE%E4%B8%AD)/src/testModule/module_fake_device",
             "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_fake_device/auto_fake_cpuinfo_module.zip",
-            "download_chn_alert": "风险警告：此模块为高风险模块，仅满足使用效果，不保证隐藏效果，若继续安装，请点击“确认”，产生一切后果请自负。",
+            "changelog_url": "",
+			"download_chn_alert": "风险警告：此模块为高风险模块，仅满足使用效果，不保证隐藏效果，若继续安装，请点击“确认”，产生一切后果请自负。",
             "download_eng_alert": ""
         },
         {
@@ -269,6 +286,7 @@
             "update_date": "2026-4-12",
             "source_url": "https://github.com/abcz316/SKRoot-linuxKernelRoot/tree/master/Pro(%E4%BC%97%E6%B5%8B%E5%BC%80%E6%94%BE%E4%B8%AD)/src/testModule/module_fake_device",
             "download_url": "https://abcz316.github.io/big-file-cdn/aling_fake_zui_module.zip",
+            "changelog_url": "",
             "download_chn_alert": "",
             "download_eng_alert": ""
         },
@@ -282,6 +300,7 @@
             "update_date": "2026-2-12",
             "source_url": "https://github.com/abcz316/SKRoot-linuxKernelRoot/tree/master/Pro(%E4%BC%97%E6%B5%8B%E5%BC%80%E6%94%BE%E4%B8%AD)/src/testModule/module_fake_system_file",
             "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_demo/module_fake_system_file.zip",
+            "changelog_url": "",
             "download_chn_alert": "",
             "download_eng_alert": ""
         },
@@ -295,6 +314,7 @@
             "update_date": "2025-12-10",
             "source_url": "https://github.com/abcz316/SKRoot-linuxKernelRoot/tree/master/Pro(%E4%BC%97%E6%B5%8B%E5%BC%80%E6%94%BE%E4%B8%AD)/src/testModule/module_web_ui_example",
             "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_demo/module_web_ui_example.zip",
+            "changelog_url": "",
             "download_chn_alert": "",
             "download_eng_alert": ""
         },
@@ -308,6 +328,7 @@
             "update_date": "2025-12-10",
             "source_url": "https://github.com/abcz316/SKRoot-linuxKernelRoot/tree/master/Pro(%E4%BC%97%E6%B5%8B%E5%BC%80%E6%94%BE%E4%B8%AD)/src/testModule/module_update_demo",
             "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_demo/module_update_demo.zip",
+            "changelog_url": "",
             "download_chn_alert": "",
             "download_eng_alert": ""
         },
@@ -321,6 +342,7 @@
             "update_date": "2025-12-10",
             "source_url": "https://github.com/abcz316/SKRoot-linuxKernelRoot/tree/master/Pro(%E4%BC%97%E6%B5%8B%E5%BC%80%E6%94%BE%E4%B8%AD)/src/testModule/module_install_uninstall_cb_demo",
             "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_demo/module_install_uninstall_cb_demo.zip",
+            "changelog_url": "",
             "download_chn_alert": "",
             "download_eng_alert": ""
         },
@@ -334,6 +356,7 @@
             "update_date": "2025-12-10",
             "source_url": "https://github.com/abcz316/SKRoot-linuxKernelRoot/tree/master/Pro(%E4%BC%97%E6%B5%8B%E5%BC%80%E6%94%BE%E4%B8%AD)/src/testModule/module_hello_world",
             "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_demo/module_hello_world.zip",
+            "changelog_url": "",
             "download_chn_alert": "",
             "download_eng_alert": ""
         }
