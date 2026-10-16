@@ -10,7 +10,7 @@ android {
         minSdk 26
         targetSdk 31
         versionCode 1
-        versionName "4.6.2"
+        versionName "4.6.5"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
@@ -47,6 +47,8 @@ android {
 }
 
 dependencies {
+    implementation project(":apksig-local")
+	implementation 'com.android.tools.smali:smali-dexlib2:3.0.10'
     implementation 'androidx.appcompat:appcompat:1.4.1'
     implementation 'com.google.android.material:material:1.5.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.3'

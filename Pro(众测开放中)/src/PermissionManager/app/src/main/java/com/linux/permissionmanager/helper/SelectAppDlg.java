@@ -1,12 +1,9 @@
 package com.linux.permissionmanager.helper;
 
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.graphics.drawable.ColorDrawable;
-import android.os.Handler;
-import android.os.Message;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.Gravity;
@@ -19,7 +16,6 @@ import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 
-import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -32,7 +28,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SelectAppDlg {
-    public static View showSelectAppDlg(Activity activity, String rootKey, Handler selectAppCallback) {
+
+    public interface OnAppSelectedListener {
+        void onAppSelected(SelectAppItem item);
+    }
+
+    public static View showSelectAppDlg(Activity activity, String rootKey, OnAppSelectedListener listener) {
         final PopupWindow popupWindow = new PopupWindow(activity);
         View view = View.inflate(activity, R.layout.select_app_wnd, null);
         popupWindow.setContentView(view);
@@ -83,8 +84,7 @@ public class SelectAppDlg {
         SelectAppAdapter adapter = new SelectAppAdapter(R.layout.select_app_recycler_item, appList,
                 item -> {
                     popupWindow.dismiss();
-                    Message msg = new Message(); msg.obj = item;
-                    selectAppCallback.sendMessage(msg);
+                    listener.onAppSelected(item);
                 }
         );
         RecyclerView select_app_recycler_view = (RecyclerView) view.findViewById(R.id.select_app_recycler_view);
@@ -98,24 +98,20 @@ public class SelectAppDlg {
         CheckBox show_thirty_app_ckbox = view.findViewById(R.id.show_thirty_app_ckbox);
         show_system_app_ckbox.setEnabled(true);
         show_thirty_app_ckbox.setEnabled(true);
-        @SuppressLint("HandlerLeak") Handler updateAppListFunc = new Handler() {
-            @Override
-            public void handleMessage(@NonNull Message msg) {
-                List<SelectAppItem> newAppList = new ArrayList<>();
-                String filterText = search_edit.getText().toString();
-                for(SelectAppItem item : appList) {
-                    PackageInfo pack = item.getPackageInfo();
-                    if(!show_system_app_ckbox.isChecked()) {
-                        if ((pack.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0) continue; //系统应用
-                    }
-                    if(!show_thirty_app_ckbox.isChecked()) {
-                        if ((pack.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 0) continue; // 第三方应用
-                    }
-                    if(item.getPackageName().indexOf(filterText) != -1 || item.getShowName(activity).indexOf(filterText) != -1) newAppList.add(item);
+        Runnable updateAppList = () -> {
+            List<SelectAppItem> newAppList = new ArrayList<>();
+            String filterText = search_edit.getText().toString();
+            for(SelectAppItem item : appList) {
+                PackageInfo pack = item.getPackageInfo();
+                if(!show_system_app_ckbox.isChecked()) {
+                    if ((pack.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0) continue; //系统应用
                 }
-                adapter.setData(newAppList);
-                super.handleMessage(msg);
+                if(!show_thirty_app_ckbox.isChecked()) {
+                    if ((pack.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 0) continue; // 第三方应用
+                }
+                if(item.getPackageName().indexOf(filterText) != -1 || item.getShowName(activity).indexOf(filterText) != -1) newAppList.add(item);
             }
+            adapter.setData(newAppList);
         };
         search_edit.addTextChangedListener(new TextWatcher() {
             @Override
@@ -123,7 +119,7 @@ public class SelectAppDlg {
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 clear_search_btn.setVisibility(s.toString().length() > 0 ? View.VISIBLE : View.GONE);
-                updateAppListFunc.sendMessage(new Message());
+                updateAppList.run();
             }
             @Override
             public void afterTextChanged(Editable s) {}
@@ -135,13 +131,13 @@ public class SelectAppDlg {
 
         show_system_app_ckbox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) { updateAppListFunc.sendMessage(new Message()); }
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) { updateAppList.run(); }
         });
         show_thirty_app_ckbox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) { updateAppListFunc.sendMessage(new Message()); }
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) { updateAppList.run(); }
         });
-        updateAppListFunc.sendMessage(new Message());
+        updateAppList.run();
         return view;
     }
 

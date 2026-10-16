@@ -57,8 +57,7 @@ public class SkrModUpdateChecker {
     /**
      * 单个模块：请求更新日志内容
      */
-    public void requestModuleChangelog(
-            SkrModInstalledItem item,
+    public void requestModuleChangelog(SkrModInstalledItem item,
             BiConsumer<SkrModInstalledItem, String> onSuccessUi,
             BiConsumer<SkrModInstalledItem, Exception> onErrorUi
     ) {

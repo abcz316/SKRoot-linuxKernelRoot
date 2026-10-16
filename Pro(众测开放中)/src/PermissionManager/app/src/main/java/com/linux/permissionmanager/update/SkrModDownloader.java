@@ -121,13 +121,11 @@ public class SkrModDownloader {
 
     private String buildFileName(@NonNull String url, @Nullable String fileNameHint) {
         if (!TextUtils.isEmpty(fileNameHint)) return sanitizeFileName(fileNameHint);
-
         try {
             Uri uri = Uri.parse(url);
             String last = uri.getLastPathSegment();
             if (!TextUtils.isEmpty(last)) return sanitizeFileName(last);
         } catch (Exception ignored) {}
-
         return "skrmod_" + System.currentTimeMillis() + ".zip";
     }
 
@@ -139,12 +137,8 @@ public class SkrModDownloader {
     }
 
     private void safeDelete(@NonNull File f) {
-        try {
-            FileUtils.deleteFile(f);
-        } catch (Throwable t) {
-            try {
-                f.delete();
-            } catch (Throwable ignored) {}
+        try { FileUtils.deleteFile(f); } catch (Throwable t) {
+            try { f.delete(); } catch (Throwable ignored) {}
         }
     }
 

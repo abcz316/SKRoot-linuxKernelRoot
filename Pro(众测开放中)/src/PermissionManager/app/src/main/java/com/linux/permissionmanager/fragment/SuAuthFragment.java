@@ -5,8 +5,6 @@ import android.app.ProgressDialog;
 import android.content.pm.PackageInfo;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -134,14 +132,7 @@ public class SuAuthFragment extends Fragment {
     }
 
     private void onShowSelectAddSuAuthList() {
-        Handler selectImplantAppCallback = new Handler() {
-            @Override
-            public void handleMessage(@NonNull Message msg) {
-                SelectAppItem app = (SelectAppItem) msg.obj;
-                onAddSuAuth(app);
-                super.handleMessage(msg);
-            }
-        };
+        SelectAppDlg.OnAppSelectedListener selectImplantAppCallback = app -> onAddSuAuth(app);
         View view = SelectAppDlg.showSelectAppDlg(mActivity, mRootKey, selectImplantAppCallback);
         CheckBox show_system_app_ckbox = view.findViewById(R.id.show_system_app_ckbox);
         CheckBox show_thirty_app_ckbox = view.findViewById(R.id.show_thirty_app_ckbox);

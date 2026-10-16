@@ -1,0 +1,4 @@
+MuntashirAkon/apksig-android
+source commit: c120428b7b07f2a2b638c7519c2d60680d6398ce
+source: user provided apksig-android-master.zip
+license: Apache-2.0 (see LICENSE)

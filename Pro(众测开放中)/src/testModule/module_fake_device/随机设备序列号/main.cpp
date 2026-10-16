@@ -22,11 +22,26 @@ struct PropertySpoofItem {
     SnGenerator generator;
 };
 static constexpr PropertySpoofItem kPropertySpoofItems[] = {
-    { "ro.serialno",           "new_sn",          generate_new_sn },
-    { "ro.boot.emmcid",        "new_emmcid",      generate_new_sn },
-    { "ro.boot.bootload_sn",   "new_bootload_sn", generate_new_sn },
-};
+    { "ro.serialno",                    "new_sn",                         generate_new_sn },
+    { "ro.boot.emmcid",                 "new_emmcid",                     generate_new_sn },
+    { "ro.boot.bootload_sn",            "new_bootload_sn",                generate_new_sn },
+    { "ro.kernel.androidboot.serialno", "new_androidboot_serialno",       generate_new_sn },
+    { "ril.serialnumber",               "new_ril_serialnumber",           generate_new_sn },
+    { "gsm.serial",                     "new_gsm_serial",                 generate_new_sn },
+    { "ro.vendor.oplus.serialno",       "new_oplus_serialno",             generate_new_sn },
+    { "ro.oplus.serialno",              "new_oplus_serialno",             generate_new_sn },
+    { "ro.vendor.serialno",             "new_vendor_serialno",            generate_new_sn },
+    { "ro.boot.oplus.serialno",         "new_boot_oplus_serialno",        generate_new_sn },
+    { "sys.oplus.serialno",             "new_sys_oplus_serialno",         generate_new_sn },
+    { "persist.sys.oplus.serialno",     "new_persist_sys_oplus_serialno", generate_new_sn },
+    { "ro.vendor.gsm.serial",           "new_vendor_gsm_serial",          generate_new_sn },
+    { "vendor.gsm.serial",              "new_vendor_gsm_serial",          generate_new_sn },
+    { "ro.ril.oem.psno",                "new_ril_oem_psno",               generate_new_sn },
+    { "ro.ril.oem.sno",                 "new_ril_oem_sno",                generate_new_sn },
+    { "persist.sys.serialno",           "new_persist_sys_serialno",       generate_new_sn },
+    { "ro.vendor.oem.serialno",         "new_vendor_oem_serialno",        generate_new_sn },
 
+};
 // 生成新序列号的核心函数
 static std::string generate_new_sn(std::string_view original_sn) {
     // 使用 thread_local 保证在多线程环境下安全，且只初始化一次随机数引擎
@@ -126,7 +141,9 @@ static void generate_and_store_property(const PropertySpoofItem& item) {
         printf("%s is empty, skip\n", item.property_name);
         return;
     }
-    const std::string new_value = item.generator(old_value);
+    //跳过开头0x
+    const bool has_hex_prefix = old_value.size() >= 2 && old_value[0] == '0' && (old_value[1] == 'x' || old_value[1] == 'X');
+    const std::string new_value = has_hex_prefix ? old_value.substr(0, 2) + item.generator(std::string_view(old_value).substr(2)) : item.generator(old_value);
     printf("old %s: %s\n", item.property_name, old_value.c_str());
     printf("new %s: %s\n", item.property_name, new_value.c_str());
     kernel_module::write_string_disk_storage(item.storage_key, new_value.c_str());
@@ -269,7 +286,7 @@ std::string module_on_install(const char* root_key, const char* module_private_d
 // SKRoot 模块名片
 // 字段说明见 module_descriptor.h
 SKROOT_MODULE_NAME("随机设备序列号")
-SKROOT_MODULE_VERSION("1.0.3")
+SKROOT_MODULE_VERSION("1.0.4")
 SKROOT_MODULE_DESC(MODULE_DESC_CN_TEXT)
 SKROOT_MODULE_AUTHOR("SKRoot & 蜃 & 杨")
 SKROOT_MODULE_ON_INSTALL(module_on_install)

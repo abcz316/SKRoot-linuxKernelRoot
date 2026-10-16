@@ -1,0 +1,18 @@
+// 完整的 apksig-android 源码位于当前模块，签名库不使用 JitPack/Maven 二进制依赖。
+// Android Gradle Plugin 版本由根工程 settings.gradle 统一指定。
+plugins {
+    id 'com.android.library'
+}
+
+android {
+    compileSdk 31
+
+    defaultConfig {
+        minSdk 21
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}

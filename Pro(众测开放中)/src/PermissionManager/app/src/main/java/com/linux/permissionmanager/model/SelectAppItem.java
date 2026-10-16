@@ -1,7 +1,9 @@
 package com.linux.permissionmanager.model;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
 
 public class SelectAppItem {
@@ -26,6 +28,15 @@ public class SelectAppItem {
     public Drawable getDrawable(Context ctx) {
         Drawable icon =  this.packageInfo.applicationInfo.loadIcon(ctx.getPackageManager());
         return icon;
+    }
+
+    public String getLaunchActivityName(Context ctx) {
+        PackageManager pm = ctx.getPackageManager();
+        Intent launchIntent = pm.getLaunchIntentForPackage(getPackageName());
+        if (launchIntent != null && launchIntent.getComponent() != null) {
+            return launchIntent.getComponent().getClassName();
+        }
+        return null;
     }
 
 }

@@ -163,6 +163,18 @@
                     />
 
                 <com.google.android.material.button.MaterialButton
+                    android:layout_marginTop="4dp"
+                    android:id="@+id/generate_fake_app_btn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="3.伪装自身APP"
+                    android:paddingLeft="20dp"
+                    android:paddingRight="20dp"
+                    app:cornerRadius="8dp"
+                    style="@style/Widget.MaterialComponents.Button"
+                    />
+
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/implant_app_btn"
                     android:layout_marginTop="4dp"
                     android:layout_width="wrap_content"
@@ -170,7 +182,7 @@
                     android:enabled="false"
                     android:paddingLeft="20dp"
                     android:paddingRight="20dp"
-                    android:text="3.寄生 (即将上线)"
+                    android:text="4.寄生 (即将上线)"
                     app:cornerRadius="8dp"
                     style="@style/Widget.MaterialComponents.Button"
                     />

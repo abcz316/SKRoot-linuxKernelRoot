@@ -8,7 +8,6 @@
 #include <filesystem>
 #include <sys/capability.h>
 
-
 #include "kernel_module_kit_umbrella.h"
 
 #include "urlEncodeUtils.h"
