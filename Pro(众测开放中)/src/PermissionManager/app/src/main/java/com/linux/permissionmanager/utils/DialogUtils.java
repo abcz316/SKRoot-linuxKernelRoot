@@ -54,9 +54,7 @@ public class DialogUtils {
     }
 
     public static void showNeedPermissionDialog(Context context) {
-        DialogUtils.showCustomDialog(context, "权限申请", "请授予权限后重新操作", null, "确定",
-                (dialog, which) -> dialog.dismiss(), null, null
-        );
+        DialogUtils.showMsgDlg(context, "权限申请", "请授予权限后重新操作", null);
     }
 
     /**
@@ -91,6 +89,7 @@ public class DialogUtils {
         builder.setTitle(title)
                 .setIcon(android.R.drawable.ic_dialog_info)
                 .setView(inputTxt)
+                .setCancelable(false)
                 .setNegativeButton("取消", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) { dialog.dismiss(); }
@@ -125,6 +124,7 @@ public class DialogUtils {
                     d.dismiss();
                     if (listener != null) listener.onClick(d, which);
                 })
+                .setCancelable(false)
                 .setNegativeButton("取消", (d, which) -> d.dismiss())
                 .create();
         dialog.show();
@@ -166,6 +166,63 @@ public class DialogUtils {
 
     public static void dismissDialog(Dialog dialog) {
         if (dialog != null && dialog.isShowing()) dialog.dismiss();
+    }
+
+    public static Dialog showLoadingDialog(Context context, String message) {
+        Dialog dialog = new Dialog(context);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.setCancelable(false);
+        dialog.setCanceledOnTouchOutside(false);
+
+        // 最外层容器：透明背景下居中
+        FrameLayout outer = new FrameLayout(context);
+        outer.setPadding(dp(context, 24), dp(context, 24), dp(context, 24), dp(context, 24));
+
+        // 白色圆角卡片
+        LinearLayout card = new LinearLayout(context);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setGravity(Gravity.CENTER_HORIZONTAL);
+        card.setPadding(dp(context, 28), dp(context, 24), dp(context, 28), dp(context, 24));
+
+        GradientDrawable bg = new GradientDrawable();
+        bg.setColor(Color.WHITE);
+        bg.setCornerRadius(dp(context, 16));
+        card.setBackground(bg);
+
+        FrameLayout.LayoutParams cardLp = new FrameLayout.LayoutParams(dp(context, 260), ViewGroup.LayoutParams.WRAP_CONTENT);
+        cardLp.gravity = Gravity.CENTER;
+        card.setLayoutParams(cardLp);
+
+        ProgressBar progressBar = new ProgressBar(context);
+        LinearLayout.LayoutParams progressLp = new LinearLayout.LayoutParams(dp(context, 36), dp(context, 36));
+        progressLp.bottomMargin = dp(context, 16);
+        progressBar.setLayoutParams(progressLp);
+
+        TextView textView = new TextView(context);
+        textView.setText(message);
+        textView.setTextSize(15);
+        textView.setTextColor(Color.parseColor("#222222"));
+        textView.setGravity(Gravity.CENTER);
+        textView.setLineSpacing(0f, 1.2f);
+
+        LinearLayout.LayoutParams textLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        textView.setLayoutParams(textLp);
+
+        card.addView(progressBar);
+        card.addView(textView);
+        outer.addView(card);
+
+        dialog.setContentView(outer);
+
+        Window window = dialog.getWindow();
+        if (window != null) {
+            window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            window.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            window.setGravity(Gravity.CENTER);
+        }
+
+        dialog.show();
+        return dialog;
     }
 
     /**
@@ -224,6 +281,8 @@ public class DialogUtils {
             layout.addView(scrollView);
             layout.addView(buttonBar);
             dialog.setContentView(layout);
+            dialog.setCancelable(false);
+            dialog.setCanceledOnTouchOutside(false);
             Window window = dialog.getWindow();
             if (window != null) {
                 window.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);

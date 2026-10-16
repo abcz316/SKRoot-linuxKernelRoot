@@ -2,6 +2,7 @@ package com.linux.permissionmanager.utils;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.pm.ApplicationInfo;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.OpenableColumns;
@@ -96,6 +97,25 @@ public class FileUtils {
         } catch (Exception ignore) {}
     }
 
+    public static void clearDirectory(File dir) {
+        if (dir == null || !dir.isDirectory()) return;
+        File[] files = dir.listFiles();
+        if (files != null) {
+            for (File f : files) {
+                f.delete();
+            }
+        }
+    }
+
+    public static long getAppApkSize(Context context, String packageName) {
+        try {
+            ApplicationInfo info = context.getPackageManager().getApplicationInfo(packageName, 0);
+            return new File(info.sourceDir).length();
+        } catch (Exception e) {
+            return -1;
+        }
+    }
+
     public static String formatFileSize(long size) {
         // 定义单位
         final long K = 1024;
@@ -181,5 +201,19 @@ public class FileUtils {
     public static File makeSdcardLogFile(String prefix, String suffix) {
         String time = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
         return new File("/sdcard", prefix + time + suffix);
+    }
+
+    public static File copyAssetToCache(Context context, String assetName, String suffix) throws IOException {
+        File output = File.createTempFile("apk-generator-asset-", suffix, context.getCacheDir());
+        try (InputStream in = context.getAssets().open(assetName);
+             FileOutputStream out = new FileOutputStream(output)) {
+            byte[] buf = new byte[64 * 1024];
+            int n;
+            while ((n = in.read(buf)) != -1) out.write(buf, 0, n);
+            return output;
+        } catch (IOException e) {
+            output.delete();
+            throw e;
+        }
     }
 }

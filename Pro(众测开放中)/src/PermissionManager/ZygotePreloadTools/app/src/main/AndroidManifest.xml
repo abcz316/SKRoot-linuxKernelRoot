@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.android.zygotepreloadtools">
+    <queries>
+        <package android:name="com.android.aabbcc" />
+    </queries>
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.ZygotePreloadTools"
+        android:zygotePreloadName="com.android.zygotepreloadtools.AppZygotePreload">
+        <service
+            android:name="com.android.zygotepreloadtools.MagicaService"
+            android:isolatedProcess="true"
+            android:useAppZygote="true" />
+
+        <activity
+            android:name="com.android.zygotepreloadtools.EntryActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+    <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES"/>
+</manifest>

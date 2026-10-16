@@ -7,7 +7,6 @@ import java.util.Collections;
 import java.util.Set;
 
 public class AppSettings {
-    public static final String HOTLOAD_SHELL_PATH = "/sdcard/1.h";
     private static SharedPreferences preferences;
 
     public static void init(Context context) {

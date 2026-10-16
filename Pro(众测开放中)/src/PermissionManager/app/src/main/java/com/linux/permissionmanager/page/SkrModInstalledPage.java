@@ -187,8 +187,7 @@ public class SkrModInstalledPage {
                     if(tip.indexOf("OK") != -1) tip += "，重启后生效";
                     DialogUtils.showMsgDlg(mActivity, "执行结果", tip, null);
                     refreshPage();
-                },
-                "取消", (dialog, which) -> dialog.dismiss()
+                },"取消", (dialog, which) -> dialog.dismiss()
         );
     }
 
@@ -203,8 +202,7 @@ public class SkrModInstalledPage {
     }
 
     private void onUpdateSkrMod(SkrModInstalledItem skrMod) {
-        mUpdateManager.requestModuleUpdate(
-                skrMod,
+        mUpdateManager.requestModuleUpdate(skrMod,
                 (item) -> checkModUpdateFromMarket(item, (info) -> showModUpdateResult(item, info)),
                 this::showModUpdateResult,
                 (item, e) -> DialogUtils.showMsgDlg(mActivity,"提示","检查模块 \"" + item.getName() + "\" 更新失败：" + e.getMessage(),null)
@@ -227,24 +225,25 @@ public class SkrModInstalledPage {
     private void checkModUpdateFromMarket(SkrModInstalledItem skrMod, Consumer<SkrModUpdateInfo> onResult) {
         SkrModMarketFetcher.getInstance().request(
             (modArr) -> {
-                SkrModUpdateInfo info = null;
-                if (modArr != null) {
-                    for (SkrModMarketItem it : modArr) {
-                        if (skrMod.getId32().equals(it.getId32())) {
-                            if (!skrMod.getVer().equals(it.getVer())) {
-                                info = new SkrModUpdateInfo(true, it.getVer(), it.getDownloadUrl(), "");
-                                SkrModUpdateCache.saveModuleUpdateResponseCache(skrMod, info);
-                            }
-                            break;
-                        }
-                    }
-                }
-                if (onResult != null) onResult.accept(info);
+                if (onResult == null) return;
+                onResult.accept(buildUpdateInfoFromMarket(skrMod, modArr));
             },
             (e) -> {
                 // 忽略市场数据拉取失败
             }
         );
+    }
+
+    private SkrModUpdateInfo buildUpdateInfoFromMarket(SkrModInstalledItem skrMod, List<SkrModMarketItem> modArr) {
+        if (modArr == null) return null;
+        for (SkrModMarketItem it : modArr) {
+            if (!skrMod.getId32().equals(it.getId32())) continue;
+            if (skrMod.getVer().equals(it.getVer())) return null;
+            SkrModUpdateInfo info = new SkrModUpdateInfo(true, it.getVer(), it.getDownloadUrl(), it.getChangelogUrl());
+            SkrModUpdateCache.saveModuleUpdateResponseCache(skrMod, info);
+            return info;
+        }
+        return null;
     }
 
     private void onDownloadChangeLogSkrMod(SkrModInstalledItem skrMod) {
@@ -256,19 +255,20 @@ public class SkrModInstalledPage {
 
     private void refreshAllModulesUpdate(List<SkrModInstalledItem> listAll) {
         if (listAll == null || listAll.isEmpty()) return;
-        mUpdateManager.getAllModulesUpdateCache(
-                listAll,
+        mUpdateManager.getAllModulesUpdateCache(listAll,
                 (mod, info) -> {
-                    if (info != null && mAdapter != null) mAdapter.updateModuleUpdateInfo(mod.getId32(), info);
+                    if (info == null || mAdapter == null) return;
+                    mAdapter.updateModuleUpdateInfo(mod.getId32(), info);
                 }
         );
-        mUpdateManager.checkAllModulesUpdate(
-                listAll,
+        mUpdateManager.checkAllModulesUpdate(listAll,
                 (mod) -> checkModUpdateFromMarket(mod, (info) -> {
-                    if (info != null && mAdapter != null) mAdapter.updateModuleUpdateInfo(mod.getId32(), info);
+                    if (info == null || mAdapter == null) return;
+                    mAdapter.updateModuleUpdateInfo(mod.getId32(), info);
                 }),
                 (mod, info) -> {
-                    if (info != null && mAdapter != null) mAdapter.updateModuleUpdateInfo(mod.getId32(), info);
+                    if (info == null || mAdapter == null) return;
+                    mAdapter.updateModuleUpdateInfo(mod.getId32(), info);
                 },
                 (mod, e) -> Log.w("SkrMod", "check update failed: " + mod.getName(), e)
         );

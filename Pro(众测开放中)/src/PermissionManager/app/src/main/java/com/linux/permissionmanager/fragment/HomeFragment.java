@@ -1,12 +1,17 @@
 package com.linux.permissionmanager.fragment;
 
-import static com.linux.permissionmanager.AppSettings.HOTLOAD_SHELL_PATH;
+import static com.linux.permissionmanager.AppConfig.HOTLOAD_SHELL_PATH;
 
 import android.app.Activity;
+import android.app.Dialog;
+import android.content.pm.ApplicationInfo;
+import android.content.res.Resources;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,14 +25,26 @@ import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
+import com.linux.permissionmanager.AppConfig;
 import com.linux.permissionmanager.AppSettings;
 import com.linux.permissionmanager.R;
 import com.linux.permissionmanager.bridge.NativeBridge;
+import com.linux.permissionmanager.helper.GenerateFakeAppDlg;
+import com.linux.permissionmanager.model.GenerateFakeAppConfig;
 import com.linux.permissionmanager.model.HotloadMethod;
+import com.linux.permissionmanager.utils.AppInstallUtils;
+import com.linux.permissionmanager.utils.AppLaunchUtils;
+import com.linux.permissionmanager.utils.IconResourceUtils;
+import com.linux.permissionmanager.utils.repack.ApkGenerator;
+import com.linux.permissionmanager.utils.ApkInstallUtils;
 import com.linux.permissionmanager.utils.ClipboardUtils;
 import com.linux.permissionmanager.utils.DialogUtils;
+import com.linux.permissionmanager.utils.FileUtils;
 
 import org.json.JSONObject;
+
+import java.io.File;
+import java.io.IOException;
 
 public class HomeFragment extends Fragment implements View.OnClickListener {
     private Activity mActivity;
@@ -36,6 +53,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
     private HotloadMethod mHotloadMethod = null;
     private String lastInputCmd = "id";
     private String lastInputRootExecPath = "";
+    private GenerateFakeAppDlg mGenFakeAppDlg;
 
     private TextView tvSelinuxStatus;
     private TextView tvSeccompStatus;
@@ -47,6 +65,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
         mRootKey = rootKey;
         mIsHotload = isHotload;
         mHotloadMethod = hotloadMethod;
+        mGenFakeAppDlg = new GenerateFakeAppDlg(mActivity);
     }
     @Nullable
     @Override
@@ -67,6 +86,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
         Button uninstall_skroot_env_btn = view.findViewById(R.id.uninstall_skroot_env_btn);
         Button test_root_btn = view.findViewById(R.id.test_root_btn);
         Button run_root_cmd_btn = view.findViewById(R.id.run_root_cmd_btn);
+        Button generate_fake_app_btn = view.findViewById(R.id.generate_fake_app_btn);
         Button implant_app_btn_btn = view.findViewById(R.id.implant_app_btn);
         Button copy_info_btn = view.findViewById(R.id.copy_info_btn);
         Button clean_info_btn = view.findViewById(R.id.clean_info_btn);
@@ -80,6 +100,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
         uninstall_skroot_env_btn.setOnClickListener(this);
         test_root_btn.setOnClickListener(this);
         run_root_cmd_btn.setOnClickListener(this);
+        generate_fake_app_btn.setOnClickListener(this);
         implant_app_btn_btn.setOnClickListener(this);
         copy_info_btn.setOnClickListener(this);
         clean_info_btn.setOnClickListener(this);
@@ -101,6 +122,9 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
                 break;
             case R.id.run_root_cmd_btn:
                 showInputRootCmdDlg();
+                break;
+            case R.id.generate_fake_app_btn:
+                mGenFakeAppDlg.showGenerateFakeAppDlg(this::installMyselfApk);
                 break;
             case R.id.implant_app_btn:
                 break;
@@ -190,7 +214,10 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
     private void onClickInstallSkrootEnvBtn() {
         String err = NativeBridge.installSkrootEnv(mRootKey, mIsHotload ? "HotLoad" : "Boot", mHotloadMethod != null ? mHotloadMethod.getConfigValue() : "");
         appendConsoleMsg(err);
-        if(mIsHotload && err.indexOf("OK") != -1) NativeBridge.runRootCmd(mRootKey, "rm -f " + HOTLOAD_SHELL_PATH);
+        if(mIsHotload && err.indexOf("OK") != -1) {
+            NativeBridge.runRootCmd(mRootKey, "rm -f " + HOTLOAD_SHELL_PATH);
+            NativeBridge.runRootCmd(mRootKey, "pm uninstall " + AppConfig.ZYGOTE_PRELOAD_TOOLS_PACKAGE);
+        }
         if(mHotloadMethod == HotloadMethod.CVE_2026_43499) {
             DialogUtils.showCustomDialog(mActivity, "确认", "请问要软重启吗？\n\n提示：当前环境已安装完成！模块也已激活。一般不需要软重启，当使用特殊模块（如改机型）才需要进行软重启。",null,
             "不需要", (dialog, which) -> {
@@ -208,14 +235,15 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
         }
     }
 
-    private void onClickUninstallSkrootEnvBtn() {
-        DialogUtils.showCustomDialog(mActivity,"确认","确定要卸载SKRoot环境吗？这会同时清空 su 授权列表和删除已安装的模块",null,
-                "确定", (dialog, which) -> {
-                    dialog.dismiss();
-                    appendConsoleMsg(NativeBridge.uninstallSkrootEnv(mRootKey));
-                },"取消", (dialog, which) -> dialog.dismiss()
-        );
-    }
+
+   private void onClickUninstallSkrootEnvBtn() {
+       DialogUtils.showCustomDialog(mActivity,"确认","确定要卸载SKRoot环境吗？这会同时清空 su 授权列表和删除已安装的模块",null,
+               "确定", (dialog, which) -> {
+                   dialog.dismiss();
+                   appendConsoleMsg(NativeBridge.uninstallSkrootEnv(mRootKey));
+               },"取消", (dialog, which) -> dialog.dismiss()
+       );
+   }
 
     private void appendConsoleMsg(String msg) {
         StringBuffer txt = new StringBuffer();
@@ -234,5 +262,62 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 
     private void cleanConsoleMsg() {
         mConsoleEdit.setText("");
+    }
+
+    public File cloneSelfApk(GenerateFakeAppConfig config) throws Exception {
+        ApplicationInfo ai = mActivity.getApplicationInfo();
+        if (ai.splitSourceDirs != null && ai.splitSourceDirs.length > 0) throw new IOException("当前 App 使用 Split APK 安装，只有 base.apk 不完整，此示例不支持");
+        File sourceApk = new File(ai.sourceDir);
+        File outputDir = new File(mActivity.getFilesDir(), "generated-apks");
+        FileUtils.clearDirectory(outputDir);
+        ApkGenerator.GenerateOptions options = new ApkGenerator.GenerateOptions();
+        options.sourceApk = sourceApk;
+        options.newPackageName = config.pkgName;
+        options.newAppName = config.appName;
+        options.oldEntryActivityName = AppLaunchUtils.getLauncherActivityName(mActivity);
+        options.newEntryActivityName = config.launchActivity;
+        Resources res = mActivity.getResources();
+        options.removeAppIcon = config.removeIcon;
+        if(!config.removeIcon) {
+            options.iconPaths = new ApkGenerator.IconPaths(
+                IconResourceUtils.getResourcePath(res, R.drawable.dynamic_icon_legacy),
+                IconResourceUtils.getResourcePath(res, R.drawable.dynamic_icon_foreground),
+                IconResourceUtils.getResourcePath(res, R.drawable.dynamic_icon_background)
+            );
+            options.customIcon = config.iconDrawable;
+        }
+        if (!TextUtils.isEmpty(config.versionName)) options.newVersionName = config.versionName;
+        if (config.versionCode > 0) options.newVersionCode = (int) config.versionCode;
+        options.certInfo = config.certInfo;
+        if (config.fakeSize != null && config.fakeSize > sourceApk.length()) options.targetApkSize = config.fakeSize;
+        options.outputApk = new File(outputDir, "self-clone"+ System.nanoTime() +".apk");
+        return ApkGenerator.generate(mActivity, options);
+    }
+
+    private void installMyselfApk(GenerateFakeAppConfig config, Runnable dismissConfigDialog) {
+        if(!ApkInstallUtils.getInstallPermission(mActivity)) {
+            DialogUtils.showNeedPermissionDialog(mActivity);
+            return;
+        }
+        Dialog loadingDialog = DialogUtils.showLoadingDialog(mActivity, "正在生成APK，请稍候…");
+        new Thread(() -> {
+            try {
+                File apk = cloneSelfApk(config);
+                mActivity.runOnUiThread(() -> onFakeApkGenerated(config.pkgName, config.originalAppName, apk, dismissConfigDialog));
+            } catch (Exception e) {
+                mActivity.runOnUiThread(() -> DialogUtils.showMsgDlg(mActivity, "生成失败", "生成失败：" + e.getMessage(), null));
+            } finally {
+                mActivity.runOnUiThread(() -> DialogUtils.dismissDialog(loadingDialog));
+            }
+        }, "apk-generate-worker").start();
+    }
+
+    private void onFakeApkGenerated(String pkgName, String originalAppName, File apk, Runnable dismissConfigDialog) {
+        if (AppInstallUtils.isAppInstalled(mActivity, pkgName)) {
+            DialogUtils.showMsgDlg(mActivity, "下一步操作", "新应用已准备就绪，安装前需要先卸载原应用。\n\n请卸载「" + originalAppName + "」，完成后返回此页面，重新点击「开始安装」。", null);
+        } else {
+            dismissConfigDialog.run();
+            ApkInstallUtils.requestInstall(mActivity, apk);
+        }
     }
 }

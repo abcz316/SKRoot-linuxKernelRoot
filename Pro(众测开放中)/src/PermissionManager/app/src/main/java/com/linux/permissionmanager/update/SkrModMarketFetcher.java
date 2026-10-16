@@ -116,6 +116,7 @@ public class SkrModMarketFetcher {
                     it.optString("update_date", ""),
                     it.optString("source_url", ""),
                     it.optString("download_url", ""),
+                    it.optString("changelog_url", ""),
                     it.optString("download_chn_alert", ""),
                     it.optString("download_eng_alert", "")
             ));

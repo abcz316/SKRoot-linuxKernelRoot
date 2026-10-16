@@ -10,6 +10,7 @@ public class SkrModMarketItem {
     private String updateDate;
     private String sourceUrl;
     private String downloadUrl;
+    private String changelogUrl;
     private String downloadChnAlert;
     private String downloadEngAlert;
 
@@ -85,6 +86,14 @@ public class SkrModMarketItem {
         this.downloadUrl = downloadUrl;
     }
 
+    public String getChangelogUrl() {
+        return changelogUrl;
+    }
+
+    public void setChangelogUrl(String changelogUrl) {
+        this.changelogUrl = changelogUrl;
+    }
+
     public String getDownloadChnAlert() {
         return downloadChnAlert;
     }
@@ -101,7 +110,7 @@ public class SkrModMarketItem {
         this.downloadEngAlert = downloadEngAlert;
     }
 
-    public SkrModMarketItem(String chnName, String engName, String desc, String ver, String id32, String author, String updateDate, String sourceUrl, String downloadUrl, String downloadChnAlert, String downloadEngAlert) {
+    public SkrModMarketItem(String chnName, String engName, String desc, String ver, String id32, String author, String updateDate, String sourceUrl, String downloadUrl, String changelogUrl, String downloadChnAlert, String downloadEngAlert) {
         this.chnName = chnName;
         this.engName = engName;
         this.desc = desc;
@@ -111,6 +120,7 @@ public class SkrModMarketItem {
         this.updateDate = updateDate;
         this.sourceUrl = sourceUrl;
         this.downloadUrl = downloadUrl;
+        this.changelogUrl = changelogUrl;
         this.downloadChnAlert = downloadChnAlert;
         this.downloadEngAlert = downloadEngAlert;
     }
