@@ -1,4 +1,5 @@
 ﻿#pragma once
+#include <cstddef>
 #include <optional>
 #include <vector>
 #include <string>
@@ -8,6 +9,20 @@
 #include "../../skroot_env/skroot_su_auth.h"
 #include "../../skroot_env/skroot_test.h"
 namespace skroot_env {
+static_assert(sizeof(module_desc) == 9229);
+static_assert(offsetof(module_desc, name) == 0);
+static_assert(offsetof(module_desc, version) == 1024);
+static_assert(offsetof(module_desc, desc) == 2048);
+static_assert(offsetof(module_desc, author) == 6144);
+static_assert(offsetof(module_desc, id32) == 7168);
+static_assert(offsetof(module_desc, update_json) == 8192);
+static_assert(offsetof(module_desc, web_ui) == 9216);
+static_assert(offsetof(module_desc, min_sdk_ver) == 9217);
+
+static_assert(sizeof(module_record) == 9233);
+static_assert(offsetof(module_record, desc) == 0);
+static_assert(offsetof(module_record, state) == 9229);
+
 inline KModErr read_skroot_log(const char* root_key, std::string& out) {
     thread_local std::string* tls_out = nullptr;
     auto cb = [](const char* text) {
@@ -73,6 +88,21 @@ inline KModErr get_su_auth_list(const char* root_key, std::vector<su_auth_item>&
     tls_out = &out_pkgs;
     KModErr get_su_auth_list_with_cb(const char* root_key, void (*cb)(const su_auth_item* item));
     KModErr err = get_su_auth_list_with_cb(root_key, cb);
+    tls_out = nullptr; 
+    return err;
+}
+
+inline KModErr get_su_probe_records(const char* root_key, std::vector<su_probe_item>& out_records) {
+    thread_local std::vector<su_probe_item>* tls_out = nullptr;
+    auto cb = [](const su_probe_item* record) {
+        if (!tls_out || !record) return;
+        su_probe_item r;
+        std::memcpy(&r, record, sizeof(r));
+        tls_out->push_back(std::move(r));
+    };
+    tls_out = &out_records;
+    KModErr get_su_probe_records_cb(const char* root_key, void (*cb)(const su_probe_item* record));
+    KModErr err = get_su_probe_records_cb(root_key, cb);
     tls_out = nullptr; 
     return err;
 }

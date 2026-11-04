@@ -17,6 +17,9 @@ public final class NativeBridge {
     public static native String removeSuAuth(String rootKey, String appPackageName);
     public static native String getSuAuthList(String rootKey);
     public static native String clearSuAuthList(String rootKey);
+    
+    public static native String getSuProbeRecords(String rootKey);
+    public static native String clearSuProbeRecords(String rootKey);
 
     public static native String installSkrootModule(String rootKey, String zipFilePath, boolean isDevRunOnceMode);
     public static native String uninstallSkrootModule(String rootKey, String modUuid);

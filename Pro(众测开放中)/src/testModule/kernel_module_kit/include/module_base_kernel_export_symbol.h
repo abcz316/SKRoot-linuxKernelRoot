@@ -68,7 +68,7 @@ void kallsyms_lookup_name(Assembler* a, KModErr& out_err, GpX name);
 void kallsyms_lookup_size_offset(Assembler* a, KModErr& out_err, GpX addr, GpX symbolsize, GpX offset);
 void kallsyms_lookup_size_offset(Assembler* a, KModErr& out_err, uint64_t addr, GpX symbolsize, GpX offset);
 
-//TODO：有问题会死机待修复，请先使用
+//TODO：有问题会死机待修复，请先使用kallsyms_lookup_name
 // 原型：int fn(void *data, const char *name, struct module *mod, unsigned long addr)，设置末尾 X0 返回值非0代表终止遍历。
 // typedef void (*SymbolCb)(
 //     Assembler* a, // Assembler 对象，用于生成 ARM64 指令
@@ -354,6 +354,7 @@ KModErr get_PAGE_OFFSET(uint64_t & result);
 // 原型：phys_addr_t virt_to_phys(const volatile void *x); 返回值为 X0 寄存器
 KModErr virt_to_phys(uint64_t virt_kaddr, uint64_t & result);
 // 原型：void *phys_to_virt(phys_addr_t x); 返回值为 X0 寄存器
+void phys_to_virt(Assembler* a, KModErr& out_err, GpX phys_addr);
 KModErr phys_to_virt(uint64_t phys_addr, uint64_t & result);
 
 // 原型：#define vmemmap 返回值为 X0 寄存器
@@ -400,11 +401,20 @@ void security_secctx_to_secid(Assembler* a, KModErr& out_err, GpX secdata, GpW s
 void security_secctx_to_secid(Assembler* a, KModErr& out_err, GpX secdata, uint32_t seclen, GpX secid);
 void security_secctx_to_secid(Assembler* a, KModErr& out_err, GpX secdata, uint32_t seclen, uint64_t secid);
 
+// 原型：struct cred *prepare_kernel_cred(struct task_struct *daemon); 返回值为 X0 寄存器
+void prepare_kernel_cred(Assembler* a, KModErr& out_err, GpX daemon);
+
+// 原型：int commit_creds(struct cred *new); 返回值为 W0 寄存器
+void commit_creds(Assembler* a, KModErr& out_err, GpX _new);
+
 // 原型：void *vmap(struct page **pages, unsigned int count, unsigned long flags, pgprot_t prot); 返回值为 X0 寄存器
 void vmap(Assembler* a, KModErr& out_err, GpX pages, GpW count, GpX flags, GpX prot);
 
 // 原型：void vunmap(const void *addr); 无返回值
 void vunmap(Assembler* a, KModErr& out_err, GpX addr);
+
+// 原型：unsigned long vm_mmap(struct file *file, unsigned long addr, unsigned long len, unsigned long prot, unsigned long flag, unsigned long offset); 返回值为 X0 寄存器
+void vm_mmap(Assembler* a, KModErr& out_err, GpX file, GpX addr, GpX len, GpX prot, GpX flag, GpX offset);
 
 // 原型：struct block_device *I_BDEV(struct inode *inode); 返回值为 X0 寄存器
 void I_BDEV(Assembler* a, KModErr& out_err, GpX inode);
@@ -412,6 +422,22 @@ void I_BDEV(Assembler* a, KModErr& out_err, uint64_t inode_kaddr);
 
 // 原型：void dump_stack(void); 无返回值
 void dump_stack(Assembler* a, KModErr& out_err);
+
+namespace linux_above_3_15_0 {
+// 原型：int tracepoint_probe_register(struct tracepoint *tp, void *probe, void *data); 返回值为 W0 寄存器
+void tracepoint_probe_register(Assembler* a, KModErr& out_err, GpX tp, GpX probe, GpX data);
+
+// 原型：int tracepoint_probe_unregister(struct tracepoint *tp, void *probe, void *data); 返回值为 W0 寄存器
+void tracepoint_probe_unregister(Assembler* a, KModErr& out_err, GpX tp, GpX probe, GpX data);
+}
+
+namespace linux_older {
+// 原型：int tracepoint_probe_register(const char *name, void *probe, void *data); 返回值为 W0 寄存器
+void tracepoint_probe_register(Assembler* a, KModErr& out_err, GpX name, GpX probe, GpX data);
+
+// 原型：int tracepoint_probe_unregister(const char *name, void *probe, void *data); 返回值为 W0 寄存器
+void tracepoint_probe_unregister(Assembler* a, KModErr& out_err, GpX name, GpX probe, GpX data);
+}
 
 namespace linux_above_5_10_0 {
 // 原型：struct btf *bpf_get_btf_vmlinux(void); 返回值为 X0 寄存器

@@ -51,6 +51,15 @@ KModErr kallsyms_lookup_name_array(const char* name, std::vector<uint64_t>& out)
 KModErr kallsyms_lookup_name_array(const char* name, std::vector<SymbolHit>& out, SymbolMatchMode mode);
 
 /***************************************************************************
+ * 获取内核函数大小
+ * 参数:
+ *   kaddr          内核函数内的地址
+ *   symbol_size    输出：函数大小（字节）
+ * 返回: OK 表示成功；其它值为错误码
+ ***************************************************************************/
+KModErr get_symbol_size(uint64_t kaddr, uint64_t & symbol_size);
+
+/***************************************************************************
  * 获取sys_call_table内核地址
  * 参数: func_start_addr             输出sys_call_table内核地址
  * 返回: OK 表示成功；其它值为错误码
@@ -89,10 +98,11 @@ bool is_syscall_args_in_ptregs();
  * 
  * 说明: 因部分手机内核对avc_denied有特殊保护，不可直接 Hook，Skroot在这里提供一个特殊内核地址，可绕过厂商的特殊保护。
  * 
- * 参数: func_entry_kaddr            输出 avc_denied 内核地址
- *      ret_after_can_hook_kaddr    输出 avc_denied ret 前可安装HOOK的地址
+ * 参数: entry_kaddr                输出 avc_denied 函数入口内核地址
+ *      ret_before_hook_kaddr      输出 avc_denied ret 前可安装 HOOK 的地址
+ *      first_arg_size             输出 avc_denied 第一个参数的宽度（4 或 8 字节）
  * 返回: OK 表示成功；其它值为错误码
  ***************************************************************************/
-KModErr get_avc_denied_kaddr(uint64_t & func_entry_kaddr, uint64_t & ret_after_can_hook_kaddr);
+KModErr get_avc_denied_kaddr(uint64_t & entry_kaddr, uint64_t & ret_before_hook_kaddr, uint32_t & first_arg_size);
 
 }

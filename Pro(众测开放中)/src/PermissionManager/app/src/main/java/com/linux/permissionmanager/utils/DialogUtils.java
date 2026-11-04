@@ -122,7 +122,7 @@ public class DialogUtils {
                 .setTitle(title != null ? title : "请选择一个选项")
                 .setSingleChoiceItems(items, checkedItem, (d, which) -> {
                     d.dismiss();
-                    if (listener != null) listener.onClick(d, which);
+                    if (listener != null) new Handler(Looper.getMainLooper()).post(() -> listener.onClick(d, which));
                 })
                 .setCancelable(false)
                 .setNegativeButton("取消", (d, which) -> d.dismiss())

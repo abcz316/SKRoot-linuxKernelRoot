@@ -45,12 +45,15 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class HomeFragment extends Fragment implements View.OnClickListener {
     private Activity mActivity;
     private String mRootKey = "";
     private boolean mIsHotload = false;
-    private HotloadMethod mHotloadMethod = null;
+    private HotloadMethod mHotloadMethod = HotloadMethod.NONE;
     private String lastInputCmd = "id";
     private String lastInputRootExecPath = "";
     private GenerateFakeAppDlg mGenFakeAppDlg;
@@ -124,7 +127,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
                 showInputRootCmdDlg();
                 break;
             case R.id.generate_fake_app_btn:
-                mGenFakeAppDlg.showGenerateFakeAppDlg(this::installMyselfApk);
+                onClickGenerateFakeAppBtn();
                 break;
             case R.id.implant_app_btn:
                 break;
@@ -141,6 +144,15 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 
     private boolean isSkrootChannelOK(String rootKey) { return NativeBridge.testSkrootBasics(rootKey, "Channel").contains("OK"); }
 
+    private void onClickGenerateFakeAppBtn() {
+        String curState = NativeBridge.getSkrootEnvState(mRootKey);
+        if (curState != null && curState.contains("Running")) {
+            mGenFakeAppDlg.showGenerateFakeAppDlg(this::installMyselfApk);
+        } else {
+            DialogUtils.showMsgDlg(mActivity, "提示", "SKRoot环境未运行，请先安装并启动SKRoot环境", null);
+        }
+    }
+
     private void showSkrootStatus() {
         String curState = NativeBridge.getSkrootEnvState(mRootKey);
         String installedVer = NativeBridge.getInstalledSkrootEnvVersion(mRootKey);
@@ -153,6 +165,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
         } else if(curState.indexOf("Running") != -1) {
             if (sdkVer.equals(installedVer)) {  
                 appendConsoleMsg("SKRoot环境运行中，核心版本：" + installedVer);
+                appendConsoleMsg("【安全提示】目前正在众测中，请认准官方渠道。请勿使用非官方修补文件，隐蔽性无法保证，请慎用，以免造成损失。官方Q群：582990929");
             } else {
                 appendConsoleMsg("SKRoot环境运行中，核心版本：" + installedVer + "，版本太低，请升级！");
                 appendConsoleMsg("升级方式：请重新安装 SKRoot 环境。");
@@ -212,13 +225,13 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
     }
 
     private void onClickInstallSkrootEnvBtn() {
-        String err = NativeBridge.installSkrootEnv(mRootKey, mIsHotload ? "HotLoad" : "Boot", mHotloadMethod != null ? mHotloadMethod.getConfigValue() : "");
+        String err = NativeBridge.installSkrootEnv(mRootKey, mIsHotload ? "HotLoad" : "Boot", mHotloadMethod.getConfigValue());
         appendConsoleMsg(err);
         if(mIsHotload && err.indexOf("OK") != -1) {
             NativeBridge.runRootCmd(mRootKey, "rm -f " + HOTLOAD_SHELL_PATH);
             NativeBridge.runRootCmd(mRootKey, "pm uninstall " + AppConfig.ZYGOTE_PRELOAD_TOOLS_PACKAGE);
         }
-        if(mHotloadMethod == HotloadMethod.CVE_2026_43499) {
+        if(mHotloadMethod == HotloadMethod.CVE_2026_43499 || mHotloadMethod == HotloadMethod.CVE_2026_43284) {
             DialogUtils.showCustomDialog(mActivity, "确认", "请问要软重启吗？\n\n提示：当前环境已安装完成！模块也已激活。一般不需要软重启，当使用特殊模块（如改机型）才需要进行软重启。",null,
             "不需要", (dialog, which) -> {
                     dialog.dismiss();
@@ -295,15 +308,16 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
     }
 
     private void installMyselfApk(GenerateFakeAppConfig config, Runnable dismissConfigDialog) {
-        if(!ApkInstallUtils.getInstallPermission(mActivity)) {
-            DialogUtils.showNeedPermissionDialog(mActivity);
+        if (AppInstallUtils.isAppInstalled(mActivity, config.pkgName) && AppInstallUtils.isSystemApp(mActivity, config.pkgName)) {
+            dismissConfigDialog.run();
+            DialogUtils.showMsgDlg(mActivity, "提示", "系统应用已存在，无法安装。", null);
             return;
         }
         Dialog loadingDialog = DialogUtils.showLoadingDialog(mActivity, "正在生成APK，请稍候…");
         new Thread(() -> {
             try {
                 File apk = cloneSelfApk(config);
-                mActivity.runOnUiThread(() -> onFakeApkGenerated(config.pkgName, config.originalAppName, apk, dismissConfigDialog));
+                mActivity.runOnUiThread(() -> onFakeApkGenerated(config.pkgName, config.launchActivity, apk, dismissConfigDialog));
             } catch (Exception e) {
                 mActivity.runOnUiThread(() -> DialogUtils.showMsgDlg(mActivity, "生成失败", "生成失败：" + e.getMessage(), null));
             } finally {
@@ -312,12 +326,15 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
         }, "apk-generate-worker").start();
     }
 
-    private void onFakeApkGenerated(String pkgName, String originalAppName, File apk, Runnable dismissConfigDialog) {
-        if (AppInstallUtils.isAppInstalled(mActivity, pkgName)) {
-            DialogUtils.showMsgDlg(mActivity, "下一步操作", "新应用已准备就绪，安装前需要先卸载原应用。\n\n请卸载「" + originalAppName + "」，完成后返回此页面，重新点击「开始安装」。", null);
-        } else {
+    private void onFakeApkGenerated(String pkgName, String launchActivity, File apk, Runnable dismissConfigDialog) {
+        String installer = mActivity.getPackageManager().getInstallerPackageName(pkgName);
+        if (TextUtils.isEmpty(installer)) installer = "com.android.vending";
+        String result = NativeBridge.runRootCmd(mRootKey, "pm uninstall " + pkgName + " ; pm install -i \"" + installer + "\" " + apk.getAbsolutePath() + " && echo \"INSTALL_SUCCESS\" && am start -n " + pkgName + "/" + launchActivity);
+        if (result != null && result.contains("INSTALL_SUCCESS")) {
             dismissConfigDialog.run();
-            ApkInstallUtils.requestInstall(mActivity, apk);
+            DialogUtils.showMsgDlg(mActivity, "提示", "安装成功", null);
+        } else {
+            DialogUtils.showMsgDlg(mActivity, "提示", "安装失败：" + result, null);
         }
     }
 }

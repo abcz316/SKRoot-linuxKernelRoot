@@ -5,15 +5,17 @@ int skroot_module_main(const char* root_key, const char* module_private_dir) {
     printf("[module_background_service_example] hello\n");
     pid_t child = fork();
     if (child == 0) {
-        //读取配置文件内容
-        std::string value;
-        KModErr err = kernel_module::read_string_disk_storage("myKey", value);
-        if(is_ok(err)) {
-            printf("[module_background_service_example] read storage succeed: value: %s\n", value.c_str());
-        } else {
-            printf("[module_background_service_example] read storage failed: %s\n", to_string(err).c_str());
+        // 后台进程演示：每 10 秒读取一次磁盘存储并打印结果
+        while (true) {
+            std::string value;
+            KModErr err = kernel_module::read_string_disk_storage("myKey", value);
+            if (is_ok(err)) {
+                printf("[module_background_service_example] read storage succeed: value: %s\n", value.c_str());
+            } else {
+                printf("[module_background_service_example] read storage failed: %s\n", to_string(err).c_str());
+            }
+            sleep(10); // 每 10 秒读取一次
         }
-        _exit(0);
     }
     return 0;
 }

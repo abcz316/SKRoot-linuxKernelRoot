@@ -4,4 +4,5 @@
     <item android:id="@+id/add_su_auth" android:title="添加su授权"/>
     <item android:id="@+id/add_adb_auth" android:title="添加adb授权"/>
     <item android:id="@+id/clear_su_auth" android:title="清空su授权"/>
+    <item android:id="@+id/clear_su_probe_records" android:title="清空su嗅探记录"/>
 </menu>

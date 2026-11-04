@@ -1,10 +1,10 @@
 LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := module_background_service_example
+LOCAL_MODULE := module_background_service
 
 LOCAL_SRC_FILES := \
-     $(LOCAL_PATH)/../module_background_service_example.cpp
+     $(LOCAL_PATH)/../module_background_service.cpp
 
 KERNEL_MODULE_KIT := $(LOCAL_PATH)/../../kernel_module_kit
 LOCAL_C_INCLUDES  += $(KERNEL_MODULE_KIT)/include

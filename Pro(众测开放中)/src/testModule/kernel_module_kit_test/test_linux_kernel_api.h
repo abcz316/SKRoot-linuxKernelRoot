@@ -28,6 +28,16 @@ KModErr Test_kallsyms_lookup_name2() {
     return KModErr::OK;
 }
 
+KModErr Test_get_symbol_size() {
+    uint64_t kaddr = 0;
+    RETURN_IF_ERROR(kernel_module::kallsyms_lookup_name("kernel_halt", kaddr));
+
+    uint64_t symbol_size = 0;
+    KModErr err = kernel_module::get_symbol_size(kaddr, symbol_size);
+    printf("get_symbol_size return: %s, addr: %p, size: 0x%llx\n", to_string(err).c_str(), (void*)kaddr, (unsigned long long)symbol_size);
+    return err;
+}
+
 KModErr Test_get_task_mm() {
     KModErr err = KModErr::ERR_MODULE_ASM;
     aarch64_asm_ctx asm_ctx = init_aarch64_asm();
@@ -343,8 +353,8 @@ KModErr Test_module_memfree2() {
 
 KModErr Test_kern_path() {
     using LookupFlags = kernel_module::export_symbol::LookupFlags;
-    uint64_t path_buf_addr = 0;
-    RETURN_IF_ERROR(kernel_module::export_symbol::linux_older::module_alloc(0x1000, path_buf_addr));
+    uint64_t path_buf_kaddr = 0;
+    RETURN_IF_ERROR(kernel_module::alloc_kernel_mem(0x1000, path_buf_kaddr));
 
     aarch64_asm_ctx asm_ctx = init_aarch64_asm();
     auto a = asm_ctx.assembler();
@@ -353,7 +363,7 @@ KModErr Test_kern_path() {
     aarch64_asm_set_x_cstr_ptr(a, x0, "/data/bhuvsUdRKoCLH3OB/init");
 
     KModErr err = KModErr::ERR_MODULE_ASM;
-    kernel_module::export_symbol::kern_path(a, err, x0, LookupFlags::LOOKUP_FOLLOW, path_buf_addr);
+    kernel_module::export_symbol::kern_path(a, err, x0, LookupFlags::LOOKUP_FOLLOW, path_buf_kaddr);
     RETURN_IF_ERROR(err);
 
     kernel_module::arm64_module_asm_func_end(a, x0);
@@ -361,5 +371,32 @@ KModErr Test_kern_path() {
     uint64_t result = 0;
     RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, result));
     printf("kern_path output result: %p\n", (void*)result);
+    return KModErr::OK;
+}
+
+KModErr Test_security_secctx_to_secid() {
+    uint64_t result_sid_buf_kaddr = 0;
+    RETURN_IF_ERROR(kernel_module::alloc_kernel_mem(4, result_sid_buf_kaddr));
+
+    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
+    auto a = asm_ctx.assembler();
+    kernel_module::arm64_module_asm_func_start(a);
+
+    static const char ctx[] = "u:object_r:kernel:s0";
+    aarch64_asm_set_x_cstr_ptr(a, x0, ctx);
+
+    KModErr err = KModErr::ERR_MODULE_ASM;
+    kernel_module::export_symbol::security_secctx_to_secid(a, err, x0, strlen(ctx), result_sid_buf_kaddr);
+    RETURN_IF_ERROR(err);
+
+    kernel_module::arm64_module_asm_func_end(a, x0);
+	std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
+    uint64_t result = 0;
+    RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, result));
+    printf("security_secctx_to_secid output result: %p\n", (void*)result);
+
+    uint32_t result_sid = 0;
+    RETURN_IF_ERROR(kernel_module::read_kernel_mem(result_sid_buf_kaddr, &result_sid, sizeof(result_sid)));
+    printf("security_secctx_to_secid result_sid: %d\n", result_sid);
     return KModErr::OK;
 }
