@@ -54,6 +54,20 @@ KModErr Test_read_kernel_mem() {
 	return KModErr::OK;
 }
 
+KModErr Test_read_kernel_mem_nofault() {
+	uint64_t addr = 0;
+	RETURN_IF_ERROR(kernel_module::alloc_kernel_mem(kernel_module::get_page_size(), addr));
+	printf("Output addr: %p\n", (void*)addr);
+	std::vector<uint8_t> buf(16);
+	uint32_t r = kernel_module::read_kernel_mem_nofault(addr + kernel_module::get_page_size() - 8, buf.data(), buf.size());
+	printf("read_kernel_mem_nofault Buffer %d bytes:", r);
+	for (size_t i = 0; i < buf.size(); ++i) {
+		printf(" %02hhx", buf[i]);
+	}
+	printf("\n");
+	return KModErr::OK;
+}
+
 KModErr Test_write_rw_kernel_mem() {
 	uint32_t test_data[2] = {0xAABBCCDD, 0xEEFF1122};
 
@@ -180,15 +194,16 @@ KModErr Test_btf_resolve_member_offset() {
 
 int main(int argc, char *argv[]) {
  	//TODO: 在此修改你的Root key值。
-	fake_skroot_module_main("txEO2by4A0auZpUxL7Cji2aMR9olMylmoEyNLkoTaqYvuECE");
+	fake_skroot_module_main("17TiFiS9OzDWnbvkDiJN1QNNtrLu4a844Ipcb134AhySPrz7");
 
  	// 单元测试：内核模块基础能力
 	int idx = 1;
- 	TEST(idx++, Test_execute_kernel_asm_func);				// 执行shellcode并获取返回值ruct.cred）
+	TEST(idx++, Test_execute_kernel_asm_func);				// 执行shellcode并获取返回值ruct.cred）
 	TEST(idx++, Test_get_kernel_base_vaddr);				// 获取内核虚拟基址
  	TEST(idx++, Test_alloc_kernel_mem);						// 申请内核内存
  	TEST(idx++, Test_free_kernel_mem);						// 释放内核内存
  	TEST(idx++, Test_read_kernel_mem);						// 读取内核内存
+ 	TEST(idx++, Test_read_kernel_mem_nofault);				// 安全读取内核内存
  	TEST(idx++, Test_write_rw_kernel_mem);					// 写入内核内存(可读写区域)
  	TEST(idx++, Test_write_x_kernel_mem);					// 写入内核内存(仅执行区域)
  	TEST(idx++, Test_disk_storage);							// 读取、写入磁盘存储
@@ -199,6 +214,7 @@ int main(int argc, char *argv[]) {
  	// 单元测试: Linux内核API调用
  	TEST(idx++, Test_kallsyms_lookup_name1);				// 调用内核API：kallsyms_lookup_name
  	TEST(idx++, Test_kallsyms_lookup_name2);
+ 	TEST(idx++, Test_get_symbol_size);
  	TEST(idx++, Test_get_task_mm);							// 调用内核API：get_task_mm、mmput
  	TEST(idx++, Test_printk);								// 调用内核API：printf
  	TEST(idx++, Test_copy_from_user);						// 调用内核API：copy_from_user
@@ -284,7 +300,11 @@ int main(int argc, char *argv[]) {
 	TEST(idx++, Test_get_gendisk_part0_offset2);			// 获取 gendisk 结构体中 part0 字段的偏移量
 	TEST(idx++, Test_get_seq_operations_show_offset);		// 获取 seq_operations 结构体中 show 字段的偏移量
 	TEST(idx++, Test_get_kstat_ino_offset);					// 获取 kstat 结构体中 ino 字段的偏移量
- 	TEST(idx++, Test_set_current_caps);						// 设置进程能力集
+	TEST(idx++, Test_get_tracepoint_name_offset);			// 获取 tracepoint 结构体中 name 字段的偏移量
+	TEST(idx++, Test_get_tracepoint_funcs_offset);			// 获取 tracepoint 结构体中 funcs 字段的偏移量
+	TEST(idx++, Test_get_nameidata_last_offset);			// 获取 nameidata 结构体中 last 字段的偏移量
+	TEST(idx++, Test_get_nameidata_last_type_offset);		// 获取 nameidata 结构体中 last_type 字段的偏移量
+	TEST(idx++, Test_set_current_caps);						// 设置进程能力集
  	TEST(idx++, Test_set_current_process_name);				// 设置进程名
 
  	// 单元测试：内核字符串与内存操作

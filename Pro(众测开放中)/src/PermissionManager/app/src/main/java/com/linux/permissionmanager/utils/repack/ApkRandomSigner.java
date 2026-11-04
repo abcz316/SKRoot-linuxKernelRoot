@@ -48,10 +48,10 @@ final class ApkRandomSigner {
         String ou = validateSubjectField("OU", info.certOU, 64, false);
         String l = validateSubjectField("L", info.certL, 128, false);
         String st = validateSubjectField("ST", info.certST, 128, false);
-        String c = validateSubjectField("C", info.certC, 2, false);
+        String c = validateSubjectField("C", normalizeCountryCode(info.certC), 2, false);
         if (c != null) {
             c = c.toUpperCase(Locale.ROOT);
-            if (!c.matches("[A-Za-z0-9]{2}")) throw new IllegalArgumentException("证书国家C必须是两个英文字母或数字: " + c);
+            if (!c.matches("[A-Z]{2}")) throw new IllegalArgumentException("证书国家 C 必须是两个英文字母: " + c);
         }
 
         // X.509 RDNSequence 从外到内编码，因此多数解析器的 RFC2253 输出顺序相反。
@@ -63,6 +63,18 @@ final class ApkRandomSigner {
         appendSubjectRdn(rdns, 0x0b, ou, false); // 2.5.4.11 organizationalUnitName
         appendSubjectRdn(rdns, 0x03, cn, false); // 2.5.4.3 commonName
         return Der.value(0x30, rdns.toByteArray());
+    }
+
+    /** 把 ISO 3166-1 alpha-3 国家代码转换为 X.509 countryName 所需的 alpha-2。 */
+    private static String normalizeCountryCode(String country) {
+        if (country == null) return null;
+        String code = country.trim().toUpperCase(Locale.ROOT);
+        if (code.length() == 3) {
+            for (String alpha2 : Locale.getISOCountries()) {
+                if (code.equals(new Locale("", alpha2).getISO3Country())) return alpha2;
+            }
+        }
+        return code;
     }
 
     private static String validateSubjectField(String field, String text, int maxLength, boolean required) {

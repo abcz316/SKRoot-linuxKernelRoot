@@ -16,6 +16,9 @@ enum class ExploitMethod : uint32_t {
     None          = 0, // 无（默认，不使用特定漏洞）
     Magica        = 1, // Magica 漏洞方式
     CVE2026_43499 = 2, // CVE-2026-43499 漏洞方式
+    CVE2026_43284 = 3, // CVE-2026-43284 漏洞方式
+    CVE2026_64650 = 4, // CVE-2026-64650 漏洞方式
+    CVE2026_98260 = 5, // CVE-2026-98260 漏洞方式
 };
 
 // SKRoot 环境安装配置
@@ -58,7 +61,7 @@ SkrootEnvState get_skroot_environment_state(const char* root_key);
  * 参数: root_key  ROOT权限密钥文本
  * 返回: OK 表示成功；其它值为错误码
  ***************************************************************************/
-struct SkrootSdkVersion { uint32_t major = 0, minor = 0, patch = 0; };
+struct SkrootSdkVersion { uint32_t major, minor, patch; };
 KModErr get_installed_skroot_environment_version(const char* root_key, SkrootSdkVersion& out_ver);
 
 /***************************************************************************

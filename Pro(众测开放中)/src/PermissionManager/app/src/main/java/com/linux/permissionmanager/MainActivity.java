@@ -32,6 +32,7 @@ import com.linux.permissionmanager.fragment.SuAuthFragment;
 import com.linux.permissionmanager.fragment.HomeFragment;
 import com.linux.permissionmanager.fragment.SettingsFragment;
 import com.linux.permissionmanager.fragment.SkrModFragment;
+import com.linux.permissionmanager.helper.dirtyfrag.ExploitRunner;
 import com.linux.permissionmanager.model.HotloadMethod;
 import com.linux.permissionmanager.utils.repack.ApkGenerator;
 import com.linux.permissionmanager.utils.ApkInstallUtils;
@@ -46,7 +47,6 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
@@ -56,7 +56,7 @@ public class MainActivity extends AppCompatActivity {
     private String mRootKey = "";
     private boolean mIsHotloadMode = false;
     private String mHotloadCmd = "";
-    private HotloadMethod mHotloadMethod = null;
+    private HotloadMethod mHotloadMethod = HotloadMethod.NONE;
     private String mOneplusBypassResult = "";
 
     private HomeFragment mHomeFragm;
@@ -99,7 +99,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showModeSelectDlg(boolean currentIsHotload, @NonNull Runnable onSelectBoot, @NonNull Runnable onSelectHotload) {
-        final String[] items = {"1.刷 Boot 模式", "2.热启动模式"};
+        final String[] items = {"1.刷Boot", "2.热启动(内核漏洞)"};
         DialogUtils.showSingleChoiceDialog(this, "请选择模式", items, -1,
                 (dialog, which) -> {
                     if(which == 0) {
@@ -275,19 +275,24 @@ public class MainActivity extends AppCompatActivity {
                 "    exit 0\n" +
                 "fi\n";
     }
-    
+
+    private boolean precheckHotloadScript(String script, HotloadMethod method) {
+        if (method == HotloadMethod.MAGICA) {
+            if(AppLaunchUtils.launchApp(this, AppConfig.ZYGOTE_PRELOAD_TOOLS_PACKAGE, AppConfig.ZYGOTE_PRELOAD_TOOLS_ENTRY_ACTIVITY)) return false;
+            if(!ApkInstallUtils.getInstallPermission(this)) {
+                DialogUtils.showNeedPermissionDialog(this);
+                return false;
+            }
+            installMagicaApk(script);
+            return false;
+        }
+        return true;
+    }
+
     private void executeHotloadScript(String script, HotloadMethod method) {
         if(TextUtils.isEmpty(script)) return;
         int methodVer = extractConfigInt(script, "METHOD_VER");
-        if (method == HotloadMethod.MAGICA) {
-            if(AppLaunchUtils.launchApp(this, AppConfig.ZYGOTE_PRELOAD_TOOLS_PACKAGE, AppConfig.ZYGOTE_PRELOAD_TOOLS_ENTRY_ACTIVITY)) return;
-            if(!ApkInstallUtils.getInstallPermission(this)) {
-                DialogUtils.showNeedPermissionDialog(this);
-                return;
-            }
-            installMagicaApk(script);
-            return;
-        }
+        if(!precheckHotloadScript(script, method)) return;
         DialogUtils.LogDialog logDlg = new DialogUtils.LogDialog(this, "正在加载热启动补丁，预计需要 1 分钟");
         logDlg.appendLine("[开始执行热启动补丁]");
         if (method == HotloadMethod.SHELL) {
@@ -298,6 +303,16 @@ public class MainActivity extends AppCompatActivity {
         } else if (method == HotloadMethod.CVE_2026_43499) {
             new Thread(() -> {
                 ShellUtils.executeScript(this, getCVE2026_43499GuideScript(methodVer) + script, logDlg::appendLine);
+                onHotloadCompletionResult(logDlg);
+            }).start();
+        } else if (method == HotloadMethod.CVE_2026_43284) {
+            new Thread(() -> {
+                final String[] koPathHolder = new String[1];
+                ShellUtils.executeScript(this, script, line -> {
+                    logDlg.appendLine(line);
+                    if (line.startsWith("KO_PATH=")) koPathHolder[0] = line.substring("KO_PATH=".length()).trim();
+                });
+                logDlg.appendLine("dfroot rc=" + ExploitRunner.run(this, logDlg::appendLine, koPathHolder[0]) + "\n");
                 onHotloadCompletionResult(logDlg);
             }).start();
         }
@@ -342,9 +357,10 @@ public class MainActivity extends AppCompatActivity {
         rootLayout.setOrientation(LinearLayout.VERTICAL);
         rootLayout.setPadding(dp16, dp16, dp16, dp4);
         TextView tipText = new TextView(this);
-        tipText.setText("可直接输入 Key，或将热启动补丁包放到 "+ HOTLOAD_SHELL_PATH +" 后点击“从1.h导入”");
         tipText.setTextSize(14);
         tipText.setPadding(0, dp4, 0, dp4);
+        updateHotloadTipText(tipText, mHotloadMethod);
+
         EditText inputTxt = new EditText(this);
         inputTxt.setText(mRootKey);
         inputTxt.setFocusable(true);
@@ -362,7 +378,7 @@ public class MainActivity extends AppCompatActivity {
         exportLp.setMargins(dp6, 0, 0, 0);
         actionRow.addView(importBtn, importLp);
         actionRow.addView(exportBtn, exportLp);
-        ModeRowHolder modeRow = createModeRow(this, "热启动");
+        ModeRowHolder modeRow = createModeRow(this, "热启动(内核漏洞)");
         rootLayout.addView(modeRow.root);
         rootLayout.addView(tipText);
         rootLayout.addView(inputTxt);
@@ -416,6 +432,7 @@ public class MainActivity extends AppCompatActivity {
            mRootKey = rootKey;
            mHotloadMethod = HotloadMethod.fromConfig(method);
            mHotloadCmd = scriptText;
+           updateHotloadTipText(tipText, mHotloadMethod);
            inputTxt.setText(mRootKey);
            inputTxt.setEnabled(false);
            AppSettings.setString("rootKey", mRootKey);
@@ -432,6 +449,14 @@ public class MainActivity extends AppCompatActivity {
         });
         dialog.show();
         if (!TextUtils.isEmpty(mHotloadCmd)) oneplusBypassWriteStage1();
+    }
+    private void updateHotloadTipText(TextView tipText, HotloadMethod method) {
+        String value = method.getConfigValue();
+        if (TextUtils.isEmpty(value)) {
+            tipText.setText("可直接输入 Key，或将热启动补丁包放到 " + HOTLOAD_SHELL_PATH + " 后点击“从1.h导入”");
+        } else {
+            tipText.setText("已选内核漏洞：" + value);
+        }
     }
     private void setupFragment(String rootKey) {
         mBottomTab = findViewById(R.id.bottom_tab);

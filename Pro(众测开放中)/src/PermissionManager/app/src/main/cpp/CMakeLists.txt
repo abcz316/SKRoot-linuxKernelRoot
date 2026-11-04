@@ -59,3 +59,5 @@ target_link_libraries( # Specifies the target library.
 		${CMAKE_CURRENT_SOURCE_DIR}/../../../../../testModule/kernel_module_kit/lib/libkernel_module_kit_static.a
 		z
         ${log-lib})
+
+add_subdirectory(dirtyFrag)

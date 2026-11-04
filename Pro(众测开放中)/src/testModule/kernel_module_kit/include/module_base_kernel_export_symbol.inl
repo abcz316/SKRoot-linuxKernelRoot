@@ -3,6 +3,7 @@
 #include "kernel_module_kit_umbrella.h"
 #include "module_math.h"
 #include "aarch64_kernel_sym_call_helper.h"
+#include "third_party/proc_iomem_utils.h"
 #include <sys/system_properties.h>
 
 /***************************************************************************
@@ -10,9 +11,7 @@
  ***************************************************************************/
 #define RETURN_ERR_IF_KERNEL_VERSION_LESS(ver)                             \
     do {                                                                   \
-        static_assert(std::is_same<decltype(out_err), KModErr&>::value,    \
-            "RETURN_ERR_IF_KERNEL_VERSION_LESS: out_err 必须是 KModErr&"    \
-        );                                                                 \
+        static_assert(std::is_same<decltype(out_err), KModErr&>::value, "RETURN_ERR_IF_KERNEL_VERSION_LESS: out_err 必须是 KModErr&"); \
         if (kernel_module::is_kernel_version_less(ver)) {                  \
             out_err = KModErr::ERR_MODULE_SYMBOL_NOT_MATCH_LINUX_VER;      \
             return;                                                        \
@@ -21,9 +20,7 @@
 
 #define RETURN_ERR_IF_KERNEL_VERSION_AT_LEAST(ver)                         \
     do {                                                                   \
-        static_assert(std::is_same<decltype(out_err), KModErr&>::value,    \
-            "RETURN_ERR_IF_KERNEL_VERSION_AT_LEAST: out_err 必须是 KModErr&"\
-        );                                                                 \
+        static_assert(std::is_same<decltype(out_err), KModErr&>::value, "RETURN_ERR_IF_KERNEL_VERSION_AT_LEAST: out_err 必须是 KModErr&"); \
         if (!kernel_module::is_kernel_version_less(ver)) {                 \
             out_err = KModErr::ERR_MODULE_SYMBOL_NOT_MATCH_LINUX_VER;      \
             return;                                                        \
@@ -124,19 +121,19 @@ inline void get_current_thread_info(Assembler* a, GpX out_regs) {
 }
 
 static const std::vector<std::string> copy_from_user_symbol_names = {
-	"__arch_copy_from_user",	// Android 10+ / Kernel 4.14+ (GKI)
-	"__copy_from_user",			// Android 7-9 / Kernel 3.18-4.9
-	"_copy_from_user",			// 老内核 fallback (通常无 LTO，可用)
-	"arm64_copy_from_user",		// 极少数异类
-	"copy_from_user",			// 最后倔强
+	"__arch_copy_from_user",	// ARM64 主实现，Linux 4.x~6.18，原始复制接口
+	"__copy_from_user",			// 旧版 ARM64 兼容
+	"_copy_from_user",			// 通用包装函数，部分内核配置存在
+	"arm64_copy_from_user",		// 厂商定制兼容项
+	"copy_from_user",			// 通常为内联函数，不保证存在符号
 };
 
 static const std::vector<std::string> copy_to_user_symbol_names = {
-	"__arch_copy_to_user",	// Android 10+ / Kernel 4.14+ (GKI)
-	"__copy_to_user",		// Android 7-9 / Kernel 3.18-4.9
-	"_copy_to_user",		// 老内核 fallback (通常无 LTO，可用)
-	"arm64_copy_to_user",	// 极少数异类
-	"copy_to_user",			// 最后倔强
+	"__arch_copy_to_user",	// ARM64 主实现，Linux 4.x~6.18，原始复制接口
+	"__copy_to_user",		// 旧版 ARM64 兼容
+	"_copy_to_user",		// 通用包装函数，部分内核配置存在
+	"arm64_copy_to_user",	// 厂商定制兼容项
+	"copy_to_user",			// 通常为内联函数，不保证存在符号
 };
 
 inline void copy_from_user(Assembler* a, KModErr & out_err, GpX to, GpX __user_from, GpX n) {
@@ -747,9 +744,22 @@ inline void apply_to_existing_page_range(Assembler* a, KModErr& out_err, GpX mm,
 }
 
 inline KModErr get_PHYS_OFFSET(uint64_t & result) {
-	uint64_t kaddr;
-	RETURN_IF_ERROR(kernel_module::kallsyms_lookup_name("memstart_addr", kaddr));
-	return kernel_module::read_kernel_mem(kaddr, &result, sizeof(result));
+	static std::atomic<uint64_t> last_result{0};
+	uint64_t cached = last_result.load(std::memory_order_acquire);
+	if (cached == 0) {
+		uint64_t kaddr = 0;
+		kernel_module::kallsyms_lookup_name("memstart_addr", kaddr);
+		if(kaddr) {
+			RETURN_IF_ERROR(kernel_module::read_kernel_mem(kaddr, &cached, sizeof(cached)));		
+		} else if(proc_iomem_utils::get_phys_offset_from_iomem(cached)) {
+			printf("get_PHYS_OFFSET from iomem: %llx\n", (unsigned long long)cached);
+		} else {
+			return KModErr::ERR_MODULE_SYMBOL_NOT_EXIST;
+		}
+		last_result.store(cached, std::memory_order_release);
+	}
+	result = cached;
+	return KModErr::OK;
 }
 
 inline KModErr get_PAGE_OFFSET(uint64_t& result) {
@@ -780,12 +790,68 @@ inline KModErr virt_to_phys(uint64_t virt_kaddr, uint64_t & result) {
 	return KModErr::OK;
 }
 
+inline void phys_to_virt(Assembler* a, KModErr& out_err, GpX phys_addr) {
+	SymbolLookupSilentGuard_8dfccc5cf454087c7314725d3487e703 s;
+    static const uint64_t physvirt_offset = []() {
+        uint64_t addr = 0;
+        (void)kernel_module::kallsyms_lookup_name("physvirt_offset", addr);
+        return addr;
+    }();
+    if (physvirt_offset) {
+		static uint64_t physvirt_offset_val = 0;
+		if (!physvirt_offset_val) {
+			out_err = kernel_module::read_kernel_mem(physvirt_offset, &physvirt_offset_val, sizeof(physvirt_offset_val));
+			if(is_failed(out_err)) return;
+		}
+		// result = phys_addr - physvirt_offset_val;
+		IdleRegPool pool = IdleRegPool::make(x0, phys_addr);
+		GpX xTempPhysvirt = pool.acquireX();
+		GpX xTempProt = pool.acquireX();
+		RegProtectGuard g1(a, excluding_x0(pool.getUsed()));
+		aarch64_asm_mov_x(a, xTempPhysvirt, physvirt_offset_val);
+		a->sub(x0, phys_addr, xTempPhysvirt);
+		out_err = KModErr::OK;
+	}
+
+	uint64_t PHYS_OFFSET = 0;
+	out_err = kernel_module::export_symbol::get_PHYS_OFFSET(PHYS_OFFSET);
+    if(is_failed(out_err)) return;
+    uint64_t PAGE_OFFSET = 0;
+	out_err = kernel_module::export_symbol::get_PAGE_OFFSET(PAGE_OFFSET);
+    if(is_failed(out_err)) return;
+
+	IdleRegPool pool = IdleRegPool::make(x0, phys_addr);
+	GpX xTempPhysOffset = pool.acquireX();
+	GpX xTempPageOffset = pool.acquireX();
+	RegProtectGuard g1(a, excluding_x0(pool.getUsed()));
+	aarch64_asm_mov_x(a, xTempPhysOffset, PHYS_OFFSET);
+	aarch64_asm_mov_x(a, xTempPageOffset, PAGE_OFFSET);
+	
+    static const bool kernel_lt_46 = kernel_module::is_kernel_version_less("4.6.0");
+    if(kernel_lt_46) {
+        //result = phys_addr - PHYS_OFFSET + PAGE_OFFSET;
+		a->sub(x0, phys_addr, xTempPhysOffset);
+		a->add(x0, x0, xTempPageOffset);
+    } else {
+        //result = (phys_addr - PHYS_OFFSET) | PAGE_OFFSET;
+		a->sub(x0, phys_addr, xTempPhysOffset);
+		a->orr(x0, x0, xTempPageOffset);
+    }
+	out_err = KModErr::OK;
+}
+
 inline KModErr phys_to_virt(uint64_t phys_addr, uint64_t & result) {
 	SymbolLookupSilentGuard_8dfccc5cf454087c7314725d3487e703 s;
-    uint64_t physvirt_offset = 0;
-    if(is_ok(kernel_module::kallsyms_lookup_name("physvirt_offset", physvirt_offset)) && physvirt_offset) {
-		uint64_t physvirt_offset_val = 0;
-		RETURN_IF_ERROR(kernel_module::read_kernel_mem(physvirt_offset, &physvirt_offset_val, sizeof(physvirt_offset_val)));
+    static const uint64_t physvirt_offset = []() {
+        uint64_t addr = 0;
+        (void)kernel_module::kallsyms_lookup_name("physvirt_offset", addr);
+        return addr;
+    }();
+    if (physvirt_offset) {
+		static uint64_t physvirt_offset_val = 0;
+		if (!physvirt_offset_val) {
+			RETURN_IF_ERROR(kernel_module::read_kernel_mem(physvirt_offset, &physvirt_offset_val, sizeof(physvirt_offset_val)));
+		}
 		result = phys_addr - physvirt_offset_val;
 		return KModErr::OK;
 	}
@@ -793,7 +859,8 @@ inline KModErr phys_to_virt(uint64_t phys_addr, uint64_t & result) {
     RETURN_IF_ERROR(kernel_module::export_symbol::get_PHYS_OFFSET(PHYS_OFFSET));
     uint64_t PAGE_OFFSET = 0;
     RETURN_IF_ERROR(kernel_module::export_symbol::get_PAGE_OFFSET(PAGE_OFFSET));
-    if(kernel_module::is_kernel_version_less("4.6.0")) {
+    static const bool kernel_lt_46 = kernel_module::is_kernel_version_less("4.6.0");
+    if(kernel_lt_46) {
         result = phys_addr - PHYS_OFFSET + PAGE_OFFSET;
     } else {
         result = (phys_addr - PHYS_OFFSET) | PAGE_OFFSET;
@@ -913,6 +980,14 @@ inline void security_secctx_to_secid(Assembler* a, KModErr& out_err, GpX secdata
 	out_err = CallHelper::callNameAuto(a, "security_secctx_to_secid", NeedReturnX0::Yes, secdata, seclen, secid);
 }
 
+inline void prepare_kernel_cred(Assembler* a, KModErr& out_err, GpX daemon) {
+	out_err = CallHelper::callNameAuto(a, "prepare_kernel_cred", NeedReturnX0::Yes, daemon);
+}
+
+inline void commit_creds(Assembler* a, KModErr& out_err, GpX _new) {
+	out_err = CallHelper::callNameAuto(a, "commit_creds", NeedReturnX0::Yes, _new);
+}
+
 inline void vmap(Assembler* a, KModErr& out_err, GpX pages, GpW count, GpX flags, GpX prot) {
 	out_err = CallHelper::callNameAuto(a, "vmap", NeedReturnX0::Yes, pages, count, flags, prot);
 }
@@ -921,9 +996,38 @@ inline void vunmap(Assembler* a, KModErr& out_err, GpX addr) {
 	out_err = CallHelper::callNameAuto(a, "vunmap", NeedReturnX0::No, addr);
 }
 
+inline void vm_mmap(Assembler* a, KModErr& out_err, GpX file, GpX addr, GpX len, GpX prot, GpX flag, GpX offset) {
+	out_err = CallHelper::callNameAuto(a, "vm_mmap", NeedReturnX0::Yes, file, addr, len, prot, flag, offset);
+}
+
 inline void dump_stack(Assembler* a, KModErr& out_err) {
 	out_err = CallHelper::callNameAuto(a, "dump_stack", NeedReturnX0::No);
 }
+
+namespace linux_above_3_15_0 {
+inline void tracepoint_probe_register(Assembler* a, KModErr& out_err, GpX tp, GpX probe, GpX data) {
+	RETURN_ERR_IF_KERNEL_VERSION_LESS("3.15.0");
+	out_err = CallHelper::callNameAuto(a, "tracepoint_probe_register", NeedReturnX0::Yes, tp, probe, data);
+}
+
+inline void tracepoint_probe_unregister(Assembler* a, KModErr& out_err, GpX tp, GpX probe, GpX data) {
+	RETURN_ERR_IF_KERNEL_VERSION_LESS("3.15.0");
+	out_err = CallHelper::callNameAuto(a, "tracepoint_probe_unregister", NeedReturnX0::Yes, tp, probe, data);
+}
+}
+
+namespace linux_older {
+inline void tracepoint_probe_register(Assembler* a, KModErr& out_err, GpX name, GpX probe, GpX data) {
+	RETURN_ERR_IF_KERNEL_VERSION_AT_LEAST("3.15.0");
+	out_err = CallHelper::callNameAuto(a, "tracepoint_probe_register", NeedReturnX0::Yes, name, probe, data);
+}
+
+inline void tracepoint_probe_unregister(Assembler* a, KModErr& out_err, GpX name, GpX probe, GpX data) {
+	RETURN_ERR_IF_KERNEL_VERSION_AT_LEAST("3.15.0");
+	out_err = CallHelper::callNameAuto(a, "tracepoint_probe_unregister", NeedReturnX0::Yes, name, probe, data);
+}
+}
+
 namespace linux_above_5_10_0 {
 inline void bpf_get_btf_vmlinux(Assembler* a, KModErr& out_err) {
 	RETURN_ERR_IF_KERNEL_VERSION_LESS("5.10.0");

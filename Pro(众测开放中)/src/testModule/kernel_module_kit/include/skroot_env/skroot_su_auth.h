@@ -5,6 +5,11 @@ namespace skroot_env {
 struct su_auth_item {
     char app_package_name[256] = {0};
 };
+struct su_probe_item {
+    char app_package_name[256] = {0};
+    int probe_count = 0;
+    uint64_t last_probe_time_s = 0; // Unix 秒时间戳
+};
 /***************************************************************************
  * 获取 SU 授权列表
  * 参数: root_key   ROOT权限密钥文本
@@ -35,5 +40,20 @@ KModErr remove_su_auth_list(const char* root_key, const char* app_package_name);
  * 返回: OK 表示成功；其它值为错误码
  ***************************************************************************/
 KModErr clear_su_auth_list(const char* root_key);
+
+/***************************************************************************
+ * 获取 SU 嗅探记录
+ * 参数: root_key      ROOT权限密钥文本
+ *       out_records   输出：统计当次开机期间，试图嗅探系统底层 su 文件的 APP 列表信息
+ * 返回: OK 表示成功；其它值为错误码
+ ***************************************************************************/
+KModErr get_su_probe_records(const char* root_key, std::vector<su_probe_item>& out_records);
+
+/***************************************************************************
+ * 清空 SU 嗅探记录
+ * 参数: root_key      ROOT权限密钥文本
+ * 返回: OK 表示成功；其它值为错误码
+ ***************************************************************************/
+KModErr clear_su_probe_records(const char* root_key);
 
 }

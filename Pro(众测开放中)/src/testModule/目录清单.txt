@@ -1,7 +1,7 @@
 testModule 模块目录清单：
 ──────────────────────────────
 • SKRoot 内核模块开发 SDK .................. kernel_module_kit
-• SDK 全接口回归测试工程（源码） .......... kernel_module_kit_test
+• SDK 全接口单元测试工程（源码） .......... kernel_module_kit_test
 
 模块示例：
 ──────────────────────────────
