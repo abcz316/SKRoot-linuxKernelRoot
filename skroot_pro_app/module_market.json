@@ -142,6 +142,20 @@
             "download_eng_alert": ""
         },
         {
+            "chn_name": "文件系统隐藏 SUSFS",
+            "eng_name": "",
+            "ver": "0.3.11",
+            "desc": "提供文件隐藏、状态伪装、重定向，以及内核版本伪装、启动信息修改、内核模块隐藏、AVC 日志伪装等 SUSFS 功能。在原 SUSFS 项目基础上优化，支持规则独立作用域调整、按域豁免，并提供可视化 WebUI 配置。",
+            "author": "斓梦语、SUSFS4KSU-LKM",
+            "id32": "fa362333cf458e832cd032fda9a9f3c6",
+            "update_date": "2026-10-27",
+			"source_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_tools/%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F%E9%9A%90%E8%97%8F%20SUSFS/src.zip",
+            "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_tools/%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F%E9%9A%90%E8%97%8F%20SUSFS/module.zip",
+            "changelog_url": "",
+            "download_chn_alert": "",
+            "download_eng_alert": ""
+        },
+        {
             "chn_name": "修复/data/local/tmp目录",
             "eng_name": "",
             "ver": "1.0.1",
