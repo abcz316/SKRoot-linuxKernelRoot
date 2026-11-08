@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 835" role="img" aria-labelledby="title desc" style="max-width:100%;height:auto">
+<title id="title">路径隐藏与名称匹配：如何选对规则？</title>
+<desc id="desc">路径规则针对选定路径对应对象，名称规则精确匹配完整名称，适用于任意位置的同名普通文件和目录，区分大小写且不支持通配符。</desc>
+<defs><marker id="arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0 L8 4.5 L0 9" fill="#7454a7"/></marker></defs>
+<g font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif">
+<rect x="0" y="0" width="1200" height="835" rx="0" fill="#f7f5fb"/>
+<text x="48" y="42" font-size="16" fill="#7454a7" font-weight="600" text-anchor="start">SUSFS 0.3.0 · 配置教学图</text>
+<text x="48" y="88" font-size="32" fill="#282236" font-weight="700" text-anchor="start">路径隐藏与名称匹配：如何选对规则？</text>
+<text x="48" y="123" font-size="20" fill="#696176" font-weight="400" text-anchor="start">要针对一个位置，选路径；要覆盖各位置的完整同名项，选名称。</text>
+<rect x="48" y="154" width="540" height="478" rx="18" fill="#ffffff" stroke="#ded6ed" stroke-width="1.5"/>
+<rect x="612" y="154" width="540" height="478" rx="18" fill="#ffffff" stroke="#ded6ed" stroke-width="1.5"/>
+<rect x="72" y="177" width="140" height="33" rx="16" fill="#eee7f7"/>
+<text x="142.0" y="200" font-size="16" fill="#7454a7" font-weight="600" text-anchor="middle">路径隐藏</text>
+<rect x="636" y="177" width="170" height="33" rx="16" fill="#eee7f7"/>
+<text x="721.0" y="200" font-size="16" fill="#7454a7" font-weight="600" text-anchor="middle">名称匹配隐藏</text>
+<text x="72" y="246" font-size="23" fill="#282236" font-weight="700" text-anchor="start">填写绝对路径</text>
+<text x="636" y="246" font-size="23" fill="#282236" font-weight="700" text-anchor="start">只填写完整名称</text>
+<rect x="72" y="267" width="492" height="70" rx="14" fill="#eee7f7"/>
+<rect x="636" y="267" width="492" height="70" rx="14" fill="#eee7f7"/>
+<text x="90" y="309" font-size="19" fill="#7454a7" font-weight="600" text-anchor="start">/…/SUSFS-Tutorial/alpha/secret</text>
+<text x="654" y="309" font-size="23" fill="#7454a7" font-weight="700" text-anchor="start">secret</text>
+<text x="72" y="388" font-size="24" fill="#246b53" font-weight="700" text-anchor="start">✓</text>
+<text x="107" y="388" font-size="20" fill="#282236" font-weight="600" text-anchor="start">/…/alpha/secret</text>
+<text x="107" y="417" font-size="17" fill="#696176" font-weight="400" text-anchor="start">针对这个路径对应的对象</text>
+<text x="72" y="462" font-size="24" fill="#696176" font-weight="700" text-anchor="start">—</text>
+<text x="107" y="462" font-size="20" fill="#282236" font-weight="600" text-anchor="start">/…/beta/secret</text>
+<text x="107" y="491" font-size="17" fill="#696176" font-weight="400" text-anchor="start">不会只因同名而匹配</text>
+<text x="72" y="536" font-size="24" fill="#696176" font-weight="700" text-anchor="start">—</text>
+<text x="107" y="536" font-size="20" fill="#282236" font-weight="600" text-anchor="start">/…/new/secret</text>
+<text x="107" y="565" font-size="17" fill="#696176" font-weight="400" text-anchor="start">不会按完整名称自动扩散</text>
+<text x="636" y="388" font-size="24" fill="#246b53" font-weight="700" text-anchor="start">✓</text>
+<text x="671" y="388" font-size="20" fill="#282236" font-weight="600" text-anchor="start">/…/alpha/secret</text>
+<text x="671" y="417" font-size="17" fill="#696176" font-weight="400" text-anchor="start">目录或普通文件都可匹配</text>
+<text x="636" y="462" font-size="24" fill="#246b53" font-weight="700" text-anchor="start">✓</text>
+<text x="671" y="462" font-size="20" fill="#282236" font-weight="600" text-anchor="start">/…/beta/secret</text>
+<text x="671" y="491" font-size="17" fill="#696176" font-weight="400" text-anchor="start">任意位置的完整同名项</text>
+<text x="636" y="536" font-size="24" fill="#246b53" font-weight="700" text-anchor="start">✓</text>
+<text x="671" y="536" font-size="20" fill="#282236" font-weight="600" text-anchor="start">/…/new/secret</text>
+<text x="671" y="565" font-size="17" fill="#696176" font-weight="400" text-anchor="start">以后新建的同名项也匹配</text>
+<text x="72" y="605" font-size="17" fill="#696176" font-weight="400" text-anchor="start">文件替换、挂载视图变化后，需检查并重新应用。</text>
+<text x="636" y="605" font-size="17" fill="#696176" font-weight="400" text-anchor="start">Secret、mysecret、secret.txt 均不是 secret。</text>
+<rect x="48" y="660" width="1104" height="110" rx="18" fill="#eee7f7"/>
+<text x="73" y="698" font-size="19" fill="#282236" font-weight="400" text-anchor="start">名称规则：区分大小写，不支持子串、通配符或正则；不可含 /，最多 255 个 UTF-8 字节。</text>
+<text x="73" y="733" font-size="19" fill="#282236" font-weight="400" text-anchor="start">共享存储可能经过 FUSE / 存储服务的底层过滤，豁免应用与模块文件页也可能看不到同名项。</text>
+<text x="48" y="810" font-size="15" fill="#696176" font-weight="400" text-anchor="start">0.3.0 教学示意 · 以当前界面及内核能力为准 · 不是设备效果证据</text>
+</g>
+</svg>

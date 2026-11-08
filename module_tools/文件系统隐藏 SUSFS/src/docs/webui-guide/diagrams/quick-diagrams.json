@@ -1,0 +1,20 @@
+[
+  {
+    "id": "visual-file-flow",
+    "title": "从文件页完成一条规则",
+    "description": "从文件页选择目标，打开设置规则，选择类型与作用组，先保存草稿，再保存并应用。",
+    "file": "visual-file-flow.svg"
+  },
+  {
+    "id": "visual-rule-choice",
+    "title": "想实现什么？选对应规则",
+    "description": "六种对象规则的简短功能选择图；名称匹配隐藏需要进入规则页点击加号新建。",
+    "file": "visual-rule-choice.svg"
+  },
+  {
+    "id": "visual-group-flow",
+    "title": "规则选“做什么”，作用组选“对谁”",
+    "description": "对象规则定义动作，作用组定义受影响的应用。指定模式只影响名单，排除模式的名单应用不受该组影响。",
+    "file": "visual-group-flow.svg"
+  }
+]

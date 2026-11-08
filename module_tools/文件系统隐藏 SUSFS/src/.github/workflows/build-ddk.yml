@@ -1,0 +1,950 @@
+name: build-lkm-ddk
+
+on:
+  # The SKP repository builds the 6.1, 6.6 and 6.12 candidates. Select full_matrix
+  # manually to build all eight upstream variants. Other repositories retain the upstream matrix.
+  # The legacy branch has no DDK image for its pre-5.10 range and must not be built at all.
+  # A documentation-only push has nothing to compile.
+  push:
+    branches-ignore:
+      - legacy
+    paths-ignore:
+      - "**.md"
+  # Pull requests build the same way, which is what a fork contribution needs: the first fork PR this
+  # repository took arrived with a header comment that broke every variant, and nothing here could
+  # see it until the branch had been pulled in by hand.  This is safe to enable because GitHub runs the
+  # BASE branch's copy of the workflow for pull_request events (a fork cannot change what executes),
+  # no secret is referenced anywhere in this file, and the privileged container is discarded after the
+  # run. main and dev only: legacy has no DDK image.
+  pull_request:
+    branches:
+      - main
+      - dev
+    paths-ignore:
+      - "**.md"
+  workflow_dispatch:
+    inputs:
+      full_matrix:
+        description: Build all eight upstream GKI variants instead of the 6.1, 6.6 and 6.12 candidates
+        type: boolean
+        default: false
+        required: false
+
+# Least privilege for GITHUB_TOKEN: this workflow only checks the repository out, and its own artifact
+# uploads are covered by the runtime token - no scope beyond reading the contents is needed.  CodeQL's
+# actions analysis flagged the missing block twice as actions/missing-workflow-permissions.
+permissions:
+  contents: read
+
+jobs:
+  management:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Ordinary persistence and sequential application (host and sanitizers)
+        run: python3 management/tests/simple_service_runner.py --evidence /tmp/management-simple
+      - name: Private service stop and idle lifecycle (isolated host fixture)
+        run: sudo python3 management/tests/embedded_lifecycle_runner.py --output /tmp/management-lifecycle
+      - name: WebUI launch guard and heartbeat regression (host DOM and clock doubles)
+        run: node module/tests/webui-lifecycle.test.cjs
+
+  # Current host tests cover the per-rule RCU publication contract and subject selectors.
+  subject-policy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Subject policy tests (host and sanitizers)
+        run: |
+          set -eu
+          cc -std=c11 -Wall -Wextra -Werror -pedantic -O2 -I kernel \
+            kernel/skp_subject_policy.c tools/tests/subject_policy_test.c \
+            -o /tmp/skp-subject-policy-test
+          /tmp/skp-subject-policy-test
+          cc -std=c11 -Wall -Wextra -Werror -pedantic -O1 -g -fsanitize=address,undefined \
+            -fno-omit-frame-pointer -I kernel kernel/skp_subject_policy.c \
+            tools/tests/subject_policy_test.c -o /tmp/skp-subject-policy-test-sanitized
+          ASAN_OPTIONS=detect_leaks=1:halt_on_error=1 UBSAN_OPTIONS=halt_on_error=1 \
+            /tmp/skp-subject-policy-test-sanitized
+      - name: Sequential adapter and lifetime regression
+        run: python3 tools/tests/sequential_test_runner.py /tmp/skp-sequential-test --sanitizers
+      - name: Directory-content compatibility without optional open hooks
+        run: python3 tools/tests/path_contents_compat_regression.py --evidence /tmp/skp-path-contents-compat
+      - name: Syscall entries with PAC, BTI and shadow call stack
+        run: python3 tools/tests/fp_entry_regression.py --evidence /tmp/skp-fp-entry
+      - name: SKP directory composition and 6.6 content restriction
+        run: |
+          python3 tools/tests/content_hook_regression.py --kernel-version 6.6 --evidence /tmp/skp-content-66
+          python3 tools/tests/content_hook_regression.py --evidence /tmp/skp-content-612
+          python3 tools/tests/dirent_compose_regression.py --kernel-version 6.6 --evidence /tmp/skp-dirent-66
+          python3 tools/tests/dirent_compose_regression.py --evidence /tmp/skp-dirent-612
+      - name: Upstream lifecycle and compatibility regression
+        run: python3 tools/tests/upstream_sync_regression.py --output /tmp/skp-upstream-sync
+
+  module:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Build the three downstream candidates by default; retain all eight upstream variants on request.
+        # 6.18 uses the same >= 6.12 static-call implementation, but it remains a separate DDK/KMI artifact.
+        variant: ${{ fromJSON((github.repository != 'dreamcolor123/susfs4skp-lkm' || inputs.full_matrix) && '["android12-5.10","android13-5.10","android13-5.15","android14-5.15","android14-6.1","android15-6.6","android16-6.12","android17-6.18"]' || '["android14-6.1","android15-6.6","android16-6.12"]') }}
+    container:
+      # DDK-min image with the GKI kernel headers (modules_prepare done), Module.symvers and the matching Clang toolchain:
+      # KMI freezing guarantees symbol CRCs match the GKI kernel of that release.
+      image: ghcr.io/ylarod/ddk-min:${{ matrix.variant }}-20260828
+      options: --privileged
+
+    steps:
+      - name: Inspect DDK environment
+        run: |
+          set -e
+          echo "variant  = ${{ matrix.variant }}"
+          echo "KDIR=$KDIR"
+          echo "KERNEL_SRC=$KERNEL_SRC"
+          echo "CLANG_PATH=$CLANG_PATH"
+          clang --version | head -1
+          # `make -C "$KDIR"` below needs the OBJTREE (a prepared output tree with its Makefile and generated headers); the
+          # sources live in a separate tree (KERNEL_SRC, where include/linux/lsm_hooks.h actually is).  Checking for the
+          # header HERE was the first version of this guard and it failed all eight variants at once.
+          if [ -z "$KDIR" ] || [ ! -f "$KDIR/Makefile" ]; then
+            echo "::error::KDIR ('$KDIR') is not a prepared kernel build tree (no Makefile) for variant ${{ matrix.variant }}"
+            exit 1
+          fi
+          for d in "${KERNEL_SRC:-}" "${KDIR:-}" "/opt/ddk/src/${{ matrix.variant }}" /opt/ddk/src/*; do
+            if [ -n "$d" ] && [ -f "$d/include/linux/lsm_hooks.h" ]; then
+              echo "source tree = $d"
+              break
+            fi
+          done
+
+      - name: Checkout module
+        uses: actions/checkout@v4
+
+      # kCFI/CFI checks the callee's type at every indirect call site and the LSM dispatch calls our replacements
+      # indirectly, so a replacement MUST match the hook type EXACTLY and must not be __nocfi.  Printing this tree's
+      # authoritative declarations is how a hook that changed or disappeared between releases is caught, per variant.
+      - name: Show authoritative LSM hook signatures
+        run: |
+          set -e
+          V="${{ matrix.variant }}"
+          H=""
+          for d in "${KERNEL_SRC:-}" "${KDIR:-}" "/opt/ddk/src/$V" "/opt/ddk/kdir/$V" /opt/ddk/src/* /opt/ddk/kdir/*; do
+            if [ -n "$d" ] && [ -f "$d/include/linux/lsm_hooks.h" ]; then H="$d"; break; fi
+          done
+          if [ -z "$H" ]; then
+            echo "::error::no kernel tree with include/linux/lsm_hooks.h found (variant=$V KERNEL_SRC=$KERNEL_SRC KDIR=$KDIR)"
+            exit 1
+          fi
+          echo "=== kernel tree: $H ==="
+          DEFS="$H/include/linux/lsm_hook_defs.h"
+          [ -f "$DEFS" ] || DEFS="$H/include/linux/lsm_hooks.h"
+          echo "=== hook declarations: $DEFS ==="
+
+          # Exactly the hooks this module installs (kernel/sus_path.c).  A missing one is a hard error: the module would
+          # not compile against this tree, and a silently dropped hook would read as coverage in the counters.
+          HOOKS="inode_permission inode_getattr inode_unlink inode_rmdir inode_rename \
+                 inode_link sb_statfs inode_setattr inode_getxattr inode_listxattr \
+                 inode_setxattr inode_removexattr path_notify"
+          n=0
+          for h in $HOOKS; do
+            out=$(grep -nE "(^|[^_a-z])${h}," "$DEFS" | head -2 || true)
+            if [ -z "$out" ]; then
+              echo "::error::hook '$h' is not declared in $DEFS (variant $V)"
+              exit 1
+            fi
+            echo "--- $h ---"; echo "$out"; n=$((n+1))
+          done
+          echo "checked $n hook prototypes"
+
+          echo "=== the SELinux implementations we target by name ==="
+          for s in inode_permission inode_getattr inode_unlink inode_rmdir inode_rename \
+                   inode_link sb_statfs inode_setattr inode_getxattr inode_listxattr \
+                   inode_setxattr inode_removexattr path_notify; do
+            echo "--- selinux_$s ---"
+            grep -nA3 "^static int selinux_$s(" "$H/security/selinux/hooks.c" | head -5 || true
+          done
+
+          echo "=== the hook list head type (static calls start at 6.12) ==="
+          grep -nE 'struct security_hook_heads security_hook_heads|struct lsm_static_calls_table' "$H/security/security.c" | head -3 || true
+          echo "=== struct security_hook_list fields (the lsm field changed over releases) ==="
+          sed -n '/^struct security_hook_list {/,/} __randomize_layout/p' "$H/include/linux/lsm_hooks.h"
+
+      - name: Show per-version spellings of the non-LSM APIs the module uses
+        run: |
+          set -e
+          V="${{ matrix.variant }}"
+          T=""
+          for d in "${KERNEL_SRC:-}" "${KDIR:-}" "/opt/ddk/src/$V" "/opt/ddk/kdir/$V" /opt/ddk/src/* /opt/ddk/kdir/*; do
+            if [ -n "$d" ] && [ -f "$d/include/linux/lsm_hooks.h" ]; then T="$d"; break; fi
+          done
+          echo "=== kernel tree: $T ==="
+          echo "--- the version this build's LINUX_VERSION_CODE gates are evaluated against ---"
+          # The kdir (objtree) holds the generated headers the src tree may lack: version.h is what LINUX_VERSION_CODE
+          # expands from, utsrelease.h is the human-readable release.
+          G="${KDIR:-$T}/include/generated"
+          cat "$G/uapi/linux/version.h" 2>/dev/null || true
+          cat "$G/utsrelease.h" 2>/dev/null || cat "$T/include/generated/utsrelease.h" 2>/dev/null || true
+          echo "--- inode timestamps (i_ctime became __i_ctime + inode_get_ctime() in 6.6) ---"
+          grep -nE 'i_atime;|i_mtime;|_i_ctime;|inode_get_ctime|inode_set_ctime' "$T/include/linux/fs.h" | head -8 || true
+          echo "--- the mm's vma container (mm->mmap list before 6.1, mm->mm_mt from 6.1) ---"
+          grep -nE 'struct vm_area_struct \*mmap;|struct maple_tree mm_mt;' "$T/include/linux/mm_types.h" || true
+          grep -nE '^#define VMA_ITERATOR|^#define for_each_vma' "$T/include/linux/mm_types.h" "$T/include/linux/mm.h" || true
+          echo "--- kallsyms_on_each_symbol (its callback lost the struct module * in 6.4) ---"
+          grep -nA3 'kallsyms_on_each_symbol' "$T/include/linux/kallsyms.h" | head -12 || true
+          echo "--- task_work_add notify modes ---"
+          grep -nE 'TWA_RESUME|task_work_add' "$T/include/linux/task_work.h" || true
+          echo "--- kvmalloc()/kvfree() ---"
+          grep -nE 'void \*kvmalloc\(|void kvfree\(' "$T/include/linux/mm.h" "$T/include/linux/slab.h" || true
+
+          echo "--- CFI scheme, RANDSTRUCT and the LSM set as THIS tree was configured ---"
+          # Read from the tree's own generated config, not assumed: the option that selects CFI has more than one
+          # spelling upstream (6.12 spells kCFI CONFIG_CFI_CLANG and 6.18 spells the same option CONFIG_CFI, and both
+          # variants are in the matrix now), __randomize_layout is only a no-op while RANDSTRUCT is off, and
+          # MAX_LSM_COUNT follows from the SECURITY_* set.  A missing entry prints "(absent here)", so a gate that did
+          # not apply stays visible instead of reading as an answer.
+          A="$G/autoconf.h"
+          cfg() {
+            _v=""
+            if [ -f "$A" ]; then
+              _v=$(grep -hE "^(#define $1 |/\* #undef $1 \*/)" "$A" | head -1)
+            fi
+            if [ -z "$_v" ] && [ -f "$KDIR/.config" ]; then
+              _v=$(grep -hE "^(# )?$1[= ]" "$KDIR/.config" | head -1)
+            fi
+            echo "${_v:-(absent here)}"
+          }
+          for k in CONFIG_SECURITY CONFIG_CFI_CLANG CONFIG_CFI CONFIG_RANDSTRUCT \
+                   CONFIG_GCC_PLUGIN_RANDSTRUCT CONFIG_ARM64_BTI_KERNEL CONFIG_LTO_CLANG \
+                   CONFIG_LTO_CLANG_FULL CONFIG_KALLSYMS_ALL CONFIG_MODULES \
+                   CONFIG_HAVE_STATIC_CALL CONFIG_HAVE_STATIC_CALL_INLINE \
+                   CONFIG_SECURITY_SELINUX CONFIG_SECURITY_SAFESETID CONFIG_SECURITY_LANDLOCK \
+                   CONFIG_BPF_LSM CONFIG_ARM64_VA_BITS_48; do
+            printf '  %-30s %s\n' "$k" "$(cfg "$k")"
+          done
+
+      - name: Build susfs_guard_lkm.ko (DDK way)
+        run: |
+          set -e
+          # One line on purpose: trailing backslashes followed by a blank line ended the shell continuation, so this used to
+          # run `make -C $KDIR M=.../kernel` with no ARCH/CC/LLVM and no `modules` target, silently depending on the image's
+          # exported ARCH/LLVM.  -k (keep going) so one broken object does not hide every later one; it still exits nonzero.
+          make -k -C "$KDIR" M="$PWD/kernel" ARCH=arm64 CC=clang LLVM=1 LLVM_IAS=1 modules -j"$(nproc)"
+          ls -la kernel/susfs_guard_lkm.ko
+          file kernel/susfs_guard_lkm.ko
+
+      - name: Verify sections (__versions / .BTF / cfi)
+        run: |
+          set -e
+          f=kernel/susfs_guard_lkm.ko
+          readelf -S "$f" | grep -E "__versions|\.BTF|cfi|\.llvm_addrsig|\.plt|modinfo" || true
+          echo "--- vermagic ---"
+          modinfo "$f" 2>/dev/null | grep -E "vermagic|srcversion" || true
+          echo "--- CFI scheme of this tree ---"
+          # 5.10/5.15 use LLVM CFI (__cfi_check + shadow + .cfi_jt); 6.1/6.6 use kCFI (a type hash right before the
+          # function, checked inline by the caller).  The module's symbol resolution differs between the two, so record which.
+          grep -cE '\.cfi_jt$' /proc/kallsyms 2>/dev/null | sed 's/^/  .cfi_jt symbols in the build container: /' || true
+          echo "--- mount-hook symbols this module probes by name ---"
+          for s in show_vfsstat show_mountinfo show_vfsmnt; do
+            printf '  %-16s %s\n' "$s" "$(grep -cE " $s\$" /proc/kallsyms 2>/dev/null || echo '?')"
+          done
+          echo "--- KMI version-check state ---"
+          # modpost emits CRCs (and srcversion, module_layout) only when Module.symvers carries them, and this DDK tree's
+          # __versions is empty - so check_version() finds no entry for ANY imported symbol and load-time version checking
+          # does not happen: "it loads" is not evidence that the KMI matches.  Warns rather than fails for exactly that reason.
+          # Field 6 is Size (field 7 is ES) and readelf prints it zero-padded ("000000"), so the old
+          # "${vs:-0}" = "0" term compared the padding and could never match.  The size stays in the printout
+          # for the record; the warning keys off the two unambiguous signals instead.
+          vs=$(readelf -SW "$f" | awk '/\] __versions/ {print $6}')
+          sv=$(readelf -p .modinfo "$f" | grep -c 'srcversion=' || true)
+          ml=$(nm -u "$f" | grep -c 'module_layout' || true)
+          echo "__versions size=${vs:-?} srcversion=${sv} module_layout=${ml}"
+          if [ "${sv:-0}" = "0" ] || [ "${ml:-0}" = "0" ]; then
+            echo "::warning::no symbol CRCs in this build tree: load-time version checks are inert (Module.symvers has no CRC entries)"
+          fi
+
+          echo "--- symbol namespace imports ---"
+          # kern_path / ihold / override_creds / revert_creds are EXPORT_SYMBOL_NS(.., ANDROID_GKI_VFS_EXPORT_ONLY), which
+          # each tree's Makefile rewrites to the long namespace string; a module that does not import the RESULTING string is
+          # refused by the loader ("Unknown symbol kern_path (err -22)"), i.e. a missing import_ns is load-fatal while an
+          # imported-but-unused namespace is harmless - asserted on the artifact because it is invisible in the source.
+          readelf -p .modinfo "$f" 2>/dev/null | grep 'import_ns' || {
+            echo "::error::no import_ns entry in $f - kern_path/ihold/override_creds/revert_creds will be refused with -EINVAL on the variants that namespace them (see MODULE_IMPORT_NS in kernel/susfs_main.c)"
+            exit 1
+          }
+
+          echo "--- no kallsyms_* link-time dependency (regression gate) ---"
+          # These five are resolved at RUNTIME by name (kprobe bootstrap, kernel/symbol_resolver.c) and must never appear in
+          # the artifact's undefined list: measured on a 6.1 device whose KernelSU is a module, all five are provided by
+          # kernelsu.ko, so an import would make this module refuse to load without KernelSU.  Asserted on the ARTIFACT.
+          # nm has to exist and has to have read the file: with no output at all `ks` is 0 and this gate passes by default.
+          command -v nm >/dev/null 2>&1 || {
+            echo "::error::nm is not available in this image, so the kallsyms_* regression gate cannot run"
+            exit 1
+          }
+          ut=$(nm -u "$f" | wc -l)
+          echo "  undefined symbols total: $ut"
+          if [ "${ut:-0}" -eq 0 ]; then
+            echo "::error::nm reported no undefined symbols for $f - it did not read the file, so this gate cannot pass"
+            exit 1
+          fi
+          ks=$(nm -u "$f" | grep -cE '(^| )(kallsyms_lookup_name|kallsyms_lookup|kallsyms_lookup_size_offset|kallsyms_on_each_symbol|kallsyms_on_each_match_symbol)$' || true)
+          echo "  undefined kallsyms-ish symbols: $ks (must be 0)"
+          if [ "$ks" != "0" ]; then
+            echo "::error::$f imports $ks kallsyms_* symbol(s): they must be bootstrapped at runtime, not linked against"
+            nm -u "$f" | grep -E '(^| )(kallsyms_lookup_name|kallsyms_lookup|kallsyms_lookup_size_offset|kallsyms_on_each_symbol|kallsyms_on_each_match_symbol)$' || true
+            exit 1
+          fi
+
+      # A checked indirect call into the KERNEL is a panic, not an error return: the compiler
+      # instruments the call site, the kernel compares the callee's type id against the one
+      # the caller expected, and for this module the two do not agree - measured on a 5.15
+      # device, where the first call through a runtime-resolved pointer died with
+      # "Kernel panic - not syncing: CFI failure (target: kallsyms_on_each_symbol+0x0/0x1e4)".
+      # Every call through a resolved pointer therefore has to sit inside a __nocfi function.
+      #
+      # Source review cannot assert that: LTO re-instruments a `static __nocfi` helper that
+      # was inlined into a caller without the attribute, which is exactly how that panic
+      # ended up inside susfs_sus_mount_supercall().  So the assertion is made on the
+      # ARTIFACT, by tools/cfi_sites.py - a relocation against the CFI runtime entry point
+      # (5.10/5.15: LLVM CFI with .cfi_jt) and, from 6.1 on, the KCFI check sequence itself
+      # (`ldur Wt, [Xn, #-4]` of the callee's type id plus cmp plus the `brk` trap), because
+      # KCFI's mismatch path is a trap and relocates nothing.
+      - name: CFI call-site gate (module tables and qualified directory actor)
+        run: |
+          set -e
+          f=kernel/susfs_guard_lkm.ko
+          # Allow-list: calls through MODULE-local function tables. There the compiler
+          # emitted both the call site and the callee, so the type ids agree by construction:
+          #   init_module / susfs_layers_down - the susfs_layers[] init/exit table
+          #   susfs_tw_func                   - the supercall command table
+          #   sd_call_actor                   - exact filldir_t, gated by live BTF,
+          #                                     instructions and actor KCFI before use
+          # (The CFI runtime's own __cfi_check is filtered by the tool, not listed here.)
+          ALLOW="init_module,susfs_layers_down,susfs_tw_func,susfs_watch_freeing,sd_call_actor"
+          if command -v python3 >/dev/null 2>&1; then PY=python3
+          elif command -v python >/dev/null 2>&1; then PY=python
+          else
+            echo "::error::no python interpreter in this image, so the CFI call-site gate cannot run - failing rather than skipping, because a silently skipped check is how the panic above reached a release"
+            exit 1
+          fi
+          "$PY" tools/cfi_sites.py --allow "$ALLOW" "$f"
+
+      - name: SKP extension DDK contracts (6.6 and 6.12)
+        if: matrix.variant == 'android15-6.6' || matrix.variant == 'android16-6.12'
+        run: |
+          set -eu
+          V="${{ matrix.variant }}"
+          S="${KDIR}/vmlinux"
+          [ -r "$S" ] || S="${KERNEL_SRC}/vmlinux"
+          python3 tools/tests/ddk_extension_contract.py --version "${V#*-}" \
+            --vmlinux "$S" --ko kernel/susfs_guard_lkm.ko --output /tmp/skp-ddk-contract
+
+      # The stat/listing layers hook the syscall RETURN through one global sys_exit tracepoint
+      # (kernel/susfs_kstat.c: kstat_sys_exit()), which dispatches on the caller's syscall number:
+      # the stat family (native 79 newfstatat / 80 fstat / 291 statx, AArch32 327 fstatat64 /
+      # 197 fstat64) and sus_path's listing numbers (native 61 getdents64, AArch32 217 getdents64
+      # and 141 getdents).  Nothing is probed BY NAME: the two getdents kretprobes and the vfs_getattr
+      # kretprobe this module used to register are gone, the dirent filter needs no symbol of its own
+      # (it rides the same sys_exit tracepoint and decides by syscall number and caller ABI), and so
+      # what a variant has to provide is not a symbol but the syscall TABLE that lets those numbers
+      # reach the handlers.
+      #
+      # That is a property of the build, and this step is the best-effort half of it: the numbers
+      # themselves are compile-time constants in the source, while the DDK tree's own headers (or,
+      # when it ships a built image, its symbol map) are the only local evidence about which entries
+      # its unistd table carries.  When the image has neither, this step says so out loud instead of
+      # passing silently as if it had verified something.  The second half of the step is the
+      # undefined-symbol loader gate: those symbols are what the loaders absolutize from kallsyms
+      # before init_module(2), so every one of them has to exist in the tree a variant is built
+      # against.
+      - name: Check the stat/getdents syscall entry symbols in the DDK tree (best effort)
+        run: |
+          set -e
+          V="${{ matrix.variant }}"
+          S=""
+          for d in "${KDIR:-}" "${KERNEL_SRC:-}" "/opt/ddk/kdir/$V" "/opt/ddk/src/$V" /opt/ddk/kdir/* /opt/ddk/src/*; do
+            if [ -n "$d" ] && { [ -f "$d/vmlinux" ] || [ -f "$d/System.map" ]; }; then S="$d"; break; fi
+          done
+          if [ -z "$S" ]; then
+            echo "no vmlinux/System.map in the DDK image: the syscall-entry symbol check AND the undefined-symbol loader gate are both SKIPPED for $V - that is a gap in this variant's evidence, not a pass"
+            exit 0
+          fi
+          echo "=== symbol source: $S ==="
+          ls -la "$S/vmlinux" "$S/System.map" 2>/dev/null || true
+
+          # System.map first (it is names only and cheap); vmlinux via nm, then via
+          # readelf -sW for an image nm cannot read.  Returns the match count on stdout.
+          sym_count() {
+            _s="$1"; _n=0
+            if [ -f "$S/System.map" ]; then
+              _n=$(grep -cE "(^|[[:space:]])${_s}$" "$S/System.map" 2>/dev/null || true)
+            fi
+            if [ "${_n:-0}" = "0" ] && [ -f "$S/vmlinux" ]; then
+              _n=$(nm "$S/vmlinux" 2>/dev/null | grep -cE "(^|[[:space:]])${_s}$" || true)
+            fi
+            if [ "${_n:-0}" = "0" ] && [ -f "$S/vmlinux" ]; then
+              _n=$(readelf -sW "$S/vmlinux" 2>/dev/null | grep -cE "[[:space:]]${_s}$" || true)
+            fi
+            echo "${_n:-0}"
+          }
+
+          # Informational: the tables this module's dispatch assumes, so a variant's log records
+          # what its own headers say.  The syscall numbers are NOT read from these files - the
+          # module carries them as constants - so a mismatch shows up as "the counter stayed at 0"
+          # on that variant, and this listing is where that gets explained.
+          echo "--- the unistd tables this dispatch depends on (informational) ---"
+          for f in include/uapi/asm-generic/unistd.h arch/arm64/include/asm/unistd32.h; do
+            if [ -f "$S/$f" ]; then
+              echo "  $f:"
+              grep -nE "__NR_(newfstatat|fstat|statx|getdents64|fstatat64|fstat64)\b|__NR_(stat|getdents)\b" "$S/$f" | head -40 || true
+            else
+              echo "  $f: (absent in this tree)"
+            fi
+          done
+
+          echo "--- asserted: the entry points the dispatch reaches through the syscall table ---"
+          # The two native entries the whitelist needs at runtime: without them __NR_newfstatat /
+          # __NR_fstat cannot be dispatched to, and the stat spoofing silently does nothing.
+          fail=0
+          for s in __arm64_sys_newfstatat __arm64_sys_statx; do
+            n=$(sym_count "$s")
+            printf '  %-32s %s\n' "$s" "$n"
+            if [ "$n" = "0" ]; then
+              echo "::error::$s is not in $S (variant $V) - it is a number the sys_exit dispatch must reach (kernel/susfs_kstat.c: kstat_sys_exit())"
+              fail=1
+            fi
+          done
+          [ "$fail" = "0" ] || exit 1
+          echo "the asserted syscall entry points are present in $S"
+
+          # The rest is informational: __arm64_sys_newfstat is the FD-BASED one (__NR_fstat on
+          # arm64 = 80, whose C symbol is __arm64_sys_newfstat, not __arm64_sys_fstat), and the two
+          # AArch32 entries only exist in a kernel built with CONFIG_COMPAT.
+          echo "--- informational ---"
+          for s in __arm64_sys_newfstat __arm64_compat_sys_fstatat64 __arm64_compat_sys_fstat64 \
+                   __arm64_sys_getdents64 __arm64_compat_sys_getdents; do
+            printf '  %-32s %s\n' "$s" "$(sym_count "$s")"
+          done
+
+          # ---- loader gate: every undefined symbol of the built .ko must be a name this
+          # tree's kallsyms has.
+          #
+          # The loaders (tools/susfs_insmod.c and ksud insmod) rewrite each SHN_UNDEF entry
+          # of the image to SHN_ABS/<address from /proc/kallsyms> before init_module(2), so a
+          # name that is not in kallsyms is an address nothing can supply: for a strong
+          # symbol the module does not load on that kernel at all, and for a weak one the
+          # feature it feeds silently does nothing.  System.map is generated from the same
+          # kallsyms data the loader reads, so this is the build-time half of "the loader
+          # will find it at load time".  The >= 6.18 mount-id path depends on the loader in
+          # exactly this way - it takes mnt_id_xa/__xa_alloc/__xa_erase, which are not
+          # exported to modules at all.
+          echo "--- every undefined symbol of the .ko must be present in this tree ---"
+          KO="$PWD/kernel/susfs_guard_lkm.ko"
+          if [ ! -f "$KO" ]; then
+            echo "::error::$KO does not exist - the build step must have failed, so its undefined symbols cannot be checked"
+            exit 1
+          fi
+          # nm has to exist and has to have read the file: an empty list makes the loop below do nothing and the step
+          # report "all 0 undefined symbols are present" (set -e does not catch it - the pipeline status comes from awk).
+          command -v nm >/dev/null 2>&1 || {
+            echo "::error::nm is not available in this image, so this gate cannot run"
+            exit 1
+          }
+          nm "$KO" | awk '$1 == "U" || $1 == "w" || $1 == "v" { print $NF }' | sort -u > /tmp/undef-syms.txt
+          tu=$(wc -l < /tmp/undef-syms.txt)
+          echo "  undefined symbols in the artifact: $tu"
+          echo "  names: $(tr '\n' ' ' < /tmp/undef-syms.txt)"
+          if [ "${tu:-0}" -eq 0 ]; then
+            echo "::error::no undefined symbols were read from $KO - every module imports something, so nm did not read the file and this gate cannot pass"
+            exit 1
+          fi
+          miss=0
+          # Everything below leans on sym_count(), which reads System.map and falls back to vmlinux; a tree with
+          # neither would make every name look missing and fail obscurely, so say what is wrong instead.
+          [ -r "$S/System.map" ] || [ -r "$S/vmlinux" ] || {
+            echo "::error::the symbol source $S has neither a readable System.map nor a vmlinux, so this gate cannot check anything"
+            exit 1
+          }
+          while read -r s; do
+            [ -n "$s" ] || continue
+            n=$(sym_count "$s")
+            if [ "$n" = "0" ]; then
+              echo "::error::'$s' is undefined in the module but not present in $S (variant $V) - no loader can supply its address on this kernel"
+              miss=$((miss + 1))
+            fi
+          done < /tmp/undef-syms.txt
+          if [ "$miss" != "0" ]; then
+            echo "::error::$miss undefined symbol(s) of the module are missing from $S (variant $V)"
+            exit 1
+          fi
+          echo "  all $tu undefined symbols are present in $S"
+
+          # __stack_chk_guard is the one import this gate cannot be satisfied about by looking at
+          # the tree: on 5.10 the kernel does have that name, so the check above passes - while
+          # `ksud insmod` still cannot resolve it, because its kallsyms walk stops at the first
+          # record that is not three fields and the module's name comes after that point on that
+          # kernel.  The kernel then refuses the load with "Unknown symbol __stack_chk_guard
+          # (err -2)".  kernel/Makefile turns the protector off wherever the kernel predates the
+          # per-task canary (5.11), and from 5.11 the compiler reads the canary from sp_el0 and
+          # references no symbol at all - so no variant may carry this name, and one that does is
+          # a build-configuration regression rather than a kernel difference.
+          if nm "$KO" | grep -qw '__stack_chk_guard'; then
+            echo "::error::$KO references __stack_chk_guard (variant $V) - on a kernel without the per-task canary that is the name 'ksud insmod' fails on; kernel/Makefile must disable the protector below 5.11"
+            exit 1
+          fi
+          echo "  the artifact references no __stack_chk_guard"
+
+      # The module resolves a SECOND class of symbols BY NAME at runtime
+      # (kernel/symbol_resolver.c: find_kernel_symbol_exact + the kprobe bootstrap).  Those never
+      # appear in the .ko's undefined list, so the loader gate above cannot see them - and a name
+      # that moved, was renamed, or was inlined away in ONE tree silently disables that feature on
+      # that variant only.  Measured on android14-6.1: `seq_show` is four symbols there and one on
+      # 5.10/5.15, which is the kind of difference this step exists to make visible per variant.
+      # This step prints the DDK tree's own answer for every
+      # by-name lookup the module makes, per variant.  The three show_* callbacks are a hard error
+      # (without them /proc/mounts and /proc/self/mountinfo are not filtered at all, i.e. the mount
+      # layer is off on that variant); everything else is reported, because the module degrades
+      # feature-by-feature there.  The >= 6.12 lookups are listed too, because the matrix builds
+      # 6.12/6.18 and that code path is compiled here: static_calls_table, lsm_active_cnt and
+      # __static_call_update for the static-call takeover, and mnt_id_xa/__xa_alloc/__xa_erase for
+      # the 6.18 mount-id allocator - the last three are not exported to modules at all, so the
+      # loader gate above is the only thing that can supply them and their per-tree answer has to
+      # be in the log.
+      - name: Check the symbols the module resolves by name (DDK tree)
+        run: |
+          set -e
+          V="${{ matrix.variant }}"
+          S=""
+          for d in "${KDIR:-}" "${KERNEL_SRC:-}" "/opt/ddk/kdir/$V" "/opt/ddk/src/$V" /opt/ddk/kdir/* /opt/ddk/src/*; do
+            if [ -n "$d" ] && { [ -f "$d/vmlinux" ] || [ -f "$d/System.map" ]; }; then S="$d"; break; fi
+          done
+          if [ -z "$S" ]; then
+            echo "::warning::no vmlinux/System.map for $V - the by-name symbol check is SKIPPED for this variant (a gap in its evidence, not a pass)"
+            exit 0
+          fi
+          sym_count() {
+            _s="$1"; _n=0
+            if [ -f "$S/System.map" ]; then
+              _n=$(grep -cE "(^|[[:space:]])${_s}$" "$S/System.map" 2>/dev/null || true)
+            fi
+            if [ "${_n:-0}" = "0" ] && [ -f "$S/vmlinux" ]; then
+              _n=$(nm "$S/vmlinux" 2>/dev/null | grep -cE "(^|[[:space:]])${_s}$" || true)
+            fi
+            if [ "${_n:-0}" = "0" ] && [ -f "$S/vmlinux" ]; then
+              _n=$(readelf -sW "$S/vmlinux" 2>/dev/null | grep -cE "[[:space:]]${_s}$" || true)
+            fi
+            echo "${_n:-0}"
+          }
+          echo "=== by-name lookups (kernel/symbol_resolver.c, find_kernel_symbol_exact) in $S ==="
+          # --- hard: the mount layer's three show callbacks (/proc/mounts, mountinfo, mountstats)
+          hardmiss=0
+          for s in show_vfsmnt show_mountinfo show_vfsstat; do
+            n=$(sym_count "$s"); printf '  %-34s %s\n' "$s" "$n"
+            if [ "$n" = "0" ]; then
+              echo "::error::$s is not in $S (variant $V): the mount layer hooks it by name per mount line; without it /proc/mounts / mountinfo are not filtered on this kernel"
+              hardmiss=$((hardmiss + 1))
+            fi
+          done
+          # --- reported: everything else the module resolves by name.  A 0 means the feature that
+          #     needs it degrades on this variant (the module logs which one at load).
+          #
+          #     set_memory_ro/_rw/_x, aarch64_insn_patch_text, text_poke and module_alloc used to be
+          #     listed here and are GONE: none of the six is resolved by name anywhere in kernel/ on
+          #     either line (verified with `git grep` against main and dev), so the only thing their
+          #     entry bought was one spurious ::warning:: per variant.  The four getdents names dev
+          #     added are not listed either, for the same reason the gate above asserts no getdents
+          #     name: the dirent layer dispatches on the syscall NUMBER, so a missing
+          #     __arm64_sys_getdents64 / __do_sys_getdents64 cannot stop it arming and the old
+          #     warning text would have been false for it.
+          #
+          #     fget_raw and close_fd_get_file (susfs_opath.c) ARE listed: both are resolved by
+          #     name at runtime, so neither can appear in the .ko's undefined list and this loop
+          #     is the only place a variant's answer for them is recorded.  close_fd_get_file is
+          #     not exported at all, so a 0 here means the O_PATH layer cannot arm on that
+          #     variant.  fput is deliberately NOT here: it is EXPORT_SYMBOL'd and used as an
+          #     ordinary import, which the loader gate above and imports_guard.c already cover.
+          #
+          #     close_fd_get_file() and file_close_fd() are the old and the new name of the same
+          #     helper - and 6.1 changed the SIGNATURE without changing the name (int status plus
+          #     an out-param became the file itself).  The module picks its prototype from the
+          #     kernel it is built for, so which name must resolve differs per variant: the
+          #     expected counts are close_fd_get_file: 1 on 5.10/5.15/6.1/6.6 and 0 on 6.12/6.18,
+          #     with file_close_fd the other way round.
+          #     The two syscall tables are listed for the same reason: susfs_fp_hook resolves them
+          #     by name, and a 0 for either is what would stop every table-entry layer at once
+          #     (the tables themselves obviously exist - this is about the symbol being in
+          #     System.map, i.e. reachable by kallsyms).
+          for s in copy_mnt_ns attach_recursive_mnt generic_shutdown_super seq_show \
+                   __arm64_sys_statx do_statx put_mnt_ns d_path security_cred_getsecid \
+                   fget_raw close_fd_get_file file_close_fd \
+                   sys_call_table compat_sys_call_table \
+                   mnt_id_ida ida_alloc_range ida_free namespace_sem mnt_id_xa __xa_alloc __xa_erase \
+                   kallsyms_op modules_op kallsyms_lookup_name kallsyms_lookup kallsyms_on_each_symbol \
+                   kallsyms_on_each_match_symbol synchronize_rcu_tasks task_work_add \
+                   put_unused_fd \
+                   saved_boot_config init_mm copy_to_kernel_nofault __set_fixmap \
+                   security_hook_heads static_calls_table lsm_active_cnt __static_call_update \
+                   smaps_walk_ops smaps_shmem_walk_ops pagemap_ops; do
+            n=$(sym_count "$s"); printf '  %-34s %s\n' "$s" "$n"
+            if [ "$n" = "0" ]; then
+              echo "::warning::$s is not in $S (variant $V) - the feature that resolves it by name cannot arm on this kernel"
+            fi
+            # More than one match is a hazard in itself, not just for the callers that use
+            # .symbol_name: print the neighbours of each match so the log says WHO else is
+            # called that (measured: `seq_show` is four symbols from 6.1 on, one on 5.10/5.15).
+            if [ "$n" -gt 1 ] && [ -f "$S/System.map" ]; then
+              grep -nE "(^|[[:space:]])${s}$" "$S/System.map" | cut -d: -f1 | while read -r _l; do
+                echo "      match at System.map:$_l and its neighbours:"
+                sed -n "$(( _l > 1 ? _l - 1 : 1 )),$(( _l + 1 ))p" "$S/System.map" | sed 's/^/        /'
+              done
+            fi
+          done
+          # The dcache/icache flush helper is resolved by name at run time (kernel/patch_memory.c), so
+          # the four spellings are deliberately NOT in the loop above: a warning there would read
+          # "cannot arm on this kernel" for the spelling a given tree does not carry, which is wrong -
+          # the fallback is what makes that harmless.  What still matters is the pair: a tree with
+          # NEITHER dcache spelling yields a module that cannot patch, and below 6.12 that is a module
+          # that does not load at all (sus_path is fatal and installs its hooks by patching text), so
+          # this one is a hard failure.
+          if [ "$(sym_count dcache_clean_inval_poc)" = "0" ] && [ "$(sym_count __flush_dcache_area)" = "0" ]; then
+            echo "::error::$S (variant $V) has neither dcache_clean_inval_poc nor __flush_dcache_area - the module cannot flush a patch on this kernel"
+            exit 1
+          fi
+          if [ "$(sym_count dcache_clean_inval_poc)" != "0" ]; then
+            echo "  dcache flush helper: dcache_clean_inval_poc"
+          else
+            echo "  dcache flush helper: __flush_dcache_area"
+          fi
+          if [ "$(sym_count caches_clean_inval_pou)" != "0" ]; then
+            echo "  icache flush helper: caches_clean_inval_pou"
+          elif [ "$(sym_count __flush_icache_range)" != "0" ]; then
+            echo "  icache flush helper: __flush_icache_range"
+          else
+            echo "  icache flush helper: absent (nothing requests an icache flush)"
+          fi
+          # The two kernel internals the >= 6.12 static-call switch goes THROUGH: the module resolves
+          # __static_call_update by name and calls it, and that call's own body is what may reach
+          # arch_static_call_transform (only under CONFIG_HAVE_STATIC_CALL_INLINE) and cpus_read_lock.
+          # Neither is one of this module's by-name lookups, so a 0 here is a recorded fact about the
+          # tree, not a feature that failed to arm - printed for the same reason the counts above are.
+          echo "--- informational: kernel internals behind __static_call_update (not by-name lookups) ---"
+          for s in arch_static_call_transform cpus_read_lock; do
+            printf '  %-34s %s\n' "$s" "$(sym_count "$s")"
+          done
+          # fsnotify_open is a static inline in include/linux/fsnotify.h on every tree we build for, so
+          # a kernel only has an out-of-line copy where some other caller happens to force one.  The
+          # name layer uses it when it exists (a redirected open then produces IN_OPEN like any other)
+          # and says so in its own log when it does not, which makes a 0 here a fact about the tree
+          # rather than a feature that failed to arm.
+          echo "  fsnotify_open (out-of-line copy, optional): $(sym_count fsnotify_open)"
+          echo "  check_zeroed_user (optional): $(sym_count check_zeroed_user)"
+          [ "$hardmiss" = "0" ] || exit 1
+          echo "the three mount show callbacks are present in $S"
+
+      - name: Upload .ko
+        uses: actions/upload-artifact@v4
+        with:
+          name: susfs_guard_lkm.ko-${{ matrix.variant }}
+          path: kernel/susfs_guard_lkm.ko
+          if-no-files-found: error
+
+  # The userspace tools are freestanding and kernel-independent, so they are built once rather than eight times.  A broken
+  # tool FAILS this job on purpose: it is the evidence-gathering half of this project, and a tool that cannot compile or
+  # that reads the ABI wrong is how "verified" becomes wrong.
+  tools:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/ylarod/ddk-min:android14-6.1-20260828
+      options: --privileged
+    steps:
+      - name: Checkout module
+        uses: actions/checkout@v4
+
+      # Not part of the module: a freestanding aarch64 client for the supercall commands ksu_susfs does not expose
+      # (hide_sus_mnts_for_non_su_procs, add_sus_path_loop).
+      - name: Build userspace supercall client
+        run: |
+          set -e
+          clang --target=aarch64-linux-gnu -O2 -nostdlib -static-pie \
+                -fno-stack-protector -fno-builtin -fuse-ld=lld -Wl,-e,_start \
+                -o /tmp/susfs_sc tools/susfs_sc.c
+          file /tmp/susfs_sc
+          ls -la /tmp/susfs_sc
+
+      - name: Upload userspace client
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: susfs_sc
+          path: /tmp/susfs_sc
+          if-no-files-found: warn
+
+      # Micro-benchmark for the syscall layers (same freestanding shape as the client above), used to answer
+      # "what does the hook cost per call".
+      - name: Build syscall micro-benchmark
+        run: |
+          clang --target=aarch64-linux-gnu -O2 -nostdlib -static-pie \
+                -fno-stack-protector -fno-builtin -fuse-ld=lld -Wl,-e,_start \
+                -o /tmp/susfs_bench tools/susfs_bench.c
+          file /tmp/susfs_bench
+          ls -la /tmp/susfs_bench
+
+      - name: Upload micro-benchmark
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: susfs_bench
+          path: /tmp/susfs_bench
+          if-no-files-found: warn
+
+      # Resolves this process's own /proc/self/map_files entries N times, as the uid it is started
+      # with.  The map_files layer answers -ENOENT whether or not the reference the callee took is
+      # handed over, so the leak is only visible afterwards: an unmount of the mapping's filesystem
+      # succeeding, or coming back EBUSY.
+      - name: Build map_files probe
+        run: |
+          clang --target=aarch64-linux-gnu -O2 -nostdlib -static-pie \
+                -fno-stack-protector -fno-builtin -fuse-ld=lld -Wl,-e,_start \
+                -o /tmp/susfs_mapfile_probe tools/susfs_mapfile_probe.c
+          file /tmp/susfs_mapfile_probe
+          ls -la /tmp/susfs_mapfile_probe
+
+      - name: Upload map_files probe
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: susfs_mapfile_probe
+          path: /tmp/susfs_mapfile_probe
+          if-no-files-found: warn
+
+      # What an open handed back, asked the way a caller asks: the fd or the errno, F_GETFD
+      # (FD_CLOEXEC), F_GETFL, fstat(fd) - which is EBADF if the number was taken out of the table
+      # after the syscall said it succeeded - and readlink(/proc/self/fd/N), which names the file the
+      # descriptor refers to and so separates a followed symlink from the link itself.
+      - name: Build open-result probe
+        run: |
+          clang --target=aarch64-linux-gnu -O2 -nostdlib -static-pie \
+                -fno-stack-protector -fno-builtin -fuse-ld=lld -Wl,-e,_start \
+                -o /tmp/susfs_open_probe tools/susfs_open_probe.c
+          file /tmp/susfs_open_probe
+          ls -la /tmp/susfs_open_probe
+
+      - name: Upload open-result probe
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: susfs_open_probe
+          path: /tmp/susfs_open_probe
+          if-no-files-found: warn
+
+      # Scans a directory for the placeholder record a post-hoc dirent filter leaves behind: a
+      # 56-byte getdents64 buffer forces one record per call, so a chunk whose only record is
+      # hidden makes such a filter answer with d_ino 0 and an empty name.  Two public detectors
+      # key off exactly that, and a filter that decides before emitting never produces one.
+      - name: Build dirent-scan probe
+        run: |
+          clang --target=aarch64-linux-gnu -O2 -nostdlib -static-pie \
+                -fno-stack-protector -fno-builtin -fuse-ld=lld -Wl,-e,_start \
+                -o /tmp/susfs_dirent_scan tools/susfs_dirent_scan.c
+          file /tmp/susfs_dirent_scan
+          ls -la /tmp/susfs_dirent_scan
+
+      - name: Upload dirent-scan probe
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: susfs_dirent_scan
+          path: /tmp/susfs_dirent_scan
+          if-no-files-found: warn
+
+      # mmap a file, touch it, then read /proc/self/pagemap and /proc/self/smaps_rollup *in the same process* - a shell
+      # cannot do this, because the child that runs dd has its own mm and therefore its own addresses.
+      - name: Build mmap/pagemap probe
+        run: |
+          clang --target=aarch64-linux-gnu -O2 -nostdlib -static-pie \
+                -fno-stack-protector -fno-builtin -fuse-ld=lld -Wl,-e,_start \
+                -o /tmp/susfs_mmap tools/susfs_mmap.c
+          file /tmp/susfs_mmap
+          ls -la /tmp/susfs_mmap
+
+      - name: Upload mmap/pagemap probe
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: susfs_mmap
+          path: /tmp/susfs_mmap
+          if-no-files-found: warn
+
+      # The second door to a hidden mapping's content: /proc/self/mem and process_vm_readv(2), both read by the process
+      # that owns the mapping - the only way to tell whether a remote-memory hook actually refuses.
+      - name: Build remote-memory probe
+        run: |
+          clang --target=aarch64-linux-gnu -O2 -nostdlib -static-pie \
+                -fno-stack-protector -fno-builtin -fuse-ld=lld -Wl,-e,_start \
+                -o /tmp/susfs_memrd tools/susfs_memrd.c
+          file /tmp/susfs_memrd
+          ls -la /tmp/susfs_memrd
+
+      - name: Upload remote-memory probe
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: susfs_memrd
+          path: /tmp/susfs_memrd
+          if-no-files-found: warn
+
+      # The detector's view of a hidden mount: the mnt_id that /proc/self/fdinfo/N prints and statx(2) returns, checked
+      # against the ids mountinfo lists.
+      - name: Build mnt_id cross-check
+        run: |
+          clang --target=aarch64-linux-gnu -O2 -nostdlib -static-pie \
+                -fno-stack-protector -fno-builtin -fuse-ld=lld -Wl,-e,_start \
+                -o /tmp/susfs_mntid tools/susfs_mntid.c
+          file /tmp/susfs_mntid
+          ls -la /tmp/susfs_mntid
+
+      - name: Upload mnt_id cross-check
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: susfs_mntid
+          path: /tmp/susfs_mntid
+          if-no-files-found: warn
+
+      # A 32-bit client.  Only a real AArch32 caller can exercise the compat stat path, and the audit showed the module
+      # had the compat structure wrong - no 64-bit test could have seen that.
+      - name: Build 32-bit compat stat client
+        run: |
+          set -e
+          clang --target=armv7a-linux-androideabi -march=armv7-a -O2 -nostdlib \
+                -static-pie -fno-stack-protector -fno-builtin -fuse-ld=lld \
+                -Wl,-e,_start -o /tmp/susfs_compat_stat tools/susfs_compat_stat.c
+          file /tmp/susfs_compat_stat
+          ls -la /tmp/susfs_compat_stat
+
+      - name: Upload 32-bit compat stat client
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: susfs_compat_stat
+          path: /tmp/susfs_compat_stat
+          if-no-files-found: warn
+
+      # A 64-bit client for the syscalls the shell cannot reach.  `ls -li` and toybox stat only
+      # exercise newfstatat(79); fstat(80) and statx(291) fill a DIFFERENT struct (statx's is a
+      # separate layout with a mask contract) and are otherwise only reachable through libc, which
+      # a freestanding client deliberately does not link.  Same shape as the compat client above.
+      - name: Build 64-bit stat/statx/fstat client
+        run: |
+          set -e
+          clang --target=aarch64-linux-gnu -O2 -nostdlib -static-pie \
+                -fno-stack-protector -fno-builtin -fuse-ld=lld -Wl,-e,_start \
+                -o /tmp/susfs_stat tools/susfs_stat.c
+          file /tmp/susfs_stat
+          ls -la /tmp/susfs_stat
+
+      - name: Upload 64-bit stat/statx/fstat client
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: susfs_stat
+          path: /tmp/susfs_stat
+          if-no-files-found: warn
+
+      # The loading half of this project: it loads the .ko on a stock vendor kernel WITHOUT ksud, by rewriting every
+      # undefined symbol of the image to st_shndx=SHN_ABS / st_value=<kallsyms address> before init_module(2), so the
+      # kernel's SHN_UNDEF branch (resolve_symbol -> export lookup, namespace import, CRC check, KMI whitelist) is never
+      # entered at all.  See the source header.
+      - name: Build module loader (no-ksud insmod)
+        run: |
+          set -e
+          clang --target=aarch64-linux-gnu -O2 -nostdlib -static-pie \
+                -fno-stack-protector -fno-builtin -fuse-ld=lld -Wl,-e,_start \
+                -o /tmp/susfs_insmod tools/susfs_insmod.c
+          file /tmp/susfs_insmod
+          ls -la /tmp/susfs_insmod
+
+      # The rule about which kallsyms record a name may come from is tested on the runner:
+      # no kernel and no device needed.
+      - name: Match-rule test (host)
+        run: |
+          set -e
+          cc -O1 -o /tmp/insmod_match_test tools/insmod_match_test.c
+          /tmp/insmod_match_test
+
+      - name: Upload module loader
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: susfs_insmod
+          path: /tmp/susfs_insmod
+          if-no-files-found: warn
+
+  # The flashable KernelSU module, packed from the artifacts of the run that just finished.
+  #
+  # It sits after the matrix rather than only in a release-triggered workflow of its own so that
+  # EVERY build produces a testable ZIP: the run page hands out something a device can flash, with
+  # no release existing yet.  Attaching the same ZIP to a published release is still done by
+  # module-zip.yml, which calls the same tools/pack_module.py - one packer, two callers.
+  module-zip:
+    needs: [module, tools, subject-policy]
+    # The downstream SKP migration has no qualified automatic kernel loader.
+    # Preserve upstream packaging for upstream; never label its KSU ZIP as SKP.
+    if: github.repository != 'dreamcolor123/susfs4skp-lkm'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+
+      # A matrix artifact is named susfs_guard_lkm.ko-<variant> and holds a file called
+      # susfs_guard_lkm.ko; the packer keys every KMI off the per-KMI name, so the directory name
+      # is folded back into the file name here - the same rename the release workflow does.
+      - name: Collect the per-KMI modules
+        uses: actions/download-artifact@v4
+        with:
+          pattern: 'susfs_guard_lkm.ko-*'
+          path: ko
+
+      - name: Collect the loader
+        uses: actions/download-artifact@v4
+        with:
+          name: susfs_insmod
+          path: bin
+
+      - name: Name the modules after their KMI
+        run: |
+          set -euo pipefail
+          cd ko
+          for d in */; do
+            kmi="${d%/}"
+            kmi="${kmi#susfs_guard_lkm.ko-}"
+            mv "$d/susfs_guard_lkm.ko" "susfs_guard_lkm-$kmi.ko"
+            rmdir "$d"
+          done
+          ls -l
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # The tag carries the ref and the commit because this is a build, not a release: the ZIP
+      # from a PR run says so in its own name and in module.prop.  The ref's slashes are folded
+      # to dashes FIRST: a branch called pr/someone would otherwise turn the output path into
+      # dist/susfs_guard_lkm-module-pr/someone-<sha>-arm64.zip - a directory - and the upload
+      # below would report "no files were found" against dist/*.zip.
+      - name: Pack the module
+        run: |
+          set -euo pipefail
+          tag="$(echo "$GITHUB_REF_NAME" | tr '/' '-')-$(git rev-parse --short HEAD)"
+          python tools/pack_module.py --ko-dir ko --insmod bin/susfs_insmod \
+            --tag "$tag" --out "dist/susfs_guard_lkm-module-$tag-arm64.zip"
+          ls -l dist
+
+      - name: Upload the flashable module
+        uses: actions/upload-artifact@v4
+        with:
+          name: susfs_guard_lkm-module-arm64
+          path: dist/*.zip
+          if-no-files-found: error

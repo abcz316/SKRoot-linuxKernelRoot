@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 890" role="img" aria-labelledby="title desc" style="max-width:100%;height:auto">
+<title id="title">作用组：当前规则会影响哪些应用？</title>
+<desc id="desc">排除模式检查广域排除和包名对应 UID，指定模式只影响选中的 UID。规则组独立判断，精确管理身份不是系统所有功能的总豁免。</desc>
+<defs><marker id="arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0 L8 4.5 L0 9" fill="#7454a7"/></marker></defs>
+<g font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif">
+<rect x="0" y="0" width="1200" height="890" rx="0" fill="#f7f5fb"/>
+<text x="48" y="42" font-size="16" fill="#7454a7" font-weight="600" text-anchor="start">SUSFS 0.3.0 · 配置教学图</text>
+<text x="48" y="88" font-size="32" fill="#282236" font-weight="700" text-anchor="start">作用组：当前规则会影响哪些应用？</text>
+<text x="48" y="123" font-size="20" fill="#696176" font-weight="400" text-anchor="start">下图说明单个作用组中的对象规则；包名在保存应用时解析为 UID。</text>
+<rect x="48" y="154" width="540" height="508" rx="18" fill="#ffffff" stroke="#ded6ed" stroke-width="1.5"/>
+<rect x="612" y="154" width="540" height="508" rx="18" fill="#ffffff" stroke="#ded6ed" stroke-width="1.5"/>
+<rect x="72" y="176" width="140" height="33" rx="16" fill="#eee7f7"/>
+<text x="142.0" y="199" font-size="16" fill="#7454a7" font-weight="600" text-anchor="middle">排除模式</text>
+<rect x="636" y="176" width="140" height="33" rx="16" fill="#eee7f7"/>
+<text x="706.0" y="199" font-size="16" fill="#7454a7" font-weight="600" text-anchor="middle">指定模式</text>
+<text x="72" y="245" font-size="23" fill="#282236" font-weight="700" text-anchor="start">三项广域排除，仅此模式展示</text>
+<rect x="72" y="270" width="150" height="99" rx="14" fill="#eee7f7"/>
+<text x="147" y="307" font-size="20" fill="#7454a7" font-weight="600" text-anchor="middle">Root 进程</text>
+<text x="147" y="341" font-size="14" fill="#696176" font-weight="400" text-anchor="middle">实际 UID = 0</text>
+<rect x="236" y="270" width="150" height="99" rx="14" fill="#eee7f7"/>
+<text x="311" y="307" font-size="20" fill="#7454a7" font-weight="600" text-anchor="middle">系统进程</text>
+<text x="311" y="341" font-size="14" fill="#696176" font-weight="400" text-anchor="middle">UID 1～9999</text>
+<rect x="400" y="270" width="150" height="99" rx="14" fill="#eee7f7"/>
+<text x="475" y="307" font-size="20" fill="#7454a7" font-weight="600" text-anchor="middle">系统应用</text>
+<text x="475" y="341" font-size="14" fill="#696176" font-weight="400" text-anchor="middle">已识别系统应用 UID</text>
+<path d="M318 382 L318 415" fill="none" stroke="#7454a7" stroke-width="2.4" marker-end="url(#arrow)"/>
+<text x="82" y="445" font-size="20" fill="#696176" font-weight="400" text-anchor="start">已开启的任一广域项命中，</text>
+<text x="82" y="475" font-size="20" fill="#696176" font-weight="400" text-anchor="start">或“包名排除”对应的 UID 命中</text>
+<rect x="72" y="494" width="492" height="54" rx="14" fill="#edf7f1"/>
+<text x="318" y="529" font-size="22" fill="#246b53" font-weight="700" text-anchor="middle">命中 → 豁免当前组规则</text>
+<text x="72" y="588" font-size="21" fill="#7454a7" font-weight="700" text-anchor="start">均未命中 → 当前组规则生效</text>
+<text x="72" y="627" font-size="17" fill="#696176" font-weight="400" text-anchor="start">空包名列表仍会保留已开启的广域排除。</text>
+<text x="636" y="245" font-size="23" fill="#282236" font-weight="700" text-anchor="start">只看“包名指定”对应的 UID</text>
+<rect x="660" y="273" width="444" height="78" rx="14" fill="#eee7f7"/>
+<text x="882" y="307" font-size="21" fill="#7454a7" font-weight="600" text-anchor="middle">已添加的应用 / 共享 UID</text>
+<text x="882" y="336" font-size="17" fill="#696176" font-weight="400" text-anchor="middle">此模式不使用三项广域排除</text>
+<path d="M882 364 L882 403" fill="none" stroke="#7454a7" stroke-width="2.4" marker-end="url(#arrow)"/>
+<text x="882" y="443" font-size="21" fill="#282236" font-weight="600" text-anchor="middle">当前调用者是否属于选中的 UID？</text>
+<path d="M809 467 L759 503" fill="none" stroke="#7454a7" stroke-width="2.4" marker-end="url(#arrow)"/>
+<path d="M956 467 L1005 503" fill="none" stroke="#7454a7" stroke-width="2.4" marker-end="url(#arrow)"/>
+<rect x="636" y="518" width="240" height="63" rx="14" fill="#eee7f7"/>
+<rect x="888" y="518" width="240" height="63" rx="14" fill="#edf7f1"/>
+<text x="756" y="557" font-size="21" fill="#7454a7" font-weight="700" text-anchor="middle">是 → 本组生效</text>
+<text x="1008" y="557" font-size="21" fill="#246b53" font-weight="700" text-anchor="middle">否 → 本组不生效</text>
+<text x="636" y="627" font-size="18" fill="#696176" font-weight="400" text-anchor="start">空列表 → 不指定任何应用。</text>
+<rect x="48" y="690" width="1104" height="126" rx="18" fill="#eee7f7"/>
+<text x="73" y="726" font-size="18" fill="#282236" font-weight="400" text-anchor="start">共享 UID 作为整体处理；不同作用组可同时影响同一应用，避免为同一对象填写冲突值。</text>
+<text x="73" y="757" font-size="18" fill="#282236" font-weight="400" text-anchor="start">精确注册的 SUSFS 管理身份可豁免适用的对象规则；名称隐藏在共享存储下仍可能影响豁免方。</text>
+<text x="73" y="788" font-size="18" fill="#282236" font-weight="400" text-anchor="start">uname、启动信息、AVC、模块隐藏等高级全局项不按此图的作用组筛选。</text>
+<text x="48" y="865" font-size="15" fill="#696176" font-weight="400" text-anchor="start">0.3.0 教学示意 · 以当前界面及内核能力为准 · 不是设备效果证据</text>
+</g>
+</svg>

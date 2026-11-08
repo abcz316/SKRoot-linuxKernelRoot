@@ -1,0 +1,32 @@
+/* Subjects use the same neutral fields, grid and borders as object rules. */
+#susfsSubjectsPage .susfs-summary > label { display: grid; grid-template-columns: 64px minmax(0, 1fr); align-items: center; gap: 10px; font-size: 11px; font-weight: 500; }
+#susfsMode { width: 100%; min-width: 0; }
+#susfsMeaning { color: var(--color-text-secondary); font-size: 10.5px; }
+.susfs-exemptions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; padding-top: 7px; margin-top: 8px; border-top: 1px solid var(--color-border-subtle); }
+.susfs-exemptions label { display: flex; align-items: center; gap: 5px; min-height: 44px; color: var(--color-text-secondary); font-size: 10.5px; white-space: nowrap; cursor: pointer; }
+.susfs-panel input[type="checkbox"] { width: 16px; height: 16px; flex: none; accent-color: var(--color-accent-default); }
+#susfsSubjectsPage .susfs-filter { grid-template-columns: minmax(0, 1fr) 120px 108px 108px; }
+.susfs-list { overflow: hidden; background: rgba(255,255,255,.88); border: 1px solid var(--color-border-subtle); border-radius: 10px; }
+.susfs-app { display: flex; align-items: center; gap: 10px; min-height: 54px; padding: 11px 12px; border-bottom: 1px solid var(--color-border-subtle); cursor: pointer; transition: background var(--transition-fast); }
+.susfs-app:last-child { border-bottom: 0; }
+.susfs-app:hover { background: var(--color-surface-secondary); }
+.susfs-app:has(input:checked), .susfs-app:has(input:indeterminate) { background: var(--color-accent-subtle); }
+.susfs-app:has(input:disabled) { cursor: default; }
+.susfs-app input { margin: 0; }
+.susfs-app span { min-width: 0; }
+.susfs-app strong { display: block; color: var(--color-text-primary); font: 600 12px/1.5 var(--font-sans); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.susfs-app small { display: block; margin-top: 3px; color: var(--color-text-tertiary); font-size: 10px; line-height: 1.5; }
+.susfs-empty { padding: 20px; color: var(--color-text-secondary); font-size: 11px; text-align: center; }
+@media (max-width: 600px) {
+  #susfsSubjectsPage .susfs-filter { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  #susfsSubjectsPage .susfs-filter > * { width: 100%; }
+  .susfs-exemptions { gap: 4px; }
+  .susfs-exemptions label { gap: 4px; font-size: 10px; }
+}
+.susfs-app-group { display: grid; flex: 1; gap: 6px; }
+.susfs-app-identity { display: flex; align-items: center; gap: 9px; }
+.susfs-app-icon { display: grid; place-items: center; flex: none; width: 36px; height: 36px; overflow: hidden; border-radius: 9px; background: var(--color-surface-tertiary); color: var(--color-text-tertiary); }
+.susfs-app-icon img { display: block; width: 36px; height: 36px; object-fit: contain; }
+.susfs-app-text { flex: 1; }
+.susfs-app small.susfs-app-package { margin-top: 1px; font: 10px/1.5 var(--font-mono); overflow-wrap: anywhere; }
+.susfs-app-facts { padding-left: 45px; }

@@ -1,0 +1,79 @@
+# kernel module build outputs
+*.o
+*.ko
+*.mod
+*.mod.c
+*.mod.o
+*.order
+.modules.order
+Module.symvers
+modules.order
+*.cmd
+.tmp_versions/
+
+# downloaded CI artifacts
+artifacts/
+art*/
+
+# device panic logs (debug artifacts, contain device info)
+last_kmsg*.gz
+last_kmsg*.txt
+kmsg.dat.gz
+
+# temporary device test scripts (hardcode /data/local/tmp paths)
+test_*.sh
+
+# local ABI-layout verification scaffolding (uses stub <linux/*> shims)
+abi_layout_check/
+
+# device test scripts (t_*.sh): they hardcode /data/local/tmp paths and are
+# hardware-specific scaffolding, not part of the module.  Earlier revisions
+# tracked them; this keeps new ones out.  (tools/ is NOT ignored - CI builds
+# tools/susfs_sc.c into the supercall client.)
+# t_dev.ps1 is the same thing on the host side: it pushes and runs those scripts
+# (plus t_*.ps1 scratch), and is only useful against a device this machine owns.
+t_*.sh
+t_*.ps1
+art/
+
+# Documents that are not needed to build or use the module are kept out of the tree.
+# The published ones are allow-listed below: the README and the /proc interface
+# docs, each in Chinese and in English.
+*.md
+!README.md
+!PROC_INTERFACES.md
+!README.en.md
+!PROC_INTERFACES.en.md
+
+# development-only scaffolding: the probe/test modules and C test programs used
+# while working the hooks out.  They are not built by kernel/Makefile and are not
+# part of the module; only tools/susfs_sc.c is, because CI compiles it.
+diag_or.sh
+test_*.c
+kernel/*_test.c
+kernel/*_test*.c
+kernel/*_probe_main.c
+kernel/ih_hook_main.c
+kernel/ih_hook_stub.S
+
+# namespace-probe helper used by t_clonens.sh
+nsprobe.sh
+
+# byte-compiled python: tools/cfi_sites.py is run by CI and by hand, and CPython leaves
+# __pycache__ next to it
+__pycache__/
+*.pyc
+
+# local scratch: downloaded CI artifacts, device scripts and CI logs used while verifying
+dist/
+
+# Downstream migration sources and documentation.
+!AGENTS.md
+!MIGRATION.md
+!README.upstream.md
+/build/
+*.keystore
+*.jks
+.env
+.env.*
+agent.md

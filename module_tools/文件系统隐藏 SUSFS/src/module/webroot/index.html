@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>文件系统隐藏 SUSFS</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="text-editor.css">
+  <link rel="stylesheet" href="image-viewer.css">
+  <link rel="stylesheet" href="subject-policy.css">
+  <link rel="stylesheet" href="susfs.css">
+</head>
+<body>
+<div id="sheetOverlay" class="sheet-overlay"></div>
+
+<section id="fileWorkspace" class="app-view fm-workspace" aria-hidden="true" data-view="files" hidden="" aria-label="文件管理">
+  <header class="view-header fm-topbar"><button id="fileClose" type="button" hidden>返回终端</button><div class="view-title fm-view-title"><h1>文件</h1></div>
+<div id="activePathTrigger" class="fm-title-block">
+<button id="activePathText" class="fm-active-path" type="button" aria-expanded="false" aria-controls="activePathEditor">/sdcard</button><div id="activePathEditor" class="fm-path-editor" hidden>
+<input id="pathInput" type="text" enterkeyhint="go" autocomplete="off" spellcheck="false" aria-label="目录路径"><button id="pathGo" class="icon-button" type="button" aria-label="跳转路径"></button>
+</div>
+<div id="activePathMeta" class="fm-path-meta"></div>
+</div>
+<div class="header-actions">
+<button id="filePlacesButton" class="icon-button" type="button" aria-label="位置与书签" data-icon="bookmark"></button><button id="fileMenuBtn" class="icon-button" type="button" aria-label="文件菜单" aria-expanded="false" aria-controls="fileOverflowMenu"></button>
+</div>
+<div id="fileOverflowMenu" class="fm-overflow floating-menu" hidden>
+      <button id="fileRefresh" type="button"></button>
+      <button id="fileNewFolder" type="button"></button>
+      <button id="fileNewFile" type="button"></button>
+      <button id="fileSetHome" type="button"></button>
+      <button id="fileAddBookmark" type="button"></button>
+      <button id="fileSwapPanes" type="button"></button>
+      <button id="fileSyncPanes" type="button"></button>
+      <button id="fileSusfsControl" type="button" data-susfs-entry hidden>SUSFS 总控</button>
+    <button id="fileStatusHelp" type="button" data-icon="info" data-susfs-entry hidden>状态图标说明</button><button id="fileSelectMode" type="button" data-icon="check-square">选择文件</button>
+    </div>
+  </header>
+
+  <div id="fileSusfsNotice" class="fm-susfs-notice" hidden role="status"></div>
+  <div id="filePickerBar" class="fm-picker-bar" hidden role="status">
+    <button id="filePickerConfirmDirectory" type="button" hidden>选择当前目录</button>
+    <span id="filePickerMessage">选择脚本：单击文件即可使用，文件夹可继续浏览</span>
+    <button id="filePickerCancel" class="icon-action" type="button" aria-label="取消选择文件" title="取消选择" data-icon="x"></button>
+  </div>
+  <main class="fm-panes" aria-label="双栏文件浏览器">
+    <section id="filePaneLeft" class="fm-pane active" data-pane="left" aria-label="左栏">
+      <div class="fm-pane-strip"></div>
+      <div class="fm-list" data-list="left" tabindex="0"></div>
+    </section>
+    <section id="filePaneRight" class="fm-pane" data-pane="right" aria-label="右栏">
+      <div class="fm-pane-strip"></div>
+      <div class="fm-list" data-list="right" tabindex="0"></div>
+    </section>
+  </main>
+
+  <button id="filePlacesEdge" class="fm-places-edge" type="button" aria-label="上滑打开书签与最近" hidden="">
+    <span></span>
+  </button>
+  <div id="filePlacesBackdrop" class="fm-places-backdrop"></div>
+  <section id="filePlacesSheet" class="fm-places-sheet" aria-hidden="true" aria-label="书签与最近访问">
+    <div id="filePlacesHandle" class="fm-places-handle" aria-hidden="true"><span></span></div>
+    <header class="fm-places-head">
+      <button id="filePlacesRecentTab" class="active" type="button">最近 <span id="filePlacesRecentCount">0</span></button>
+      <button id="filePlacesBookmarkTab" type="button">书签 <span id="filePlacesBookmarkCount">0</span></button>
+      <button id="filePlacesClose" class="fm-places-close" type="button" aria-label="关闭"></button>
+    </header>
+    <div id="filePlacesList" class="fm-places-list"></div>
+  </section>
+
+  <div id="selectionBar" class="fm-selection-bar" hidden role="group" aria-label="多选文件操作">
+    <strong id="selectionCount" aria-live="polite">已选 0</strong>
+    <button id="selectionAll" type="button" title="全选"></button>
+    <button id="selectionInvert" type="button" title="反选"></button>
+    <button id="selectionExit" type="button" title="退出多选"></button>
+    <button id="selectionActions" type="button" title="选中项操作"></button>
+  </div>
+
+  <div id="fileJobBar" class="fm-job-bar" hidden aria-live="polite">
+    <div class="fm-job-main">
+      <div class="fm-job-head">
+        <span id="fileJobTitle">正在处理</span>
+        <span id="fileJobPercent">0%</span>
+      </div>
+      <div class="fm-job-track"><div id="fileJobProgress" class="fm-job-progress"></div></div>
+      <div id="fileJobDetail" class="fm-job-detail"></div>
+    </div>
+    <button id="fileJobCancel" class="fm-job-cancel" type="button">取消</button>
+  </div>
+</section>
+
+<div id="placeActionModal" class="modal-wrap">
+  <div class="modal fm-place-action-modal">
+    <div class="modal-title" id="placeActionTitle">最近目录</div>
+    <div class="modal-body fm-action-body">
+      <div class="action-target" id="placeActionPath"></div>
+      <div class="fm-place-action-list">
+        <button id="placeActionAddBookmark" class="action-menu-item" type="button"></button>
+        <button id="placeActionEditNote" class="action-menu-item" type="button"></button>
+        <button id="placeActionDelete" class="action-menu-item danger" type="button"></button>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="m-btn m-cancel" id="placeActionCancel" type="button">取消</button>
+    </div>
+  </div>
+</div>
+
+<div id="bookmarkNoteModal" class="modal-wrap">
+  <div class="modal">
+    <div class="modal-title">修改书签备注</div>
+    <div class="modal-body">
+      <div id="bookmarkNotePath" class="code-preview modal-code-compact"></div>
+      <div class="arg-label">备注（留空时显示目录名称）</div>
+      <input id="bookmarkNoteInput" class="arg-input" type="text" maxlength="512" enterkeyhint="done" placeholder="输入书签备注">
+    </div>
+    <div class="modal-foot">
+      <button class="m-btn m-cancel" id="bookmarkNoteCancel" type="button">取消</button>
+      <button class="m-btn m-exec" id="bookmarkNoteConfirm" type="button">保存</button>
+    </div>
+  </div>
+</div>
+
+<div id="actionModal" class="modal-wrap">
+  <div class="modal fm-action-modal">
+    <div class="modal-title" id="actionTitle">选择操作</div>
+    <div class="modal-body fm-action-body">
+      <div class="action-target" id="actionTarget"></div>
+      <div class="fm-action-grid">
+        <button class="action-menu-item" id="actCopy" type="button"></button>
+        <button class="action-menu-item" id="actMove" type="button"></button>
+        <button class="action-menu-item" id="actCompress" type="button"></button>
+        <button class="action-menu-item" id="actExtract" type="button"></button>
+        <button class="action-menu-item" id="actInstallApk" type="button"></button>
+        <button class="action-menu-item" id="actEdit" type="button"></button>
+        <button class="action-menu-item" id="actImage" type="button"></button>
+        <button class="action-menu-item" id="actBrowseArchive" type="button"></button>
+        <button class="action-menu-item" id="actRename" type="button"></button>
+        <button class="action-menu-item" id="actProperties" type="button"></button>
+        <button class="action-menu-item" id="actSusfs" type="button" data-susfs-entry hidden>SUSFS 规则…</button>
+        <button class="action-menu-item" id="actSusfsDetails" type="button" data-susfs-entry hidden>查看规则</button>
+        <button class="action-menu-item" id="actSusfsTarget" type="button" data-susfs-entry hidden>选择为重定向目标</button>
+        <button class="action-menu-item danger" id="actDelete" type="button"></button>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="m-btn m-cancel" style="border-right: none;" id="actionCancel">取消</button>
+    </div>
+  </div>
+</div>
+
+<div id="operationConfirmModal" class="modal-wrap">
+  <div class="modal">
+    <div class="modal-title" id="operationConfirmTitle">确认复制</div>
+    <div class="modal-body">
+      <div id="operationConfirmSummary" class="modal-desc"></div>
+      <div id="operationConfirmTarget" class="code-preview modal-code-compact"></div>
+      <div class="fm-conflict-options" id="operationConflictOptions">
+        <label><input type="radio" name="conflictPolicy" value="overwrite" checked> 覆盖同名项目</label>
+        <label><input type="radio" name="conflictPolicy" value="skip"> 跳过同名项目</label>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="m-btn m-cancel" id="operationConfirmCancel" type="button">取消</button>
+      <button class="m-btn m-exec" id="operationConfirmOk" type="button">开始</button>
+    </div>
+  </div>
+</div>
+
+<div id="apkInstallModal" class="modal-wrap">
+  <div class="modal">
+    <div class="modal-title">确认 Root 安装 APK</div>
+    <div class="modal-body">
+      <div class="modal-desc">将通过系统包管理器安装此 APK。安装会保留现有应用数据，并允许版本降级。</div>
+      <div id="apkInstallPath" class="code-preview modal-code-compact"></div>
+      <div class="fm-property-note">仅支持单个 APK；签名、ABI、版本和权限仍由 Android 系统校验。</div>
+    </div>
+    <div class="modal-foot">
+      <button class="m-btn m-cancel" id="apkInstallCancel" type="button">取消</button>
+      <button class="m-btn m-exec" id="apkInstallConfirm" type="button">安装</button>
+    </div>
+  </div>
+</div>
+
+
+
+
+
+<div id="renameModal" class="modal-wrap">
+  <div class="modal">
+    <div class="modal-title" id="renameTitle">重命名</div>
+    <div class="modal-body">
+      <div class="code-preview" id="renameOldName"></div>
+      <div class="arg-label" id="renameLabel">新名称</div>
+      <input id="renameInput" class="arg-input" type="text" placeholder="输入新名称">
+    </div>
+    <div class="modal-foot">
+      <button class="m-btn m-cancel" id="renameCancel">取消</button>
+      <button class="m-btn m-exec" id="renameConfirm">确定重命名</button>
+    </div>
+  </div>
+</div>
+
+<div id="deleteModal" class="modal-wrap">
+  <div class="modal">
+    <div class="modal-title" style="color: #ef4444;">确认删除</div>
+    <div class="modal-body">
+      <div id="deleteMessage" style="font-size:14px; color:#475569; line-height:1.6">
+        确定要删除以下项目吗？此操作不可恢复。
+      </div>
+      <div class="code-preview" id="deleteTargetName" style="margin-top: 10px;"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="m-btn m-cancel" id="deleteCancel">取消</button>
+      <button class="m-btn m-exec" id="deleteConfirm" style="color: #ef4444;">确定删除</button>
+    </div>
+  </div>
+</div>
+
+<div id="mkdirModal" class="modal-wrap">
+  <div class="modal">
+    <div class="modal-title">新建文件夹</div>
+    <div class="modal-body">
+      <div class="code-preview" id="mkdirParent"></div>
+      <div class="arg-label">文件夹名称</div>
+      <input id="mkdirInput" class="arg-input" type="text" placeholder="输入文件夹名称">
+    </div>
+    <div class="modal-foot">
+      <button class="m-btn m-cancel" id="mkdirCancel">取消</button>
+      <button class="m-btn m-exec" id="mkdirConfirm">确定新建</button>
+    </div>
+  </div>
+</div>
+
+<div id="createFileModal" class="modal-wrap">
+  <div class="modal">
+    <div class="modal-title">新建空白文件</div>
+    <div class="modal-body">
+      <div class="code-preview" id="createFileParent"></div>
+      <div class="arg-label">文件名</div>
+      <input id="createFileInput" class="arg-input" type="text" enterkeyhint="done" placeholder="例如 notes.txt、.env、README">
+    </div>
+    <div class="modal-foot">
+      <button class="m-btn m-cancel" id="createFileCancel" type="button">取消</button>
+      <button class="m-btn m-exec" id="createFileConfirm" type="button">确定创建</button>
+    </div>
+  </div>
+</div>
+
+<div id="propertiesModal" class="modal-wrap">
+  <div class="modal fm-properties-modal">
+    <div class="modal-title">属性</div>
+    <div class="modal-body">
+      <div id="propertiesPath" class="code-preview modal-code-compact"></div>
+      <div id="propertiesLoading" class="fm-property-loading">正在读取属性...</div>
+      <div id="propertiesContent" hidden>
+        <div class="fm-property-list">
+          <div>
+<span>类型</span><strong id="propertiesType"></strong>
+</div>
+          <div>
+<span>大小</span><strong id="propertiesSize"></strong>
+</div>
+          <div>
+<span>修改时间</span><strong id="propertiesMtime"></strong>
+</div>
+          <div>
+<span>权限</span><strong id="propertiesMode"></strong>
+</div>
+          <div>
+<span>所有者</span><strong id="propertiesOwner"></strong>
+</div>
+          <div>
+<span>用户组</span><strong id="propertiesGroup"></strong>
+</div>
+          <div id="propertiesLinkRow" hidden>
+<span>链接目标</span><strong id="propertiesLink"></strong>
+</div>
+        </div>
+        <div class="fm-property-actions">
+          <button id="propertiesEditMode" type="button"></button>
+          <button id="propertiesEditOwner" type="button"></button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="m-btn m-cancel" id="propertiesClose" type="button">关闭</button>
+    </div>
+  </div>
+</div>
+
+<div id="permissionModal" class="modal-wrap">
+  <div class="modal fm-properties-modal">
+    <div class="modal-title">权限</div>
+    <div class="modal-body">
+      <div class="fm-permission-grid" id="permissionGrid">
+        <span></span><b>读</b><b>写</b><b>执行</b>
+        <strong>所有者</strong>
+        <label><input type="checkbox" data-mode-bit="256"><span></span></label>
+        <label><input type="checkbox" data-mode-bit="128"><span></span></label>
+        <label><input type="checkbox" data-mode-bit="64"><span></span></label>
+        <strong>用户组</strong>
+        <label><input type="checkbox" data-mode-bit="32"><span></span></label>
+        <label><input type="checkbox" data-mode-bit="16"><span></span></label>
+        <label><input type="checkbox" data-mode-bit="8"><span></span></label>
+        <strong>其它</strong>
+        <label><input type="checkbox" data-mode-bit="4"><span></span></label>
+        <label><input type="checkbox" data-mode-bit="2"><span></span></label>
+        <label><input type="checkbox" data-mode-bit="1"><span></span></label>
+      </div>
+      <div class="fm-special-title">特殊权限</div>
+      <div class="fm-special-permissions">
+        <label><input type="checkbox" data-mode-bit="2048"> setuid</label>
+        <label><input type="checkbox" data-mode-bit="1024"> setgid</label>
+        <label><input type="checkbox" data-mode-bit="512"> sticky</label>
+      </div>
+      <div id="permissionPreview" class="fm-permission-preview">--------- (0000)</div>
+      <div id="permissionSymlinkNote" class="fm-property-note" hidden>符号链接的权限位由链接目标控制，此处只可修改所有者和用户组。</div>
+      <div id="permissionRecursive" class="fm-property-recursive" hidden>
+        <label><input id="permissionRecursiveFiles" type="checkbox"> 同时应用到所有子文件</label>
+        <label><input id="permissionRecursiveDirectories" type="checkbox"> 同时应用到所有子文件夹</label>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="m-btn m-cancel" id="permissionCancel" type="button">取消</button>
+      <button class="m-btn m-exec" id="permissionConfirm" type="button" disabled>应用</button>
+    </div>
+  </div>
+</div>
+
+<div id="ownershipModal" class="modal-wrap">
+  <div class="modal fm-properties-modal">
+    <div class="modal-title">所有者与用户组</div>
+    <div class="modal-body">
+      <label class="fm-principal-field">
+        <span>所有者（名称或 UID）</span>
+        <input id="ownershipUser" class="arg-input" type="text" list="ownershipUserList" autocomplete="off">
+        <datalist id="ownershipUserList"></datalist>
+        <small id="ownershipUserCurrent"></small>
+      </label>
+      <label class="fm-principal-field">
+        <span>用户组（名称或 GID）</span>
+        <input id="ownershipGroup" class="arg-input" type="text" list="ownershipGroupList" autocomplete="off">
+        <datalist id="ownershipGroupList"></datalist>
+        <small id="ownershipGroupCurrent"></small>
+      </label>
+      <div id="ownershipRecursive" class="fm-property-recursive" hidden>
+        <label><input id="ownershipRecursiveFiles" type="checkbox"> 同时应用到所有子文件</label>
+        <label><input id="ownershipRecursiveDirectories" type="checkbox"> 同时应用到所有子文件夹</label>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="m-btn m-cancel" id="ownershipCancel" type="button">取消</button>
+      <button class="m-btn m-exec" id="ownershipConfirm" type="button" disabled>应用</button>
+    </div>
+  </div>
+</div>
+
+
+
+<div id="textEditor" class="text-editor" aria-hidden="true">
+  <header class="text-editor-head">
+    <button id="textEditorClose" class="fm-icon-btn" type="button" title="关闭编辑器" aria-label="关闭编辑器"></button>
+    <div class="text-editor-title">
+      <div id="textEditorPath"></div>
+      <div id="textEditorState">已保存</div>
+    </div>
+    <button id="textEditorSave" class="fm-icon-btn" type="button" title="保存" aria-label="保存"></button>
+  </header>
+  <textarea id="textEditorInput" class="text-editor-input" spellcheck="false" autocomplete="off" aria-label="UTF-8 文本编辑器"></textarea>
+  <div id="textEditorBusy" class="text-editor-busy" hidden>
+    <div class="text-editor-spinner"></div>
+    <div id="textEditorBusyText">正在读取文件...</div>
+  </div>
+</div>
+
+
+
+
+<section id="susfsPanel" class="app-view susfs-panel" hidden aria-hidden="true" aria-label="SUSFS 控制台" data-view="susfs">
+  <header class="view-header susfs-top">
+    <div class="view-title"><span class="eyebrow">SUSFS</span><h1>控制台</h1></div>
+    <div class="header-actions"><span id="susfsDirtyState" class="susfs-dirty-state" hidden>未保存</span><button id="susfsRefresh" class="icon-button" type="button" aria-label="刷新状态" title="刷新状态" data-icon="refresh-cw"></button></div>
+  </header>
+  <nav class="susfs-tabs" aria-label="SUSFS 导航">
+    <button type="button" data-susfs-page="monitor" aria-selected="true">监控</button><button type="button" data-susfs-page="rules" aria-selected="false">规则</button><button type="button" data-susfs-page="groups" aria-selected="false">作用组</button><button type="button" data-susfs-page="advanced" aria-selected="false">高级</button>
+  </nav>
+  <p id="susfsPathMessage" class="susfs-message" role="status"></p>
+  <div class="susfs-scroll">
+    <section id="susfsMonitorPage" data-susfs-page-view="monitor" class="susfs-page">
+      <div class="susfs-overview-grid">
+        <article id="susfsWorkCard" class="susfs-card susfs-overview-card" data-state="unknown"><div class="susfs-overview-copy"><span class="eyebrow">运行状态</span><h2 id="susfsMonitorTitle">正在连接</h2><p id="susfsMonitorSummary" class="susfs-lead">正在读取服务状态</p></div><span class="susfs-card-art" aria-hidden="true"></span></article>
+        <button id="susfsResultCard" type="button" class="susfs-card susfs-overview-card" data-state="unknown" aria-label="查看规则状态"><div class="susfs-overview-copy"><span class="eyebrow">规则状态</span><h2 id="susfsMonitorResult">尚未应用</h2><p id="susfsMonitorResultText" class="susfs-lead">添加规则后保存并应用</p></div><span class="susfs-card-art" aria-hidden="true"></span></button>
+      </div>
+      <details id="susfsDiagnostics" class="susfs-card"><summary>运行诊断<span class="susfs-muted">服务状态与逐项结果</span></summary><div class="susfs-diagnostics-content">
+        <dl class="susfs-diagnostic-list"><div><dt>服务进程</dt><dd id="susfsDiagService">未知</dd></div><div><dt>内核接口</dt><dd id="susfsDiagKernel">未知</dd></div><div><dt>加载错误</dt><dd id="susfsDiagLoader">无</dd></div><div><dt>配置文件</dt><dd id="susfsDiagConfig">未知</dd></div></dl>
+        <h3>逐项应用结果</h3><div id="susfsDiagnosticSteps" class="susfs-steps"></div><details class="susfs-raw"><summary>原始状态 JSON</summary><pre id="susfsRawStatus">{}</pre></details>
+      </div></details>
+    </section>
+    <section id="susfsRulesPage" data-susfs-page-view="rules" class="susfs-page" hidden>
+      <button id="susfsAddPath" type="button" class="susfs-add-button"><i data-icon="plus"></i><span>新建规则</span></button>
+      <div class="susfs-card-heading susfs-rule-heading"><h2 id="susfsRuleCount">0 条规则</h2><div class="susfs-rule-filters"><select id="susfsRuleKindFilter" aria-label="筛选规则类型"><option value="all">全部类型</option><option value="path">路径隐藏</option><option value="directory_name">名称匹配隐藏</option><option value="kstat">属性伪装</option><option value="map">映射隐藏</option><option value="redirect">打开重定向</option><option value="mount">挂载隐藏</option></select><input id="susfsRuleSearch" class="susfs-search" type="search" placeholder="搜索路径或名称" aria-label="搜索规则路径或名称"></div></div>
+      <div id="susfsRuleList" class="susfs-rule-list"></div>
+    </section>
+    <section id="susfsGroupsPage" data-susfs-page-view="groups" class="susfs-page" hidden>
+      <button id="susfsAddGroup" type="button" class="susfs-add-button"><i data-icon="plus"></i><span>新建作用组</span></button>
+      <p class="susfs-muted">每组独立设置作用范围，在规则编辑中选择所属组。最多 8 组，含默认组。</p>
+      <div id="susfsGroupList" class="susfs-group-list"></div>
+    </section>
+    <section id="susfsAdvancedPage" data-susfs-page-view="advanced" class="susfs-page" hidden><p class="susfs-muted">全局功能遵循上游语义。展开功能查看配置与使用说明。</p><div id="susfsGlobals" class="susfs-page"></div></section>
+  </div>
+</section>
+<div id="susfsRuleEditor" class="susfs-overlay" hidden aria-hidden="true"><section class="susfs-editor" role="dialog" aria-modal="true" aria-labelledby="susfsEditorTitle">
+  <header><h2 id="susfsEditorTitle">新建规则</h2><button id="susfsEditorClose" type="button" class="icon-button" data-icon="x" aria-label="关闭规则编辑"></button></header>
+  <div class="susfs-editor-scroll">
+    <label class="susfs-field"><span id="susfsEditorPathLabel">路径</span><input id="susfsEditorPath" type="text" placeholder="/data/local/tmp/example" autocomplete="off" spellcheck="false"></label>
+    <label class="susfs-field">规则类型<select id="susfsEditorKind"><option value="path">路径隐藏</option><option value="directory_name" disabled>名称匹配隐藏</option><option value="map">映射隐藏</option><option value="mount">挂载隐藏</option><option value="kstat">属性伪装</option><option value="redirect">打开重定向</option></select></label>
+    <p id="susfsEditorHelp" class="susfs-muted"></p>
+    <div id="susfsPathHideFields" hidden><label class="susfs-path-contents-option"><input id="susfsHideContents" type="checkbox" checked><span>仅隐藏文件夹内容</span></label><p id="susfsPathHideHelp" class="susfs-muted"></p><p id="susfsPathHideUnsupported" class="susfs-muted" data-state="error" hidden>当前内核不支持仅隐藏文件夹内容，请更新模块并重启；也可手动取消此选项使用整个路径隐藏。</p></div>
+    <label class="susfs-field">作用组<select id="susfsEditorGroup"></select></label>
+    <div id="susfsRedirectFields" hidden><label class="susfs-field">重定向模式<select id="susfsRedirectMode"><option value="path">路径重定向</option><option value="content">按源权限替换只读内容</option></select></label><p id="susfsRedirectHelp" class="susfs-muted"></p><label class="susfs-field">重定向目标<input id="susfsEditorTarget" type="text" placeholder="/data/local/tmp/target"></label><button id="susfsChooseTarget" type="button">从文件管理选择目标</button></div>
+    <div id="susfsKstatFields" hidden><button id="susfsSampleAttributes" type="button">读取当前属性</button><div id="susfsAttributeFields"></div><p class="susfs-muted">勾选需要伪装的属性，值使用十进制整数。</p></div>
+    <p id="susfsEditorMessage" class="susfs-message" role="status"></p>
+  </div><footer><button id="susfsEditorCancel" type="button">取消</button><button id="susfsEditorConfirm" class="primary" type="button">保存规则</button></footer>
+</section></div>
+<div id="susfsGroupEditor" class="susfs-overlay" hidden aria-hidden="true"><section class="susfs-picker" role="dialog" aria-modal="true" aria-labelledby="susfsGroupEditorTitle"><header><h2 id="susfsGroupEditorTitle">新建作用组</h2><button id="susfsGroupClose" type="button" class="icon-button" data-icon="x" aria-label="关闭作用组编辑"></button></header><div class="susfs-editor-scroll"><label class="susfs-field">组名<input id="susfsGroupName" type="text" maxlength="128" placeholder="例如：测试应用"></label><p id="susfsGroupMessage" class="susfs-message" role="status"></p></div><footer><button id="susfsGroupCancel" type="button">取消</button><button id="susfsGroupConfirm" type="button" class="primary">保存作用组</button></footer></section></div>
+<div id="susfsPackagePicker" class="susfs-overlay" hidden aria-hidden="true"><section class="susfs-picker" role="dialog" aria-modal="true" aria-labelledby="susfsPackagePickerTitle"><header><div><span class="eyebrow">作用范围</span><h2 id="susfsPackagePickerTitle">添加包名</h2><p id="susfsPackagePickerHint" class="susfs-muted">选择应用后一次性加入当前组。</p></div><button id="susfsPackagePickerClose" type="button" class="icon-button" data-icon="x" aria-label="关闭包名选择"></button></header><div class="susfs-picker-tools"><input id="susfsPackageSearch" type="search" placeholder="搜索应用名或包名" aria-label="搜索应用"><select id="susfsPackageFilter" aria-label="筛选应用"><option value="all">全部应用</option><option value="user">用户应用</option><option value="system">系统应用</option><option value="selected">已选成员</option></select><label class="susfs-picker-check"><input id="susfsPackageSelectAll" type="checkbox"> 全选当前结果</label></div><div id="susfsPackageList" class="susfs-package-list" role="list"></div><p id="susfsPackageMessage" class="susfs-message" role="status"></p><footer><button id="susfsPackageCancel" type="button" class="secondary-button">取消</button><button id="susfsPackageConfirm" type="button" class="primary">确认添加</button></footer></section></div>
+<div id="fileLegendModal" class="modal-wrap"><section class="modal"><div class="modal-title">文件状态图标</div>
+<div class="modal-body">
+<div class="rule-legend">
+<div>
+<i data-icon="eye-off"></i><span>路径隐藏</span>
+</div>
+<div>
+<i data-icon="fingerprint"></i><span>属性伪装</span>
+</div>
+<div>
+<i data-icon="route"></i><span>打开重定向</span>
+</div>
+<div>
+<i data-icon="layers"></i><span>映射隐藏</span>
+</div>
+<div>
+<i data-icon="hard-drive"></i><span>挂载隐藏</span>
+</div>
+</div>
+<p class="modal-desc">填充表示生效；空心表示未应用或停用；虚线表示处理中或状态未确认；警示标记表示异常。可在文件操作中的“查看规则”进入规则页；逐项结果在监控页的运行诊断中查看。</p>
+<p class="modal-desc">盾形标记是独立的隐藏保护。方形勾选标记只表示文件已选择。</p>
+<p id="fileLegendStatus" class="modal-note"></p>
+</div>
+<footer class="modal-foot"><button id="fileLegendClose" class="m-btn m-cancel" type="button">完成</button></footer></section></div>
+<div id="appTasks" class="app-tasks" hidden aria-live="polite"></div>
+<section id="susfsSaveBar" role="region" aria-label="待保存的 SUSFS 更改" hidden><span id="susfsSaveHint" role="status">有未保存的更改</span><button id="susfsApply" class="primary" type="button">保存并应用</button></section>
+<nav id="appDock" class="app-dock" aria-label="主导航"><button id="fileBtn" type="button" data-nav-view="files"><i data-icon="folder"></i><span>文件</span></button><button id="susfsBtn" type="button" data-nav-view="susfs" data-susfs-entry hidden><i data-icon="shield"></i><span>SUSFS</span></button></nav><script src="request.js"></script><script src="susfs-availability.js"></script><script src="subject-policy.js"></script><script src="object-policy.js"></script>
+<script src="ui-utils.js"></script>
+<script src="webui-lifecycle.js"></script>
+<script src="lucide-icons.js"></script>
+<script src="app-shell.js"></script><script src="file-manager-model.js"></script>
+<script src="vendor/codemirror.bundle.js"></script>
+<script src="text-editor.js"></script>
+<script src="image-viewer.js"></script>
+<script src="archive-browser.js"></script>
+<script src="file-manager.js"></script>
+<script src="susfs-advanced.js"></script>
+<script src="susfs.js"></script>
+</body>
+</html>
+
+
+
+
+

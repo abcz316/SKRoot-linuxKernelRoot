@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 660" role="img" aria-labelledby="title desc" style="max-width:100%;height:auto">
+<title id="title">从文件页完成一条规则</title>
+<desc id="desc">从文件页选择目标，打开设置规则，选择类型与作用组，先保存草稿，再保存并应用。</desc>
+<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0 L9 5 L0 10" fill="#7454a7"/></marker></defs>
+<g font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif">
+<rect x="0" y="0" width="900" height="660" rx="0" fill="#f7f5fb"/>
+<text x="42" y="65" font-size="36" fill="#282236" font-weight="700" text-anchor="start">从文件页完成一条规则</text>
+<text x="42" y="110" font-size="25" fill="#696176" font-weight="400" text-anchor="start">先选目标，再按这五步完成。</text>
+<rect x="93" y="143" width="714" height="77" rx="18" fill="#fff" stroke="#ded6ed" stroke-width="1.5"/>
+<rect x="110" y="157" width="48" height="48" rx="24" fill="#7454a7"/>
+<text x="134" y="191" font-size="27" fill="#fff" font-weight="700" text-anchor="middle">1</text>
+<g transform="translate(185 157) scale(1.5)" stroke="#7454a7" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h7l3 3h15v17H3Z"/><path d="M3 13h25"/></g>
+<text x="267" y="193" font-size="30" fill="#282236" font-weight="700" text-anchor="start">选文件 / 目录</text>
+<path d="M450 222 L450 233" fill="none" stroke="#7454a7" stroke-width="2.5" marker-end="url(#arrow)"/>
+<rect x="93" y="238" width="714" height="77" rx="18" fill="#fff" stroke="#ded6ed" stroke-width="1.5"/>
+<rect x="110" y="252" width="48" height="48" rx="24" fill="#7454a7"/>
+<text x="134" y="286" font-size="27" fill="#fff" font-weight="700" text-anchor="middle">2</text>
+<g transform="translate(185 252) scale(1.5)" stroke="#7454a7" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="24" height="24" rx="4"/><path d="M10 12h12M10 17h12M10 22h8"/></g>
+<text x="267" y="288" font-size="30" fill="#282236" font-weight="700" text-anchor="start">点“设置规则”</text>
+<path d="M450 317 L450 328" fill="none" stroke="#7454a7" stroke-width="2.5" marker-end="url(#arrow)"/>
+<rect x="93" y="333" width="714" height="77" rx="18" fill="#fff" stroke="#ded6ed" stroke-width="1.5"/>
+<rect x="110" y="347" width="48" height="48" rx="24" fill="#7454a7"/>
+<text x="134" y="381" font-size="27" fill="#fff" font-weight="700" text-anchor="middle">3</text>
+<g transform="translate(185 347) scale(1.5)" stroke="#7454a7" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="11" r="5"/><path d="M3 28v-3a9 9 0 0 1 18 0v3M23 8a5 5 0 0 1 0 10M25 22a7 7 0 0 1 4 6"/></g>
+<text x="267" y="383" font-size="30" fill="#282236" font-weight="700" text-anchor="start">选类型 + 作用组</text>
+<path d="M450 412 L450 423" fill="none" stroke="#7454a7" stroke-width="2.5" marker-end="url(#arrow)"/>
+<rect x="93" y="428" width="714" height="77" rx="18" fill="#fff" stroke="#ded6ed" stroke-width="1.5"/>
+<rect x="110" y="442" width="48" height="48" rx="24" fill="#7454a7"/>
+<text x="134" y="476" font-size="27" fill="#fff" font-weight="700" text-anchor="middle">4</text>
+<g transform="translate(185 442) scale(1.5)" stroke="#7454a7" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h19l5 5v21H5Z"/><path d="M10 3v9h13V3M10 29V19h14v10"/></g>
+<text x="267" y="478" font-size="30" fill="#282236" font-weight="700" text-anchor="start">保存规则（草稿）</text>
+<path d="M450 507 L450 518" fill="none" stroke="#7454a7" stroke-width="2.5" marker-end="url(#arrow)"/>
+<rect x="93" y="523" width="714" height="77" rx="18" fill="#edf7f1" stroke="#ded6ed" stroke-width="1.5"/>
+<rect x="110" y="537" width="48" height="48" rx="24" fill="#7454a7"/>
+<text x="134" y="571" font-size="27" fill="#fff" font-weight="700" text-anchor="middle">5</text>
+<g transform="translate(185 537) scale(1.5)" stroke="#246b53" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="16" cy="16" r="13"/><path d="m9 16 5 5 10-11"/></g>
+<text x="267" y="573" font-size="30" fill="#246b53" font-weight="700" text-anchor="start">保存并应用</text>
+<text x="42" y="642" font-size="17" fill="#696176" font-weight="400" text-anchor="start">0.3.0 教学示意</text>
+</g>
+</svg>

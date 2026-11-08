@@ -1,0 +1,157 @@
+name: codeql
+
+# Every language this repository has, in one workflow, because a repository may use CodeQL's default
+# setup OR advanced configurations but not both: an upload from an advanced configuration is refused
+# with "CodeQL analyses from advanced configurations cannot be processed when the default setup is
+# enabled", which is what the first run of this workflow hit.  The default setup is therefore off, and
+# all three languages live here instead.
+#
+# c-cpp cannot use the default setup's options for this repository.  `none` analyses the sources
+# without a compiler, and kernel headers and macros then resolve badly - noise rather than coverage;
+# `autobuild` runs a plain `make` that cannot find this tree's DDK toolchain.  So the module is built
+# by hand, in the same image the release build uses, and that compile is what CodeQL traces: the
+# database then describes the code as it is actually built.
+#
+# No pull_request trigger on purpose: on a fork PR the workflow has no `security-events: write`, so the
+# upload step would fail for reasons unrelated to the change.  Push to main/dev, a weekly schedule and
+# workflow_dispatch cover it.
+
+on:
+  push:
+    branches: [main, dev]
+    paths-ignore:
+      - "**.md"
+  schedule:
+    - cron: '17 3 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  management:
+    name: Analyze (management c-cpp)
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      packages: read
+      actions: read
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: c-cpp
+          build-mode: manual
+      - name: Build production management CLI (traced, no device)
+        run: python3 management/tests/main_runner.py --build-only --evidence /tmp/management-main-codeql
+      - uses: github/codeql-action/analyze@v3
+        with:
+          category: /language:management-c-cpp
+          output: codeql-results/management
+          upload: ${{ github.event.repository.private && 'never' || 'always' }}
+      - name: Preserve management CodeQL results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: codeql-sarif-management
+          path: codeql-results/management/*.sarif
+          if-no-files-found: error
+
+  # Built in the DDK container, one variant only: CodeQL needs one compile of the module, and 5.15
+  # (LLVM CFI) is the variant this device runs.
+  c-cpp:
+    name: Analyze (c-cpp)
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/ylarod/ddk-min:android13-5.15-20260828
+      options: --privileged
+    permissions:
+      security-events: write
+      packages: read
+      actions: read
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      # The workspace belongs to the runner's user while this job runs as root inside the image, and
+      # git then refuses to read it ("detected dubious ownership").
+      - name: Trust the workspace
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: c-cpp
+          build-mode: manual
+      # The same command build-ddk.yml uses, deliberately one line: this Makefile's own comment
+      # explains how the trailing-continuation form silently lost ARCH/CC/LLVM and the `modules`
+      # target.
+      - name: Build susfs_guard_lkm.ko (traced)
+        run: |
+          set -e
+          make -k -C "$KDIR" M="$PWD/kernel" ARCH=arm64 CC=clang LLVM=1 LLVM_IAS=1 modules -j"$(nproc)"
+          ls -la kernel/susfs_guard_lkm.ko
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:c-cpp"
+          output: codeql-results/c-cpp
+          upload: ${{ github.event.repository.private && 'never' || 'always' }}
+      - name: Preserve CodeQL results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: codeql-sarif-c-cpp
+          path: codeql-results/c-cpp/*.sarif
+          if-no-files-found: error
+
+  python:
+    name: Analyze (python)
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: python
+          build-mode: none
+      - uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:python"
+          output: codeql-results/python
+          upload: ${{ github.event.repository.private && 'never' || 'always' }}
+      - name: Preserve CodeQL results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: codeql-sarif-python
+          path: codeql-results/python/*.sarif
+          if-no-files-found: error
+
+  # An interpreted language in CodeQL's sense: no build mode argument at all (passing one is an error).
+  actions:
+    name: Analyze (actions)
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: actions
+      - uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:actions"
+          output: codeql-results/actions
+          upload: ${{ github.event.repository.private && 'never' || 'always' }}
+      - name: Preserve CodeQL results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: codeql-sarif-actions
+          path: codeql-results/actions/*.sarif
+          if-no-files-found: error

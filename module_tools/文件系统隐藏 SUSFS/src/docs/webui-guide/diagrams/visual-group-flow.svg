@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 655" role="img" aria-labelledby="title desc" style="max-width:100%;height:auto">
+<title id="title">规则选“做什么”，作用组选“对谁”</title>
+<desc id="desc">对象规则定义动作，作用组定义受影响的应用。指定模式只影响名单，排除模式的名单应用不受该组影响。</desc>
+<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0 L9 5 L0 10" fill="#7454a7"/></marker></defs>
+<g font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif">
+<rect x="0" y="0" width="900" height="655" rx="0" fill="#f7f5fb"/>
+<text x="42" y="65" font-size="36" fill="#282236" font-weight="700" text-anchor="start">规则选“做什么”，作用组选“对谁”</text>
+<text x="42" y="110" font-size="25" fill="#696176" font-weight="400" text-anchor="start">同一条规则，换个作用组就能换目标。</text>
+<rect x="42" y="151" width="816" height="182" rx="18" fill="#fff" stroke="#ded6ed" stroke-width="1.5"/>
+<text x="68" y="193" font-size="29" fill="#7454a7" font-weight="700" text-anchor="start">指定模式</text>
+<g transform="translate(79 217) scale(1.75)" stroke="#7454a7" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="11" r="5"/><path d="M3 28v-3a9 9 0 0 1 18 0v3M23 8a5 5 0 0 1 0 10M25 22a7 7 0 0 1 4 6"/></g>
+<text x="155" y="255" font-size="27" fill="#282236" font-weight="600" text-anchor="start">名单内应用</text>
+<path d="M358 245 L477 245" fill="none" stroke="#7454a7" stroke-width="2.5" marker-end="url(#arrow)"/>
+<rect x="501" y="212" width="325" height="65" rx="17" fill="#eee7f7"/>
+<g transform="translate(520 225) scale(1.125)" stroke="#7454a7" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 16S8 7 16 7s13 9 13 9-5 9-13 9S3 16 3 16Z"/><path d="M5 3l23 26"/><circle cx="16" cy="16" r="4"/></g>
+<text x="581" y="254" font-size="28" fill="#7454a7" font-weight="700" text-anchor="start">规则生效</text>
+<text x="155" y="302" font-size="24" fill="#696176" font-weight="400" text-anchor="start">只影响选中的应用</text>
+<rect x="42" y="355" width="816" height="182" rx="18" fill="#fff" stroke="#ded6ed" stroke-width="1.5"/>
+<text x="68" y="397" font-size="29" fill="#246b53" font-weight="700" text-anchor="start">排除模式</text>
+<g transform="translate(79 421) scale(1.75)" stroke="#7454a7" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="11" r="5"/><path d="M3 28v-3a9 9 0 0 1 18 0v3M23 8a5 5 0 0 1 0 10M25 22a7 7 0 0 1 4 6"/></g>
+<text x="155" y="459" font-size="27" fill="#282236" font-weight="600" text-anchor="start">名单内应用</text>
+<path d="M358 449 L477 449" fill="none" stroke="#7454a7" stroke-width="2.5" marker-end="url(#arrow)"/>
+<rect x="501" y="416" width="325" height="65" rx="17" fill="#edf7f1"/>
+<g transform="translate(520 429) scale(1.125)" stroke="#246b53" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m16 3 12 5v9c0 7-12 13-12 13S4 24 4 17V8Z"/><path d="m10 16 4 4 8-9"/></g>
+<text x="581" y="458" font-size="28" fill="#246b53" font-weight="700" text-anchor="start">不受影响</text>
+<text x="155" y="506" font-size="24" fill="#696176" font-weight="400" text-anchor="start">其他应用仍按广域排除判断</text>
+<text x="42" y="594" font-size="25" fill="#7454a7" font-weight="600" text-anchor="start">改完作用组，也要“保存并应用”。</text>
+<text x="42" y="637" font-size="17" fill="#696176" font-weight="400" text-anchor="start">0.3.0 教学示意</text>
+</g>
+</svg>

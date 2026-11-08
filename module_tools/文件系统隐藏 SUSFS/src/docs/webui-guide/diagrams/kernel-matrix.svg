@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 835" role="img" aria-labelledby="title desc" style="max-width:100%;height:auto">
+<title id="title">6.6 与 6.12：能力与自动选核</title>
+<desc id="desc">0.3.0 双内核包按真实内核 release 和 KMI 选择模块，6.6 禁用按源权限替换只读内容，SDK 功能一致，构建支持不代表真机效果已验证。</desc>
+<defs><marker id="arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0 L8 4.5 L0 9" fill="#7454a7"/></marker></defs>
+<g font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif">
+<rect x="0" y="0" width="1200" height="835" rx="0" fill="#f7f5fb"/>
+<text x="48" y="42" font-size="16" fill="#7454a7" font-weight="600" text-anchor="start">SUSFS 0.3.0 · 配置教学图</text>
+<text x="48" y="88" font-size="32" fill="#282236" font-weight="700" text-anchor="start">6.6 与 6.12：能力与自动选核</text>
+<text x="48" y="123" font-size="19" fill="#696176" font-weight="400" text-anchor="start">下表为 0.3.0 当前实现的能力声明；应用是否达到预期仍须在自己的设备检查。</text>
+<rect x="48" y="156" width="1104" height="445" rx="18" fill="#ffffff" stroke="#ded6ed" stroke-width="1.5"/>
+<rect x="49" y="157" width="1102" height="89" rx="17" fill="#eee7f7"/>
+<text x="76" y="211" font-size="23" fill="#282236" font-weight="700" text-anchor="start">功能 / 行为</text>
+<text x="660" y="196" font-size="24" fill="#7454a7" font-weight="700" text-anchor="middle">android15-6.6</text>
+<text x="990" y="196" font-size="24" fill="#7454a7" font-weight="700" text-anchor="middle">android16-6.12</text>
+<text x="660" y="227" font-size="18" fill="#696176" font-weight="400" text-anchor="middle">6.6 内核</text>
+<text x="990" y="227" font-size="18" fill="#696176" font-weight="400" text-anchor="middle">6.12 内核</text>
+<text x="76" y="284" font-size="21" fill="#282236" font-weight="400" text-anchor="start">路径 / 名称 / 属性 / 映射 / 挂载</text>
+<text x="660" y="284" font-size="20" fill="#246b53" font-weight="600" text-anchor="middle">接口支持</text>
+<text x="990" y="284" font-size="20" fill="#246b53" font-weight="600" text-anchor="middle">接口支持</text>
+<text x="76" y="352" font-size="21" fill="#282236" font-weight="400" text-anchor="start">独立作用组与 UID 选择器</text>
+<text x="660" y="352" font-size="20" fill="#246b53" font-weight="600" text-anchor="middle">接口支持</text>
+<text x="990" y="352" font-size="20" fill="#246b53" font-weight="600" text-anchor="middle">接口支持</text>
+<text x="76" y="420" font-size="21" fill="#282236" font-weight="400" text-anchor="start">路径重定向</text>
+<text x="660" y="420" font-size="20" fill="#246b53" font-weight="600" text-anchor="middle">接口支持</text>
+<text x="990" y="420" font-size="20" fill="#246b53" font-weight="600" text-anchor="middle">接口支持</text>
+<rect x="61" y="457" width="1078" height="58" rx="10" fill="#eae7ed"/>
+<text x="76" y="488" font-size="21" fill="#282236" font-weight="600" text-anchor="start">按源权限替换只读内容</text>
+<text x="660" y="488" font-size="20" fill="#696176" font-weight="600" text-anchor="middle">暂不可用 · UI 置灰</text>
+<text x="990" y="488" font-size="20" fill="#7454a7" font-weight="600" text-anchor="middle">支持 · 来源仍有限制</text>
+<text x="76" y="556" font-size="21" fill="#282236" font-weight="400" text-anchor="start">SKP SDK 功能</text>
+<text x="660" y="556" font-size="20" fill="#246b53" font-weight="600" text-anchor="middle">一致</text>
+<text x="990" y="556" font-size="20" fill="#246b53" font-weight="600" text-anchor="middle">一致</text>
+<rect x="48" y="628" width="1104" height="139" rx="18" fill="#ffffff" stroke="#ded6ed" stroke-width="1.5"/>
+<text x="75" y="665" font-size="23" fill="#282236" font-weight="700" text-anchor="start">统一安装包的自动选择</text>
+<rect x="76" y="686" width="302" height="33" rx="16" fill="#eee7f7"/>
+<text x="227.0" y="709" font-size="16" fill="#7454a7" font-weight="600" text-anchor="middle">读取内核 release / KMI</text>
+<path d="M395 703 L458 703" fill="none" stroke="#7454a7" stroke-width="2.4" marker-end="url(#arrow)"/>
+<rect x="480" y="686" width="310" height="33" rx="16" fill="#eee7f7"/>
+<text x="635.0" y="709" font-size="16" fill="#7454a7" font-weight="600" text-anchor="middle">选择对应 6.6 或 6.12 KO</text>
+<text x="75" y="750" font-size="18" fill="#696176" font-weight="400" text-anchor="start">Android 15 / 16 是 KMI 标签；不能按系统设置中的 Android 版本替代判断。当前包不含 6.1。</text>
+<text x="48" y="810" font-size="15" fill="#696176" font-weight="400" text-anchor="start">0.3.0 教学示意 · 以当前界面及内核能力为准 · 不是设备效果证据</text>
+</g>
+</svg>

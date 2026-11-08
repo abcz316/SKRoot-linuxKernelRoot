@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 890" role="img" aria-labelledby="title desc" style="max-width:100%;height:auto">
+<title id="title">打开 A，读到 B：两种重定向模式</title>
+<desc id="desc">路径模式要求调用应用能访问 B；内容模式保留 A 的打开和读取权限检查，由模块预读 B 并保存快照，仅 6.12 启用。</desc>
+<defs><marker id="arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0 L8 4.5 L0 9" fill="#7454a7"/></marker></defs>
+<g font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif">
+<rect x="0" y="0" width="1200" height="890" rx="0" fill="#f7f5fb"/>
+<text x="48" y="42" font-size="16" fill="#7454a7" font-weight="600" text-anchor="start">SUSFS 0.3.0 · 配置教学图</text>
+<text x="48" y="88" font-size="32" fill="#282236" font-weight="700" text-anchor="start">打开 A，读到 B：两种重定向模式</text>
+<text x="48" y="123" font-size="19" fill="#696176" font-weight="400" text-anchor="start">示例：A = /proc/cpuinfo；B = /sdcard/Download/SUSFS-Tutorial/cpuinfo.txt</text>
+<rect x="48" y="151" width="1104" height="246" rx="18" fill="#ffffff" stroke="#ded6ed" stroke-width="1.5"/>
+<rect x="72" y="173" width="140" height="33" rx="16" fill="#eee7f7"/>
+<text x="142.0" y="196" font-size="16" fill="#7454a7" font-weight="600" text-anchor="middle">路径重定向</text>
+<text x="234" y="197" font-size="21" fill="#282236" font-weight="600" text-anchor="start">打开路径转向 B；由目标应用自己访问 B。</text>
+<rect x="77" y="232" width="264" height="106" rx="14" fill="#eee7f7"/>
+<text x="209.0" y="273" font-size="22" fill="#7454a7" font-weight="700" text-anchor="middle">应用尝试打开 A</text>
+<text x="209.0" y="310" font-size="17" fill="#696176" font-weight="400" text-anchor="middle">命中当前组规则</text>
+<rect x="465" y="232" width="286" height="106" rx="14" fill="#eee7f7"/>
+<text x="608.0" y="273" font-size="22" fill="#7454a7" font-weight="700" text-anchor="middle">将打开操作转向 B</text>
+<text x="608.0" y="310" font-size="17" fill="#696176" font-weight="400" text-anchor="middle">应用须有直接访问 B 的权限</text>
+<rect x="875" y="232" width="249" height="106" rx="14" fill="#eee7f7"/>
+<text x="999.5" y="273" font-size="22" fill="#7454a7" font-weight="700" text-anchor="middle">返回 B 的内容</text>
+<text x="999.5" y="310" font-size="17" fill="#696176" font-weight="400" text-anchor="middle">遵循目标文件的访问条件</text>
+<path d="M356 285 L447 285" fill="none" stroke="#7454a7" stroke-width="2.4" marker-end="url(#arrow)"/>
+<path d="M766 285 L857 285" fill="none" stroke="#7454a7" stroke-width="2.4" marker-end="url(#arrow)"/>
+<text x="76" y="374" font-size="18" fill="#696176" font-weight="400" text-anchor="start">能在模块文件页读取 B，不代表目标应用也有权限；共享存储访问还受应用自身权限约束。</text>
+<rect x="48" y="425" width="1104" height="340" rx="18" fill="#ffffff" stroke="#ded6ed" stroke-width="1.5"/>
+<rect x="72" y="447" width="232" height="33" rx="16" fill="#eee7f7"/>
+<text x="188.0" y="470" font-size="16" fill="#7454a7" font-weight="600" text-anchor="middle">按源权限替换只读内容</text>
+<rect x="995" y="447" width="129" height="33" rx="16" fill="#edf7f1"/>
+<text x="1059.5" y="470" font-size="16" fill="#246b53" font-weight="600" text-anchor="middle">6.12 启用</text>
+<rect x="77" y="514" width="264" height="106" rx="14" fill="#eee7f7"/>
+<text x="209.0" y="555" font-size="22" fill="#7454a7" font-weight="700" text-anchor="middle">应用打开并读取 A</text>
+<text x="209.0" y="592" font-size="17" fill="#696176" font-weight="400" text-anchor="middle">仍通过 A 的打开与读取权限</text>
+<rect x="465" y="514" width="286" height="106" rx="14" fill="#eee7f7"/>
+<text x="608.0" y="555" font-size="22" fill="#7454a7" font-weight="700" text-anchor="middle">读取内核内容快照</text>
+<text x="608.0" y="592" font-size="17" fill="#696176" font-weight="400" text-anchor="middle">无需应用直接访问 B</text>
+<rect x="875" y="514" width="249" height="106" rx="14" fill="#eee7f7"/>
+<text x="999.5" y="555" font-size="22" fill="#7454a7" font-weight="700" text-anchor="middle">返回预读的内容</text>
+<text x="999.5" y="592" font-size="17" fill="#696176" font-weight="400" text-anchor="middle">不是对 B 的实时透传</text>
+<path d="M356 567 L447 567" fill="none" stroke="#7454a7" stroke-width="2.4" marker-end="url(#arrow)"/>
+<path d="M766 567 L857 567" fill="none" stroke="#7454a7" stroke-width="2.4" marker-end="url(#arrow)"/>
+<rect x="291" y="670" width="618" height="58" rx="14" fill="#edf7f1"/>
+<text x="600" y="706" font-size="21" fill="#246b53" font-weight="700" text-anchor="middle">模块在“保存并应用”时预读 B，建立内容快照</text>
+<path d="M608 660 L608 633" fill="none" stroke="#7454a7" stroke-width="2.4" marker-end="url(#arrow)"/>
+<rect x="48" y="789" width="1104" height="45" rx="12" fill="#eae7ed"/>
+<text x="600" y="819" font-size="19" fill="#696176" font-weight="600" text-anchor="middle">6.6：内容模式灰色不可选；已有内容规则不会自动降级为路径重定向。</text>
+<text x="48" y="865" font-size="15" fill="#696176" font-weight="400" text-anchor="start">0.3.0 教学示意 · 以当前界面及内核能力为准 · 不是设备效果证据</text>
+</g>
+</svg>

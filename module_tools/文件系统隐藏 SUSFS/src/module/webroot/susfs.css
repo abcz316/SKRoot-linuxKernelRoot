@@ -1,0 +1,301 @@
+/* Standalone SUSFS console; shared file-manager glass surfaces and lavender accent. */
+#susfsRedirectMode option:disabled, #susfsRedirectMode.susfs-unavailable { color:var(--color-text-tertiary,#9396a4); }
+#susfsClosedOverlay { position:fixed; inset:0; z-index:10000; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:32px; background:var(--color-surface-primary,#fff); color:var(--color-text-primary,#292a36); text-align:center; }
+#susfsClosedOverlay p { max-width:420px; line-height:1.8; color:var(--color-text-secondary,#626575); }
+#terminalView, #automationView, #terminalBtn, #autoBtn { display:none!important; }
+#susfsPanel, #susfsRuleEditor, #susfsPackagePicker, #susfsGroupEditor, #susfsModulePicker, #susfsTransferDialog, #susfsSaveBar {
+  --susfs-radius:16px; --susfs-surface:rgba(255,255,255,.84); --susfs-shadow:0 4px 18px rgba(49,43,78,.035);
+  color:var(--color-text-primary,#292a36); font-size:12px; line-height:1.5;
+}
+#susfsPanel { display:flex; flex-direction:column; min-width:0; min-height:0; overflow:hidden; background:transparent; }
+:is(#susfsPanel,#susfsRuleEditor,#susfsPackagePicker,#susfsGroupEditor,#susfsModulePicker,#susfsTransferDialog,#susfsSaveBar)[hidden],
+:is(#susfsPanel,#susfsRuleEditor,#susfsPackagePicker,#susfsGroupEditor,#susfsModulePicker,#susfsTransferDialog) [hidden] { display:none!important; }
+:is(#susfsPanel,#susfsRuleEditor,#susfsPackagePicker,#susfsGroupEditor,#susfsModulePicker,#susfsTransferDialog,#susfsSaveBar) :is(button,input,select,textarea) {
+  box-sizing:border-box; min-height:42px; max-width:100%; border:1px solid var(--color-border-default,#d7dbe7); border-radius:11px; background:var(--color-surface-primary,#fff); color:inherit; font:inherit;
+}
+:is(#susfsPanel,#susfsRuleEditor,#susfsPackagePicker,#susfsGroupEditor,#susfsModulePicker,#susfsTransferDialog,#susfsSaveBar) button { padding:9px 13px; cursor:pointer; transition:border-color .16s,background .16s,box-shadow .16s,color .16s; -webkit-tap-highlight-color:transparent; }
+:is(#susfsPanel,#susfsRuleEditor,#susfsPackagePicker,#susfsGroupEditor,#susfsModulePicker,#susfsTransferDialog,#susfsSaveBar) button:hover:not(:disabled) { border-color:var(--color-accent-muted,#ded5f0); background-color:var(--color-accent-subtle,#efebf8); }
+:is(#susfsPanel,#susfsRuleEditor,#susfsPackagePicker,#susfsGroupEditor,#susfsModulePicker,#susfsTransferDialog,#susfsSaveBar) :is(button,input,select,textarea,summary):focus-visible { outline:2px solid var(--color-accent-default,#7864ba); outline-offset:3px; }
+:is(#susfsPanel,#susfsRuleEditor,#susfsPackagePicker,#susfsGroupEditor,#susfsModulePicker,#susfsTransferDialog,#susfsSaveBar) :is(button,input,select,textarea):disabled { cursor:default; opacity:.52; }
+:is(#susfsPanel,#susfsRuleEditor,#susfsPackagePicker,#susfsGroupEditor,#susfsModulePicker,#susfsTransferDialog,#susfsSaveBar) button.primary { border-color:transparent; background:var(--color-accent-default,#7864ba); color:#fff; font-weight:650; box-shadow:0 3px 10px rgba(105,84,173,.12); }
+:is(#susfsPanel,#susfsRuleEditor,#susfsPackagePicker,#susfsGroupEditor,#susfsModulePicker,#susfsTransferDialog,#susfsSaveBar) button.primary:hover:not(:disabled) { background:var(--color-accent-hover,#6954ad); }
+:is(#susfsPanel,#susfsRuleEditor,#susfsPackagePicker,#susfsGroupEditor,#susfsModulePicker,#susfsTransferDialog) .secondary-button { color:var(--color-text-secondary,#626575); background:transparent; }
+:is(#susfsPanel,#susfsRuleEditor,#susfsPackagePicker,#susfsGroupEditor,#susfsModulePicker,#susfsTransferDialog) .icon-button { display:inline-grid; place-items:center; flex:none; width:42px; min-width:42px; height:42px; padding:0; border-color:transparent; background:transparent; color:var(--color-text-secondary,#626575); }
+:is(#susfsPanel,#susfsRuleEditor,#susfsPackagePicker,#susfsGroupEditor,#susfsModulePicker,#susfsTransferDialog) .icon-button svg { width:19px; height:19px; }
+:is(#susfsPanel,#susfsRuleEditor,#susfsPackagePicker,#susfsGroupEditor,#susfsModulePicker,#susfsTransferDialog) .icon-button.danger { color:var(--color-error-text,#a73549); }
+:is(#susfsPanel,#susfsRuleEditor,#susfsPackagePicker,#susfsGroupEditor,#susfsModulePicker,#susfsTransferDialog) .icon-button.danger:hover:not(:disabled) { background:var(--color-error-subtle,#fbecef); border-color:transparent; }
+:is(#susfsPanel,#susfsRuleEditor,#susfsPackagePicker,#susfsGroupEditor,#susfsModulePicker,#susfsTransferDialog) :is(input,select,textarea) { width:100%; min-width:0; padding:10px 12px; }
+:is(#susfsPanel,#susfsRuleEditor,#susfsPackagePicker,#susfsGroupEditor,#susfsModulePicker,#susfsTransferDialog) textarea { min-height:112px; resize:vertical; font-family:var(--font-mono,monospace); line-height:1.7; }
+:is(#susfsPanel,#susfsRuleEditor,#susfsPackagePicker,#susfsGroupEditor,#susfsModulePicker,#susfsTransferDialog) :is(input,textarea)::placeholder { color:var(--color-text-tertiary,#828696); opacity:1; }
+
+/* Header and navigation. */
+#susfsPanel .susfs-top { display:flex; align-items:center; flex:none; gap:12px; min-height:72px; padding:4px 0 12px; }
+#susfsPanel .susfs-top .view-title { flex:1; min-width:0; }
+#susfsPanel .susfs-top h1 { margin:0; font-size:17px; line-height:1.4; font-weight:650; letter-spacing:-.025em; }
+:is(#susfsPanel,#susfsRuleEditor,#susfsPackagePicker,#susfsGroupEditor,#susfsModulePicker,#susfsTransferDialog) .eyebrow { display:block; color:var(--color-text-tertiary,#828696); font-size:10px; font-weight:650; letter-spacing:.08em; }
+#susfsPanel .susfs-top .eyebrow { margin-bottom:2px; }
+#susfsPanel .header-actions { display:flex; align-items:center; flex:none; gap:6px; }
+#susfsPanel .susfs-dirty-state { display:inline-flex; align-items:center; flex:none; min-height:25px; padding:3px 8px; border:1px solid #ecdfba; border-radius:999px; background:var(--color-warning-subtle,#fbf3df); color:var(--color-warning-text,#926923); font-size:10px; line-height:1.4; white-space:nowrap; }
+#susfsPanel .susfs-state-pill { display:inline-flex; align-items:center; min-height:29px; padding:3px 10px; border:1px solid var(--color-border-subtle,#e6e8f0); border-radius:999px; color:var(--color-text-secondary,#626575); font-size:10px; white-space:nowrap; }
+#susfsPanel .susfs-state-pill:is([data-state=working],[data-state=active]) { color:var(--color-success-text,#257653); background:var(--color-success-subtle,#e4f4ed); }
+#susfsPanel .susfs-state-pill:is([data-state=closed],[data-state=failed]) { color:var(--color-error-text,#a73549); background:var(--color-error-subtle,#fbecef); }
+
+/* The save action stays above the shared dock on both the rules and file pages. */
+#susfsSaveBar {
+  position:fixed; z-index:245; left:12px; right:12px; bottom:calc(var(--app-nav-clearance) + env(safe-area-inset-bottom)); display:flex; align-items:center; gap:12px; width:auto; max-width:480px; min-height:64px; margin:auto; padding:9px 10px 9px 16px; border:1px solid rgba(255,255,255,.9); border-radius:20px; background:var(--glass-surface,rgba(248,249,252,.94)); box-shadow:inset 0 1px 1px #fff,0 8px 28px #37384e16,0 2px 5px #37384e06; backdrop-filter:blur(22px) saturate(1.18); -webkit-backdrop-filter:blur(22px) saturate(1.18);
+}
+#susfsSaveHint { flex:1; min-width:0; color:var(--color-text-secondary,#626575); font-size:11px; line-height:1.5; overflow-wrap:anywhere; }
+#susfsSaveBar #susfsApply { flex:none; min-height:44px; padding-inline:19px; border-radius:13px; white-space:nowrap; }
+body:is(.keyboard-open,.has-overlay,.has-flow) #susfsSaveBar,
+body:has(.susfs-overlay:not([hidden])) #susfsSaveBar { display:none; }
+body.has-susfs-changes:not(.keyboard-open):not(.has-overlay):not(.has-flow):not(:has(.susfs-overlay:not([hidden]))) .app-view { padding-bottom:calc(var(--app-nav-clearance) + 76px + env(safe-area-inset-bottom)); }
+body.has-susfs-changes.has-tasks:not(.keyboard-open):not(.has-overlay):not(.has-flow):not(:has(.susfs-overlay:not([hidden]))) .app-view { padding-bottom:calc(var(--app-nav-clearance) + 128px + env(safe-area-inset-bottom)); }
+body.has-susfs-changes:not(.keyboard-open):not(.has-overlay):not(.has-flow):not(:has(.susfs-overlay:not([hidden]))) .app-tasks { bottom:calc(var(--app-nav-clearance) + 76px + env(safe-area-inset-bottom)); }
+
+#susfsPanel .susfs-tabs { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); flex:none; gap:4px; width:100%; margin:0 0 14px; padding:5px; border:1px solid var(--color-border-subtle,#e6e8f0); border-radius:var(--susfs-radius); background:rgba(255,255,255,.5); }
+#susfsPanel .susfs-tabs button { min-width:0; min-height:44px; padding:9px 4px; border-color:transparent; border-radius:11px; background:transparent; color:var(--color-text-secondary,#626575); font-weight:650; }
+#susfsPanel .susfs-tabs button[aria-selected=true] { background:var(--color-surface-primary,#fff); color:var(--color-accent-default,#7864ba); box-shadow:0 2px 8px rgba(65,50,107,.07); }
+#susfsPanel .susfs-scroll { flex:1; min-width:0; min-height:0; width:100%; max-width:1100px; margin:0 auto; padding:0 0 24px; overflow-x:hidden; overflow-y:auto; overscroll-behavior:contain; scrollbar-gutter:stable; }
+#susfsPanel .susfs-page { display:grid; gap:14px; min-width:0; }
+#susfsPanel .susfs-card { min-width:0; padding:18px; border:1px solid var(--color-border-subtle,#e6e8f0); border-radius:var(--susfs-radius); background:var(--susfs-surface); box-shadow:var(--susfs-shadow); }
+#susfsPanel .susfs-card-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; min-width:0; }
+#susfsPanel .susfs-card-heading>div { min-width:0; }
+#susfsPanel .susfs-card h2 { margin:2px 0 0; font-size:15px; line-height:1.5; font-weight:650; }
+:is(#susfsPanel,#susfsRuleEditor,#susfsPackagePicker,#susfsGroupEditor,#susfsModulePicker,#susfsTransferDialog) .susfs-muted,
+:is(#susfsPanel,#susfsRuleEditor,#susfsPackagePicker,#susfsGroupEditor,#susfsModulePicker,#susfsTransferDialog) .susfs-message { margin:8px 0 0; color:var(--color-text-secondary,#626575); font-size:11px; line-height:1.7; overflow-wrap:anywhere; }
+:is(#susfsPanel,#susfsRuleEditor,#susfsPackagePicker,#susfsGroupEditor,#susfsModulePicker,#susfsTransferDialog) .susfs-message:empty { display:none; }
+:is(#susfsPanel,#susfsRuleEditor,#susfsPackagePicker,#susfsGroupEditor,#susfsModulePicker,#susfsTransferDialog) .susfs-message[data-state=error] { color:var(--color-error-text,#a73549); }
+
+/* Monitor: two cards with large, clipped state illustrations. */
+#susfsPanel .susfs-overview-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; min-width:0; }
+#susfsPanel .susfs-overview-card {
+  --susfs-state-color:#9598aa; --susfs-state-tint:#f0f1f6;
+  position:relative; display:flex; flex-direction:column; align-items:stretch; justify-content:flex-start; isolation:isolate; min-width:0; min-height:188px; padding:20px; overflow:hidden; border:1px solid var(--color-border-subtle,#e6e8f0); border-radius:19px; background:linear-gradient(145deg,var(--susfs-surface) 20%,var(--susfs-state-tint)); box-shadow:var(--susfs-shadow); text-align:left;
+}
+#susfsPanel .susfs-overview-card:is([data-state=working],[data-state=active]) { --susfs-state-color:#30ac7b; --susfs-state-tint:#e6f4ed; }
+#susfsPanel .susfs-overview-card:is([data-state=closed],[data-state=failed]) { --susfs-state-color:#cc6b7b; --susfs-state-tint:#faedf0; }
+#susfsPanel .susfs-overview-card:is([data-state=partial],[data-state=pending]) { --susfs-state-color:#c39942; --susfs-state-tint:#faf2df; }
+#susfsPanel button.susfs-overview-card:hover:not(:disabled) { background:linear-gradient(145deg,#fff 10%,var(--susfs-state-tint)); border-color:var(--susfs-state-color); box-shadow:0 6px 22px rgba(49,43,78,.07); }
+#susfsPanel .susfs-overview-copy { position:relative; z-index:1; }
+#susfsPanel .susfs-overview-card h2 { margin:5px 0 0; font-size:19px; font-weight:700; letter-spacing:-.035em; line-height:1.35; }
+#susfsPanel .susfs-overview-card .susfs-lead,#susfsPanel .susfs-overview-card .susfs-muted { max-width:88%; margin:10px 0 0; color:var(--color-text-secondary,#626575); font-size:11px; line-height:1.65; overflow-wrap:anywhere; }
+#susfsPanel .susfs-card-art { position:absolute; z-index:0; right:-12px; bottom:-21px; width:120px; height:120px; color:var(--susfs-state-color); opacity:.23; pointer-events:none; }
+#susfsPanel .susfs-card-art svg { display:block; width:100%; height:100%; stroke-width:1.65; }
+
+/* Path rules. */
+#susfsPanel .susfs-add-button { display:flex; align-items:center; justify-content:center; gap:8px; width:100%; min-height:60px; padding:13px; border:1.5px dashed var(--color-accent-muted,#ded5f0); border-radius:var(--susfs-radius); background:rgba(255,255,255,.38); color:var(--color-accent-default,#7864ba); font-weight:650; }
+#susfsPanel .susfs-add-button:hover:not(:disabled) { border-color:var(--color-accent-default,#7864ba); background:var(--color-accent-subtle,#efebf8); }
+#susfsPanel .susfs-add-button svg { width:21px; height:21px; flex:none; }
+#susfsPanel .susfs-search { width:min(190px,47%); min-height:42px; padding-inline:11px; background:rgba(255,255,255,.7); }
+#susfsPanel .susfs-rule-heading { flex-wrap:wrap; }
+#susfsPanel .susfs-rule-filters { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:8px; flex:1 1 300px; }
+#susfsPanel .susfs-rule-filters select { flex:1 1 130px; min-width:0; min-height:42px; padding-inline:11px; background:rgba(255,255,255,.7); }
+#susfsPanel .susfs-rule-filters .susfs-search { flex:1 1 150px; min-width:0; width:auto; }
+#susfsPanel .susfs-rule-list,#susfsPanel .susfs-group-list { display:grid; gap:10px; min-width:0; margin-top:14px; }
+#susfsPanel .susfs-group-list { margin-top:0; }
+#susfsPanel .susfs-empty { margin:0; padding:30px 10px; color:var(--color-text-tertiary,#828696); text-align:center; font-size:12px; line-height:1.7; }
+#susfsPanel .susfs-rule-row { --susfs-rule-color:#9598aa; position:relative; isolation:isolate; display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:start; gap:12px; min-width:0; min-height:102px; padding:14px; overflow:hidden; border:1px solid var(--color-border-subtle,#e6e8f0); border-radius:14px; background:var(--color-surface-primary,#fff); }
+#susfsPanel .susfs-rule-row>:not(.susfs-rule-art) { position:relative; z-index:1; min-width:0; }
+#susfsPanel .susfs-rule-row[data-state=active] { --susfs-rule-color:#42a881; }
+#susfsPanel .susfs-rule-row[data-state=failed] { --susfs-rule-color:#c7687b; }
+#susfsPanel .susfs-rule-row:is([data-state=pending],[data-state=partial]) { --susfs-rule-color:#bf984d; }
+#susfsPanel .susfs-rule-path { display:block; margin:7px 0 0; color:var(--color-text-primary,#292a36); font:500 12px/1.8 var(--font-mono,monospace); white-space:normal; overflow-wrap:anywhere; word-break:break-word; }
+#susfsPanel .susfs-rule-group { display:block; margin-top:5px; color:var(--color-text-secondary,#626575); font-size:11px; line-height:1.7; overflow-wrap:anywhere; }
+#susfsPanel .susfs-rule-art { position:absolute; z-index:0; right:5px; bottom:-8px; width:78px; height:78px; color:var(--susfs-rule-color); opacity:.2; pointer-events:none; }
+#susfsPanel .susfs-rule-art svg { display:block; width:100%; height:100%; stroke-width:1.8; fill:currentColor; fill-opacity:.1; }
+#susfsPanel .susfs-rule-row[data-state=pending] .susfs-rule-art svg { stroke-dasharray:3 2; fill:none; }
+#susfsPanel .susfs-rule-row[data-selected=true] { border-color:var(--color-accent-default,#7864ba); box-shadow:0 0 0 2px var(--color-accent-subtle,#efebf8); }
+#susfsPanel .susfs-row-actions { display:flex; flex:none; align-items:center; justify-content:flex-end; gap:2px; }
+#susfsPanel .susfs-row-actions .icon-button { border-radius:10px; }
+
+/* Each collapsed group owns its scope settings. */
+#susfsPanel .susfs-group-card { min-width:0; padding:0; overflow:hidden; border:1px solid var(--color-border-subtle,#e6e8f0); border-radius:var(--susfs-radius); background:var(--susfs-surface); box-shadow:var(--susfs-shadow); }
+#susfsPanel .susfs-group-header { display:flex; align-items:center; gap:4px; min-width:0; min-height:82px; padding:10px 12px; }
+#susfsPanel .susfs-group-toggle { display:flex; align-items:center; flex:1; gap:10px; min-width:0; min-height:58px; padding:7px 6px; border-color:transparent; background:transparent; text-align:left; }
+#susfsPanel .susfs-group-toggle>div,#susfsPanel .susfs-group-toggle>span { min-width:0; }
+#susfsPanel .susfs-group-toggle strong { display:block; font-size:13px; font-weight:650; overflow-wrap:anywhere; }
+#susfsPanel .susfs-group-toggle small { display:block; margin-top:3px; color:var(--color-text-tertiary,#828696); font-size:10px; line-height:1.5; overflow-wrap:anywhere; }
+#susfsPanel .susfs-group-chevron { flex:none; width:7px; height:7px; margin:0 5px 3px auto; border-right:1.5px solid var(--color-text-tertiary,#828696); border-bottom:1.5px solid var(--color-text-tertiary,#828696); font-size:0; transform:rotate(45deg); transition:transform .16s; }
+#susfsPanel .susfs-group-toggle[aria-expanded=true] .susfs-group-chevron { transform:rotate(225deg); margin-bottom:0; }
+#susfsPanel .susfs-group-body { padding:0 18px 18px; }
+#susfsPanel .susfs-group-body .susfs-scope-editor { padding:17px 0 0; border-top:1px solid var(--color-border-subtle,#e6e8f0); }
+#susfsPanel .susfs-scope-editor { display:grid; gap:17px; min-width:0; }
+#susfsPanel .susfs-scope-heading,#susfsPanel .susfs-scope-section-title { display:flex; align-items:center; justify-content:space-between; gap:10px; min-width:0; }
+#susfsPanel .susfs-scope-heading h3 { margin:3px 0 0; font-size:14px; }
+#susfsPanel .susfs-scope-badge,#susfsPanel .susfs-group-count { flex:none; padding:4px 9px; border-radius:999px; color:var(--color-accent-default,#7864ba); background:var(--color-accent-subtle,#efebf8); font-size:10px; }
+#susfsPanel .susfs-scope-section { display:grid; gap:10px; min-width:0; }
+#susfsPanel .susfs-scope-section-title { align-items:baseline; }
+#susfsPanel .susfs-scope-section-title strong,#susfsPanel .susfs-scope-section>strong { font-size:12px; font-weight:650; }
+#susfsPanel .susfs-scope-section-title small,#susfsPanel .susfs-mode-option small,#susfsPanel .susfs-exclusion-card small { display:block; color:var(--color-text-secondary,#626575); font-size:10px; line-height:1.5; }
+#susfsPanel .susfs-scope-section-title>div { min-width:0; }
+#susfsPanel .susfs-scope-package-actions { display:inline-flex; align-items:center; gap:8px; flex:none; }
+#susfsPanel .susfs-package-count { color:var(--color-text-tertiary,#828696); font-size:10px; white-space:nowrap; }
+#susfsPanel .susfs-mode-switch { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; }
+#susfsPanel .susfs-mode-option { display:grid; gap:4px; min-width:0; min-height:72px; padding:12px; border-color:var(--color-border-subtle,#e6e8f0); background:rgba(255,255,255,.65); text-align:left; }
+#susfsPanel .susfs-mode-option:is([data-selected=true],[aria-checked=true]) { border-color:var(--color-accent-default,#7864ba); background:var(--color-accent-subtle,#efebf8); }
+#susfsPanel .susfs-mode-option strong { font-size:12px; font-weight:650; }
+#susfsPanel .susfs-mode-option[aria-checked=true] strong { color:var(--color-accent-active,#5d499d); }
+#susfsPanel .susfs-exclusion-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+#susfsPanel .susfs-exclusion-card { --susfs-state-color:#949aac; position:relative; isolation:isolate; display:block; min-width:0; min-height:108px; padding:12px 10px; overflow:hidden; border-color:var(--color-border-subtle,#e6e8f0); border-radius:13px; background:rgba(255,255,255,.65); text-align:left; }
+#susfsPanel .susfs-exclusion-card>span:not(.susfs-card-art) { position:relative; z-index:1; display:block; min-width:0; }
+#susfsPanel .susfs-exclusion-card strong { display:block; font-size:11px; font-weight:650; overflow-wrap:anywhere; }
+#susfsPanel .susfs-exclusion-card small { margin-top:5px; font-size:9px; overflow-wrap:anywhere; }
+#susfsPanel .susfs-exclusion-card .susfs-card-art { right:-10px; bottom:-14px; width:68px; height:68px; opacity:.12; }
+#susfsPanel .susfs-exclusion-card[aria-pressed=true] { --susfs-state-color:#7864ba; border-color:var(--color-accent-muted,#ded5f0); background:var(--color-accent-subtle,#efebf8); }
+#susfsPanel .susfs-exclusion-card[aria-pressed=true] strong { color:var(--color-accent-active,#5d499d); }
+#susfsPanel .susfs-exclusion-card[aria-pressed=true] .susfs-card-art { opacity:.32; }
+#susfsPanel .susfs-scope-note { color:var(--color-text-secondary,#626575); font-size:10px; line-height:1.7; }
+#susfsPanel .susfs-package-area .susfs-add-button { min-height:49px; border-radius:12px; font-size:11px; }
+#susfsPanel .susfs-selected-packages { display:grid; gap:7px; min-width:0; }
+#susfsPanel .susfs-selected-packages.is-scrollable { max-height:340px; overflow-y:auto; overscroll-behavior:contain; scrollbar-gutter:stable; }
+#susfsPanel .susfs-selected-package { display:flex; align-items:center; gap:9px; min-width:0; min-height:60px; padding:8px 9px; border:1px solid var(--color-border-subtle,#e6e8f0); border-radius:12px; background:rgba(255,255,255,.8); }
+#susfsPanel .susfs-selected-package>.icon-button { margin-left:auto; }
+
+/* Shared app identities in persistent selections and the package picker. */
+:is(#susfsPanel,#susfsPackagePicker) .susfs-package-identity { display:flex; align-items:center; flex:1; gap:10px; min-width:0; }
+:is(#susfsPanel,#susfsPackagePicker) .susfs-package-identity>span:last-child { min-width:0; }
+:is(#susfsPanel,#susfsPackagePicker) .susfs-package-identity strong { display:block; overflow:hidden; color:var(--color-text-primary,#292a36); font-size:11px; font-weight:600; text-overflow:ellipsis; white-space:nowrap; }
+:is(#susfsPanel,#susfsPackagePicker) .susfs-package-identity small { display:block; margin-top:2px; color:var(--color-text-tertiary,#828696); font:10px/1.5 var(--font-mono,monospace); overflow-wrap:anywhere; }
+:is(#susfsPanel,#susfsPackagePicker) .susfs-app-icon { display:grid; place-items:center; flex:none; width:36px; height:36px; overflow:hidden; border-radius:10px; background:var(--color-surface-tertiary,#eef0f5); color:var(--color-text-tertiary,#828696); font-size:22px; }
+:is(#susfsPanel,#susfsPackagePicker) .susfs-app-icon img { display:block; width:36px; height:36px; object-fit:contain; }
+
+/* Advanced settings: configuration and tutorial live together. */
+#susfsPanel .susfs-advanced-card { padding:0; overflow:hidden; }
+#susfsPanel .susfs-advanced-card>summary,#susfsPanel #susfsDiagnostics>summary { position:relative; display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:67px; padding:17px 18px; color:var(--color-text-primary,#292a36); font-size:13px; font-weight:650; cursor:pointer; list-style:none; }
+#susfsPanel .susfs-advanced-card>summary::-webkit-details-marker,#susfsPanel #susfsDiagnostics>summary::-webkit-details-marker { display:none; }
+#susfsPanel .susfs-advanced-card>summary::after,#susfsPanel #susfsDiagnostics>summary::after { content:""; flex:none; width:7px; height:7px; margin-right:4px; border-right:1.5px solid var(--color-text-tertiary,#828696); border-bottom:1.5px solid var(--color-text-tertiary,#828696); transform:rotate(45deg) translateY(-2px); transition:transform .16s; }
+#susfsPanel .susfs-advanced-card[open]>summary::after,#susfsPanel #susfsDiagnostics[open]>summary::after { transform:rotate(225deg) translate(-2px,-1px); }
+#susfsPanel .susfs-advanced-icon { display:grid; place-items:center; flex:none; width:24px; height:30px; color:var(--color-accent-default,#7864ba); }
+#susfsPanel .susfs-advanced-icon svg { display:block; width:22px; height:22px; }
+#susfsPanel .susfs-advanced-heading { display:block; flex:1; min-width:0; }
+#susfsPanel .susfs-advanced-heading strong { display:block; font-size:12px; line-height:1.6; font-weight:650; overflow-wrap:anywhere; }
+#susfsPanel .susfs-advanced-heading small { display:block; margin-top:3px; color:var(--color-text-tertiary,#828696); font-size:10px; line-height:1.6; font-weight:400; overflow-wrap:anywhere; }
+#susfsPanel .susfs-advanced-state { display:block; flex:none; max-width:120px; padding:4px 7px; border-radius:999px; background:var(--color-surface-tertiary,#eef0f5); color:var(--color-text-secondary,#626575); font-size:10px; line-height:1.4; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#susfsPanel .susfs-advanced-body { display:grid; gap:14px; padding:0 18px 18px; }
+#susfsPanel .susfs-advanced-body>:first-child { margin-top:0; }
+#susfsPanel .susfs-add-modules { min-height:49px; border-radius:12px; font-size:11px; }
+#susfsPanel .susfs-module-item.is-default { border-color:var(--color-border-subtle,#e1e3e9); background:var(--color-surface-tertiary,#eef0f5); }
+#susfsPanel .susfs-module-item.is-default .susfs-package-identity strong { color:var(--color-text-tertiary,#828696); }
+#susfsPanel .susfs-module-item.is-default .icon-button { opacity:.35; cursor:not-allowed; }
+#susfsPanel .susfs-module-list.is-scrollable { overscroll-behavior:auto; }
+#susfsPanel .susfs-module-note { margin:0; line-height:1.8; overflow-wrap:anywhere; }
+#susfsPanel .susfs-avc-notice { border-color:var(--color-accent-muted,#ded5f0); background:var(--color-accent-subtle,#efebf8); font-weight:600; }
+#susfsModulePicker { --susfs-surface:rgba(255,255,255,.92); z-index:360; }
+#susfsModulePicker .susfs-editor-scroll { display:grid; gap:12px; padding:18px; }
+#susfsPanel .susfs-help { margin:0; padding:12px 14px; border:1px solid var(--color-border-subtle,#e6e8f0); border-radius:11px; background:var(--color-surface-secondary,#f6f7fa); color:var(--color-text-secondary,#626575); font-size:11px; line-height:1.8; overflow-wrap:anywhere; }
+#susfsPanel .susfs-help p { margin:0; }
+#susfsPanel .susfs-help p+p { margin-top:6px; }
+#susfsPanel .susfs-help :is(ul,ol) { margin:7px 0 0; padding-left:19px; }
+#susfsPanel .susfs-help code { font-size:.95em; overflow-wrap:anywhere; }
+#susfsPanel .susfs-advanced-tutorial { padding:12px 14px; border:1px solid var(--color-border-subtle,#e6e8f0); border-radius:11px; background:var(--color-surface-secondary,#f6f7fa); color:var(--color-text-secondary,#626575); font-size:11px; line-height:1.8; overflow-wrap:anywhere; }
+#susfsPanel .susfs-advanced-tutorial>strong { display:block; color:var(--color-text-primary,#292a36); font-size:11px; font-weight:650; }
+#susfsPanel .susfs-advanced-tutorial ol { display:grid; gap:6px; margin:8px 0 0; padding-left:18px; }
+#susfsPanel .susfs-advanced-compat { min-width:0; padding:0 12px 12px; border:1px solid var(--color-border-subtle,#e6e8f0); border-radius:11px; background:rgba(255,255,255,.65); }
+#susfsPanel .susfs-advanced-compat>summary { min-height:44px; padding:12px 0; color:var(--color-text-secondary,#626575); font-size:11px; font-weight:600; cursor:pointer; }
+:is(#susfsPanel,#susfsRuleEditor,#susfsGroupEditor,#susfsModulePicker,#susfsTransferDialog) .susfs-field { display:grid; gap:7px; min-width:0; color:var(--color-text-secondary,#626575); font-size:11px; }
+#susfsPanel .susfs-field-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+
+/* Diagnostics are collapsed below the monitor. */
+#susfsPanel #susfsDiagnostics { padding:0; overflow:hidden; }
+#susfsPanel .susfs-diagnostics-content { display:grid; gap:16px; padding:0 18px 18px; }
+#susfsPanel .susfs-diagnostics-content .susfs-card { padding:14px; border-radius:12px; box-shadow:none; }
+#susfsPanel .susfs-diagnostic-list { display:grid; gap:0; margin:10px 0 0; }
+#susfsPanel .susfs-diagnostic-list>div { display:flex; justify-content:space-between; gap:16px; padding:10px 0; border-top:1px solid var(--color-border-subtle,#e6e8f0); }
+#susfsPanel .susfs-diagnostic-list dt { flex:none; color:var(--color-text-tertiary,#828696); font-size:11px; }
+#susfsPanel .susfs-diagnostic-list dd { min-width:0; margin:0; color:var(--color-text-primary,#292a36); font:11px/1.6 var(--font-mono,monospace); text-align:right; overflow-wrap:anywhere; }
+#susfsPanel .susfs-steps { max-height:380px; overflow-y:auto; overscroll-behavior-y:auto; }
+#susfsPanel .susfs-step { display:grid; grid-template-columns:7px minmax(0,1fr); gap:9px; padding:10px 0; border-bottom:1px solid var(--color-border-subtle,#e6e8f0); }
+#susfsPanel .susfs-step:last-child { border-bottom:0; }
+#susfsPanel .susfs-step::before { content:""; width:6px; height:6px; margin-top:5px; border-radius:50%; background:var(--color-text-tertiary,#828696); }
+#susfsPanel .susfs-step[data-state=applied]::before { background:var(--color-success,#36aa83); }
+#susfsPanel .susfs-step[data-state=failed]::before { background:var(--color-error,#ce6371); }
+#susfsPanel .susfs-step[data-state=not_executed]::before { background:var(--color-warning,#c99c40); }
+#susfsPanel .susfs-step strong,#susfsPanel .susfs-step small { display:block; overflow-wrap:anywhere; }
+#susfsPanel .susfs-step strong { font-size:11px; font-weight:600; }
+#susfsPanel .susfs-step small { margin-top:3px; color:var(--color-text-secondary,#626575); font:10px/1.6 var(--font-mono,monospace); }
+#susfsPanel .susfs-raw { padding:0; overflow:hidden; }
+#susfsPanel .susfs-raw summary { min-height:42px; padding:13px 15px; cursor:pointer; font-size:11px; font-weight:600; }
+#susfsPanel .susfs-raw pre { margin:0; padding:13px 15px; border-top:1px solid var(--color-border-subtle,#e6e8f0); color:var(--color-text-secondary,#626575); font:10px/1.7 var(--font-mono,monospace); white-space:pre-wrap; overflow-wrap:anywhere; }
+
+/* Floating editors work independently of the active file-manager page. */
+#susfsRuleEditor,#susfsPackagePicker,#susfsGroupEditor,#susfsModulePicker,#susfsTransferDialog { position:fixed; inset:0; z-index:340; display:flex; align-items:center; justify-content:center; padding:max(14px,env(safe-area-inset-top)) max(14px,env(safe-area-inset-right)) max(14px,env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left)); background:rgba(38,35,53,.3); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); }
+#susfsPackagePicker { z-index:360; }
+:is(#susfsRuleEditor,#susfsPackagePicker,#susfsGroupEditor,#susfsModulePicker,#susfsTransferDialog) :is(.susfs-editor,.susfs-picker) { display:flex; flex-direction:column; min-width:0; width:min(590px,100%); max-height:calc(100dvh - 28px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); overflow:hidden; border:1px solid rgba(255,255,255,.85); border-radius:22px; background:var(--color-surface-secondary,#f6f7fa); box-shadow:0 20px 70px rgba(37,31,59,.18); }
+:is(#susfsRuleEditor,#susfsPackagePicker,#susfsGroupEditor,#susfsModulePicker,#susfsTransferDialog) :is(header,footer) { display:flex; align-items:center; flex:none; justify-content:space-between; gap:10px; padding:15px 18px; background:var(--susfs-surface); }
+:is(#susfsRuleEditor,#susfsPackagePicker,#susfsGroupEditor,#susfsModulePicker,#susfsTransferDialog) header { border-bottom:1px solid var(--color-border-subtle,#e6e8f0); }
+:is(#susfsRuleEditor,#susfsPackagePicker,#susfsGroupEditor,#susfsModulePicker,#susfsTransferDialog) header>div { min-width:0; }
+:is(#susfsRuleEditor,#susfsPackagePicker,#susfsGroupEditor,#susfsModulePicker,#susfsTransferDialog) footer { justify-content:flex-end; border-top:1px solid var(--color-border-subtle,#e6e8f0); }
+:is(#susfsRuleEditor,#susfsPackagePicker,#susfsGroupEditor,#susfsModulePicker,#susfsTransferDialog) h2 { margin:3px 0 0; font-size:16px; font-weight:650; }
+:is(#susfsRuleEditor,#susfsGroupEditor) :is(.susfs-editor-scroll,.susfs-picker-body,.susfs-picker-scroll) { display:grid; gap:14px; min-height:0; padding:18px; overflow-y:auto; overscroll-behavior:contain; }
+#susfsRuleEditor input[readonly] { color:var(--color-text-secondary,#626575); background:var(--color-surface-tertiary,#eef0f5); font-family:var(--font-mono,monospace); }
+#susfsRuleEditor #susfsEditorPath { font-family:var(--font-mono,monospace); }
+#susfsRuleEditor .susfs-attribute { display:grid; grid-template-columns:20px minmax(70px,.85fr) minmax(0,1.2fr); align-items:center; gap:9px; margin-top:9px; font-size:11px; }
+#susfsRuleEditor .susfs-attribute input[type=checkbox] { width:18px; height:18px; min-height:18px; margin:0; padding:0; accent-color:var(--color-accent-default,#7864ba); }
+#susfsRuleEditor #susfsKstatFields>button,#susfsRuleEditor #susfsRedirectFields>button { margin-bottom:10px; }
+#susfsRuleEditor #susfsRedirectFields>button:last-child { margin:10px 0 0; }
+#susfsPackagePicker .susfs-picker-tools { display:grid; grid-template-columns:minmax(0,1fr) 135px; align-items:center; flex:none; gap:8px; padding:14px 18px; }
+#susfsPackagePicker .susfs-picker-check { grid-column:1/-1; display:inline-flex; align-items:center; gap:8px; min-height:42px; color:var(--color-text-secondary,#626575); font-size:11px; }
+#susfsPackagePicker input[type=checkbox] { width:18px; height:18px; min-height:18px; margin:0; padding:0; flex:none; accent-color:var(--color-accent-default,#7864ba); }
+#susfsPackagePicker .susfs-package-list { display:grid; gap:7px; min-height:0; padding:0 18px 14px; overflow-y:auto; overscroll-behavior:contain; }
+#susfsPackagePicker .susfs-package-member,#susfsPackagePicker .susfs-package-group>summary { display:flex; align-items:center; gap:10px; min-width:0; min-height:62px; padding:10px; border:1px solid var(--color-border-subtle,#e6e8f0); border-radius:12px; background:var(--color-surface-primary,#fff); cursor:pointer; list-style:none; }
+#susfsPackagePicker .susfs-package-member:has(input:checked),#susfsPackagePicker .susfs-package-group>summary:has(input:checked) { border-color:var(--color-accent-muted,#ded5f0); background:var(--color-accent-subtle,#efebf8); }
+#susfsPackagePicker .susfs-package-group>summary::-webkit-details-marker { display:none; }
+#susfsPackagePicker .susfs-package-group>summary::after { content:"+"; color:var(--color-text-tertiary,#828696); font-size:18px; }
+#susfsPackagePicker .susfs-package-group[open]>summary::after { content:"−"; }
+#susfsPackagePicker .susfs-package-members { display:grid; gap:5px; padding:6px 0 0 20px; }
+#susfsPackagePicker .susfs-package-members .susfs-package-member { min-height:56px; }
+#susfsPackagePicker>.susfs-picker>.susfs-message { margin:0; padding:0 18px 12px; }
+
+@media (max-width:600px) {
+  #susfsPanel .susfs-top { gap:8px; }
+  #susfsPanel .susfs-top h1 { font-size:16px; }
+  #susfsPanel .susfs-state-pill { display:none; }
+  #susfsPanel .susfs-overview-grid { gap:10px; }
+  #susfsPanel .susfs-overview-card { min-height:182px; padding:16px; }
+  #susfsPanel .susfs-overview-card h2 { font-size:17px; }
+  #susfsPanel .susfs-overview-card .susfs-lead,#susfsPanel .susfs-overview-card .susfs-muted { max-width:100%; font-size:10px; }
+  #susfsPanel .susfs-card-art { right:-14px; bottom:-18px; width:106px; height:106px; opacity:.2; }
+  #susfsPanel .susfs-card:not(.susfs-advanced-card):not(.susfs-overview-card):not(.susfs-group-card) { padding:14px; }
+  #susfsPanel .susfs-rule-row { gap:6px; padding:11px; }
+  #susfsPanel .susfs-rule-path { font-size:11px; }
+  #susfsPanel .susfs-group-header { padding:9px; }
+  #susfsPanel .susfs-group-body { padding:0 14px 14px; }
+  #susfsPanel .susfs-exclusion-grid { gap:6px; }
+  #susfsPanel .susfs-exclusion-card { min-height:106px; padding:10px 8px; }
+  #susfsPanel .susfs-exclusion-card small { font-size:9px; }
+  #susfsPanel .susfs-advanced-body,#susfsPanel .susfs-diagnostics-content { padding:0 14px 14px; }
+  #susfsPanel .susfs-advanced-card>summary,#susfsPanel #susfsDiagnostics>summary { padding:15px 14px; }
+  #susfsPanel .susfs-field-grid { grid-template-columns:1fr; }
+  #susfsModulePicker .susfs-editor-scroll { padding:14px; }
+}
+@media (max-width:380px) {
+  #susfsPanel .susfs-top { min-height:66px; gap:4px; }
+  #susfsPanel .susfs-top h1 { font-size:15px; }
+  #susfsPanel .header-actions { gap:3px; }
+  #susfsSaveBar { gap:8px; padding-left:12px; }
+  #susfsSaveBar #susfsApply { padding-inline:14px; }
+  #susfsPanel .susfs-overview-card { min-height:183px; padding:13px; border-radius:16px; }
+  #susfsPanel .susfs-overview-card h2 { font-size:16px; }
+  #susfsPanel .susfs-overview-card .eyebrow { font-size:9px; }
+  #susfsPanel .susfs-exclusion-card strong { font-size:10px; }
+  #susfsPanel .susfs-exclusion-card { padding-inline:7px; }
+  #susfsPanel .susfs-mode-option { padding:10px; }
+  #susfsPanel .susfs-row-actions { gap:0; }
+  #susfsPackagePicker .susfs-picker-tools { grid-template-columns:minmax(0,1fr) 110px; }
+  :is(#susfsRuleEditor,#susfsPackagePicker,#susfsGroupEditor,#susfsModulePicker,#susfsTransferDialog) :is(header,footer) { padding:13px 14px; }
+  :is(#susfsRuleEditor,#susfsGroupEditor) :is(.susfs-editor-scroll,.susfs-picker-body,.susfs-picker-scroll) { padding:14px; }
+}
+@media (prefers-reduced-motion:reduce) {
+  :is(#susfsPanel,#susfsRuleEditor,#susfsPackagePicker,#susfsGroupEditor,#susfsModulePicker,#susfsTransferDialog,#susfsSaveBar) *,
+  :is(#susfsPanel,#susfsRuleEditor,#susfsPackagePicker,#susfsGroupEditor,#susfsModulePicker,#susfsTransferDialog) *::after { transition:none!important; }
+}
+
+#susfsTransferDialog { --susfs-surface:rgba(255,255,255,.92); z-index:360; }
+#susfsTransferDialog .susfs-editor-scroll { display:grid; gap:14px; padding:18px; overflow-y:auto; }
+#susfsTransferDialog .susfs-field { display:grid; gap:7px; }
+#susfsPanel .susfs-transfer-actions { display:flex; gap:10px; }
+#susfsPanel .susfs-transfer-actions button { flex:1; }
+
+#susfsRuleEditor .susfs-path-contents-option { display:flex; align-items:center; gap:9px; font-size:12px; cursor:pointer; }
+#susfsRuleEditor .susfs-path-contents-option input { width:17px; height:17px; flex:none; accent-color:var(--color-primary,#727bff); }
+#susfsPanel .susfs-rule-mode { display:block; font-size:10px; color:var(--color-text-secondary,#626575); }

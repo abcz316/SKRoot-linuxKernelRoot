@@ -1,0 +1,414 @@
+{
+  "intro": {
+    "title": "跟着文件页，几步配好 SUSFS",
+    "summary": "在文件页点文件或长按目录，通过「设置规则」完成隐藏、属性伪装和重定向；参数细节按需展开。"
+  },
+  "chapters": {
+    "intro": {
+      "summary": "先认识文件页和控制台，再从自己的测试文件开始。",
+      "steps": [
+        {
+          "text": "底部「文件」管理对象，「SUSFS」查看和配置规则。",
+          "figure": "monitor-overview"
+        },
+        {
+          "text": "先建测试作用组，只选自己的 Probe 应用。",
+          "figure": "group-include"
+        },
+        {
+          "text": "点文件或长按目录，从「设置规则」开始。",
+          "figure": "file-rule-entry"
+        }
+      ],
+      "advancedTitle": "进阶说明与参数"
+    },
+    "save": {
+      "summary": "「保存规则」只改草稿，「保存并应用」才真正提交。",
+      "steps": [
+        {
+          "text": "在规则弹窗确认内容，点击「保存规则」。",
+          "figure": "file-rule-path"
+        },
+        {
+          "text": "点击导航栏上方浮出的「保存并应用」。",
+          "figure": "file-save-apply"
+        },
+        {
+          "text": "回到监控看结果，再用目标应用重新检查。",
+          "figure": "save-applied"
+        }
+      ],
+      "advancedTitle": "进阶说明与参数"
+    },
+    "groups": {
+      "summary": "创建一个应用组，再把需要的规则放进这个组。",
+      "steps": [
+        {
+          "text": "进入「作用组」，点「＋ 新建作用组」并命名。",
+          "figure": "group-create"
+        },
+        {
+          "text": "展开组卡片，选择「指定模式」。",
+          "figure": "group-include"
+        },
+        {
+          "text": "点包名栏的＋，勾选应用并点「确认添加」。",
+          "figure": "package-picker"
+        },
+        {
+          "text": "回到规则弹窗，在「作用组」中选这个组。",
+          "figure": "file-rule-path"
+        },
+        {
+          "text": "保存规则，再点浮动「保存并应用」。",
+          "figure": "file-save-apply"
+        }
+      ],
+      "advancedTitle": "进阶说明与参数"
+    },
+    "identity": {
+      "summary": "作用组按真实 UID 生效，共享 UID 的应用一起处理。",
+      "steps": [
+        {
+          "text": "在包名选择器确认自己要设置的应用。",
+          "figure": "package-picker"
+        },
+        {
+          "text": "只想影响所选应用时，使用「指定模式」。",
+          "figure": "group-include"
+        },
+        {
+          "text": "保存并应用后，用同一个应用重新检查。",
+          "figure": "save-applied"
+        }
+      ],
+      "advancedTitle": "进阶说明与参数"
+    },
+    "path": {
+      "summary": "让选定应用看不到你指定的文件或目录。",
+      "steps": [
+        {
+          "text": "在文件页点文件或长按目录，打开操作菜单。",
+          "figure": "files-select"
+        },
+        {
+          "text": "点击「设置规则」，进入规则弹窗。",
+          "figure": "file-rule-entry"
+        },
+        {
+          "text": "选「路径隐藏」和作用组，点击「保存规则」。",
+          "figure": "file-rule-path"
+        },
+        {
+          "text": "点浮动「保存并应用」，再检查隐藏结果。",
+          "figure": "file-save-apply"
+        }
+      ],
+      "advancedTitle": "进阶说明与参数"
+    },
+    "name": {
+      "summary": "输入完整名称，隐藏各处同名文件和目录；不是关键词搜索。",
+      "steps": [
+        {
+          "text": "进入「SUSFS → 规则」，点击「＋ 新建规则」。",
+          "figure": "rules-empty"
+        },
+        {
+          "text": "类型选「名称匹配隐藏」，只填完整名称。",
+          "figure": "name-editor"
+        },
+        {
+          "text": "选择作用组，点击「保存规则」。",
+          "figure": "name-editor"
+        },
+        {
+          "text": "点浮动「保存并应用」，再检查同名项。",
+          "figure": "file-save-apply"
+        }
+      ],
+      "advancedTitle": "进阶说明与参数"
+    },
+    "kstat": {
+      "summary": "勾选要改的属性，让所选应用看到指定数值。",
+      "steps": [
+        {
+          "text": "在文件页点文件或长按目录，打开操作菜单。",
+          "figure": "files-select"
+        },
+        {
+          "text": "点击「设置规则」，类型选「属性伪装」。",
+          "figure": "file-rule-kstat"
+        },
+        {
+          "text": "读取当前属性，勾选要改的字段并填值。",
+          "figure": "kstat-middle"
+        },
+        {
+          "text": "选作用组并保存规则，再点「保存并应用」。",
+          "figure": "file-save-apply"
+        }
+      ],
+      "advancedTitle": "进阶说明与参数"
+    },
+    "redirect": {
+      "summary": "把来源 A 的打开转向目标 B；路径模式要求应用能访问 B。",
+      "steps": [
+        {
+          "text": "在文件页找到来源 A，点文件打开操作菜单。",
+          "figure": "files-select"
+        },
+        {
+          "text": "点击「设置规则」，类型选「打开重定向」。",
+          "figure": "file-rule-entry"
+        },
+        {
+          "text": "选作用组和「路径重定向」，点击选择目标。",
+          "figure": "file-rule-redirect"
+        },
+        {
+          "text": "选目标 B，回到弹窗点击「保存规则」。",
+          "figure": "target-picker"
+        },
+        {
+          "text": "点浮动「保存并应用」，再重新打开 A 检查。",
+          "figure": "file-save-apply"
+        }
+      ],
+      "advancedTitle": "进阶说明与参数"
+    },
+    "content": {
+      "summary": "仅 6.12 可用：按来源权限读替代内容；6.6 暂不可选。",
+      "steps": [
+        {
+          "text": "在文件页点来源文件，进入「设置规则」。",
+          "figure": "file-rule-entry"
+        },
+        {
+          "text": "选「打开重定向」和「按源权限替换只读内容」。",
+          "figure": "redirect-content"
+        },
+        {
+          "text": "选择作用组与目标文件，点击「保存规则」。",
+          "figure": "target-picker"
+        },
+        {
+          "text": "点「保存并应用」，让应用重新打开来源。",
+          "figure": "file-save-apply"
+        }
+      ],
+      "advancedTitle": "进阶说明与参数"
+    },
+    "map": {
+      "summary": "隐藏所选文件的映射记录；文件仍在，已映射内容也仍在。",
+      "steps": [
+        {
+          "text": "在文件页点普通文件，打开操作菜单。",
+          "figure": "files-select"
+        },
+        {
+          "text": "点击「设置规则」，类型选「映射隐藏」。",
+          "figure": "file-rule-map"
+        },
+        {
+          "text": "确认路径和作用组，点击「保存规则」。",
+          "figure": "map-editor"
+        },
+        {
+          "text": "点浮动「保存并应用」，再检查映射信息。",
+          "figure": "file-save-apply"
+        }
+      ],
+      "advancedTitle": "进阶说明与参数"
+    },
+    "mount": {
+      "summary": "隐藏匹配的挂载记录，不会卸载目录或删除文件。",
+      "steps": [
+        {
+          "text": "在文件页长按目标目录，打开操作菜单。",
+          "figure": "files-select"
+        },
+        {
+          "text": "点击「设置规则」，类型选「挂载隐藏」。",
+          "figure": "file-rule-mount"
+        },
+        {
+          "text": "确认挂载路径和作用组，点击「保存规则」。",
+          "figure": "mount-editor"
+        },
+        {
+          "text": "点浮动「保存并应用」，再检查挂载记录。",
+          "figure": "file-save-apply"
+        }
+      ],
+      "advancedTitle": "进阶说明与参数"
+    },
+    "files": {
+      "summary": "准备、编辑真实文件，也可以直接从文件菜单设置规则。",
+      "steps": [
+        {
+          "text": "进入「文件」，点目录进入或在路径栏跳转。",
+          "figure": "files-overview"
+        },
+        {
+          "text": "点文件或长按目录，选择需要的操作。",
+          "figure": "file-actions"
+        },
+        {
+          "text": "设置 SUSFS 效果时，点击「设置规则」。",
+          "figure": "file-rule-entry"
+        },
+        {
+          "text": "真实属性与权限，点「属性」查看和修改。",
+          "figure": "file-properties"
+        }
+      ],
+      "advancedTitle": "进阶说明与参数"
+    },
+    "advanced": {
+      "summary": "展开需要的高级功能，按卡片提示配置后保存。",
+      "steps": [
+        {
+          "text": "进入「高级」，展开要设置的功能卡片。",
+          "figure": "advanced-overview"
+        },
+        {
+          "text": "按提示填写；列表类用＋添加、右侧×删除。",
+          "figure": "advanced-modules"
+        },
+        {
+          "text": "SKP 无需 AVC 日志功能，保持关闭即可。",
+          "figure": "advanced-avc"
+        },
+        {
+          "text": "改完点击浮动「保存并应用」，再查看结果。",
+          "figure": "file-save-apply"
+        }
+      ],
+      "advancedTitle": "进阶说明与参数"
+    },
+    "background": {
+      "summary": "开启后，失焦或切后台就退出；下次从 SKP 管理器重开。",
+      "steps": [
+        {
+          "text": "在「高级」展开「不保留后台」，选择开启。",
+          "figure": "advanced-background"
+        },
+        {
+          "text": "点击「保存并应用」，使开关设置生效。",
+          "figure": "file-save-apply"
+        },
+        {
+          "text": "退出后需从 SKP 管理器重新打开 WebUI。",
+          "figure": "webui-closed"
+        }
+      ],
+      "advancedTitle": "进阶说明与参数"
+    },
+    "transfer": {
+      "summary": "用内置文件页备份或载入配置，不调用系统选择器。",
+      "steps": [
+        {
+          "text": "导入：点「导入配置」，在内置文件页选 JSON。",
+          "figure": "import-picker"
+        },
+        {
+          "text": "确认预览并载入草稿，再点「保存并应用」。",
+          "figure": "import-preview"
+        },
+        {
+          "text": "导出：点击「导出配置」，选择保存目录。",
+          "figure": "export-directory"
+        },
+        {
+          "text": "填写文件名并点「保存文件」，完成备份。",
+          "figure": "export-name"
+        }
+      ],
+      "advancedTitle": "进阶说明与参数"
+    },
+    "monitor": {
+      "summary": "先看是否工作中，再展开运行诊断确认每条规则的结果。",
+      "steps": [
+        {
+          "text": "打开「监控」，查看运行状态和规则状态。",
+          "figure": "monitor-overview"
+        },
+        {
+          "text": "展开「运行诊断」，查看逐项应用结果。",
+          "figure": "diagnostics"
+        },
+        {
+          "text": "若显示部分应用，找到失败项再修改配置。",
+          "figure": "diagnostics-partial"
+        },
+        {
+          "text": "回到目标应用重新检查实际效果。",
+          "figure": "save-applied"
+        }
+      ],
+      "advancedTitle": "进阶说明与参数"
+    },
+    "cases": {
+      "summary": "先只对 Probe 的自建文件练习，一次验证一种效果。",
+      "steps": [
+        {
+          "text": "创建测试组，指定自己的 Probe 应用。",
+          "figure": "group-include"
+        },
+        {
+          "text": "在文件页挑一个自建文件，点击「设置规则」。",
+          "figure": "file-rule-entry"
+        },
+        {
+          "text": "先选一种规则和测试组，保存并应用。",
+          "figure": "file-save-apply"
+        },
+        {
+          "text": "验证后删除该规则并应用，练习恢复。",
+          "figure": "rule-draft"
+        }
+      ],
+      "advancedTitle": "进阶说明与参数"
+    },
+    "faq": {
+      "summary": "效果不符时，先核对应用结果、作用组和实际访问路径。",
+      "steps": [
+        {
+          "text": "先在运行诊断确认是否有失败或未执行项。",
+          "figure": "diagnostics-partial"
+        },
+        {
+          "text": "确认实际使用的应用已进入相应作用组。",
+          "figure": "package-list"
+        },
+        {
+          "text": "重定向先确认模式，以及应用能否访问目标。",
+          "figure": "redirect-path"
+        },
+        {
+          "text": "关闭旧读取或重开应用，再检查一次。",
+          "figure": "save-applied"
+        }
+      ],
+      "advancedTitle": "进阶说明与参数"
+    },
+    "reference": {
+      "summary": "不确定选什么规则或填什么单位时，展开下方速查。",
+      "steps": [
+        {
+          "text": "按想实现的效果，先选正确的规则类型。",
+          "figure": "file-rule-entry"
+        },
+        {
+          "text": "6.6 内容替换不可选，以界面能力提示为准。",
+          "figure": "content-disabled-66"
+        },
+        {
+          "text": "属性单位、容量和限制，可展开下方查表。",
+          "figure": "kstat-middle"
+        }
+      ],
+      "advancedTitle": "进阶说明与参数"
+    }
+  }
+}

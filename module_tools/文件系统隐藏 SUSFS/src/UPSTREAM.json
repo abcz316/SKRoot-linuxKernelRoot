@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "upstream": "https://github.com/inforcqb/susfs4ksu-lkm",
+  "fetched_on": "2026-10-24",
+  "base_branch": "main",
+  "base_commit": "6753d9c189b058a5978eddd7d2093f95b5be68a2",
+  "observed_dev_commit": "9b271128dbdc50da85cfd20880db1596268fc21a",
+  "development_branch": "codex/skp-lkm-migration",
+  "downstream_repository": "https://github.com/dreamcolor123/susfs4skp-lkm",
+  "base_history_preserved": true,
+  "startup_and_empty_rules": "upstream",
+  "global_features": "upstream; not application-group scoped",
+  "migration_status": "standalone SUSFS module; single JSON config, sequential per-rule management, RCU publication and precise manager FD; independent from PLUS",
+  "reviewed_main_commit": "8ab4500ffc3f13ec6ded79d7ab13e2e8147a1879",
+  "selected_sync": {
+    "date": "2026-10-21",
+    "commits": [
+      {
+        "commit": "f5f9c05e0ae14bdaf6a1a28044534c08c4e8318b",
+        "change": "bootconfig publication/reclamation",
+        "adaptation": "serialized update; exact Tasks grace period required before any publish; no delay fallback or retired-list allocation"
+      },
+      {
+        "commit": "f1a7321a2d9bb4c1dd34d189d5e845cfdbce4c8b",
+        "change": "mount identity invalidation",
+        "adaptation": "invalidate all keys; serialize readers with invalidation and slot reuse"
+      },
+      {
+        "commit": "9d36644fdf45c19ff52a79be3a8421c260f752c3",
+        "change": "uname field padding",
+        "adaptation": "also pad final returned snapshots after live sysfs parameter changes"
+      },
+      {
+        "commit": "af563036db4175c6b2bffe6e3ab1168d7481f54c",
+        "change": "HARDENED_USERCOPY import guard"
+      },
+      {
+        "commit": "3fe2c37ebaab91e007a327d9e7e1abeca17b448d",
+        "change": "bounded legacy mount scan batches",
+        "adaptation": "propagate errors from later passes; preserve separate grouped route"
+      },
+      {
+        "commit": "8b65f13f3eff4e9d530c92a92dde6133b0700ae7",
+        "change": "GKI-LKM variant label"
+      }
+    ],
+    "not_imported": [
+      "KernelSU control-node allowlist and SELinux relabel: standalone SKP keeps current root and exact-manager controls",
+      "AVC source-context expansion: optional interface remains unchanged",
+      "x64 README links: standalone runtime remains arm64"
+    ]
+  },
+  "selected_sync_20261024": {
+    "date": "2026-10-24",
+    "module_version": "0.3.6",
+    "commits": [
+      {
+        "commit": "7d74b9b9f60a01800981b5a175f396c427a80597",
+        "change": "clear disabled state when reusing registered kprobe structures"
+      },
+      {
+        "commit": "34d1d2b856527d8964bc0c2b154bbf423dc3bc1d",
+        "change": "minimum all-hidden directory placeholder, clearing entry type and aligned length"
+      },
+      {
+        "commit": "edce42226df92ee6ccb10775a4c4f2f747f023ec",
+        "change": "correct libc placeholder and partial user-buffer fault comments"
+      },
+      {
+        "commit": "64da50025308b13603a5878862e81161f4496a2d",
+        "change": "feature reporting and upstream command admission follow successful initialization",
+        "adaptation": "preserve local nonfatal policy, precise SKP manager and separate per-rule lazy preparation"
+      },
+      {
+        "commit": "149c168f617e7e0a2736fabc4691dbe374aa53ab",
+        "change": "only the symbol-hide fallback diagnostic correction",
+        "excluded": "KernelSU isolated-UID umount policy"
+      }
+    ],
+    "already_present": [
+      {
+        "commit": "91388e71cb59a74cca0cbd95c643f778b10c940c",
+        "change": "pending path merge transfers saved inode operations"
+      }
+    ],
+    "deferred": [
+      "mount scanning/capacity series",
+      "create_gate until compat numbering and wrapper registration are corrected",
+      "fatal layer policy changes and loader refactor",
+      "CI maintenance"
+    ],
+    "not_imported": [
+      "KernelSU allowlist and isolated UID scope changes",
+      "upstream private directory enumeration"
+    ]
+  }
+}

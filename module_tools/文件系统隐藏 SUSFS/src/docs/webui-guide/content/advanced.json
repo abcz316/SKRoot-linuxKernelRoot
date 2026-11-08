@@ -1,0 +1,112 @@
+[
+  {
+    "id": "files",
+    "title": "文件管理：准备目标、编辑内容与维护真实文件",
+    "kicker": "文件工具",
+    "summary": "用双栏文件管理准备教程文件、选择规则对象，并区分真实文件操作与 SUSFS 的规则配置。",
+    "body": "<h3>先分清两个“文件”概念</h3>\n<p>底部导航的<strong>文件</strong>是设备文件管理器；SUSFS 内的<strong>规则</strong>是隐藏、伪装、重定向等配置。文件管理中的删除会删除真实文件；规则页删除一条规则只移除配置，不删除文件。属性窗口“修改权限”会修改真实权限；规则中的“属性伪装”只改变相应调用者看到的属性。</p>\n<div class=\"warning\"><p>文件管理通过本模块自己的管理身份访问文件，不代表普通应用也有相同的文件权限、SELinux 权限或挂载视图。管理器能打开 B，不能据此判断路径重定向的目标应用也能打开 B。</p></div>\n<h3>认识双栏与路径</h3>\n<ol><li>点击底部<strong>文件</strong>，点击左栏或右栏，让要操作的栏成为当前栏。顶部路径显示当前栏的位置。</li><li>点顶部路径文字展开输入框，手动点选输入框，输入绝对目录，例如 <code>/sdcard/Download/SUSFS-Tutorial</code>，再点箭头跳转。输入的是目录；浏览普通文件后再从操作菜单打开。</li><li>点文件夹进入；点 <code>..</code> 返回上一级。点普通文件打开操作菜单；目录可通过长按或右键打开操作。</li><li>右上角菜单的<strong>刷新</strong>重新读取当前目录。文件不存在、权限不足、路径输入错误时，应先处理读取错误。</li></ol>\n<table><thead><tr><th>菜单</th><th>实际含义</th><th>容易混淆的地方</th></tr></thead><tbody><tr><td>设为首页</td><td>保存当前栏的首页目录。</td><td>左右栏分别保存，不会移动文件。</td></tr><tr><td>交换窗口</td><td>交换左右两栏的浏览状态。</td><td>不交换磁盘文件。</td></tr><tr><td>同步窗口</td><td>让另一栏跟随当前栏的位置。</td><td>是浏览位置同步，不是双向同步文件。压缩包视图不支持此项。</td></tr><tr><td>选择文件</td><td>进入多选模式；也可向右轻扫某行进入选择，或用键盘空格选择。</td><td>方形勾选标记仅表示选中，不代表已配置隐藏。</td></tr><tr><td>状态图标说明</td><td>查看规则底图颜色、隐藏保护与选择标记的说明。</td><td>“已应用”来自管理接口，不等于应用效果实测。</td></tr></tbody></table>\n<h3>新建教学目录与内容文件</h3>\n<ol><li>先进入 <code>/sdcard/Download</code>，打开右上角菜单，点<strong>新建文件夹</strong>，填 <code>SUSFS-Tutorial</code> 并确认。</li><li>进入新目录，选<strong>新建空白文件</strong>，填 <code>cpuinfo-demo.txt</code> 并确认。</li><li>点新文件，选<strong>编辑</strong>，填写教学内容，点编辑器右上角<strong>保存</strong>。新建的是空白文件，未填写前没有示例内容。</li><li>关闭编辑器，确认文件路径，再去规则页建立 A→B 重定向。教程的 A 使用 <code>/proc/cpuinfo</code>；B 可使用上述文件。两种重定向都不支持把 FUSE 文件作为来源 A。</li></ol>\n<p>名称输入只填单个名称，不填完整路径；不能空白、不能含 <code>/</code>、空字符，也不能是 <code>.</code> 或 <code>..</code>。路径位置由弹窗上方显示的父目录决定。</p>\n<h3>多选、复制与移动：目标始终是另一栏</h3>\n<ol><li>先将<strong>另一栏</strong>打开到目标目录，再回来源栏选择文件。</li><li>进入多选，点需要的项目；可点<strong>全选</strong>或<strong>反选</strong>，一次最多 500 项。在压缩包内，相应按钮仅针对本页。</li><li>点选择条的<strong>操作</strong>，选<strong>复制</strong>或<strong>移动</strong>；单个文件也可直接从其操作菜单选择。</li><li>核对“到另一栏当前目录”的目的路径。确认弹窗默认选中<strong>覆盖同名项目</strong>；需要保留目标文件时，改选<strong>跳过同名项目</strong>。</li><li>点<strong>开始</strong>，查看底部任务进度、成功、跳过、失败和警告数量。必要时点<strong>取消</strong>，随后检查两栏实际文件状态。</li></ol>\n<div class=\"note\"><p>复制保留来源，移动会改变来源位置。取消不会撤销任务已经完成的部分，也不是回滚。目标栏如果还停留在压缩包内部，应先退回真实目录。文件任务进度属于文件管理任务，和 SUSFS 顺序应用规则的诊断结果是两套用途。</p></div>\n<h3>重命名与删除</h3>\n<p>单项操作菜单<strong>重命名</strong>只改变名称，不是“复制一份”；核对旧路径与新名称后确认。多选不能直接批量重命名。<strong>删除</strong>支持单项或多项，确认弹窗会列出路径；点“确定删除”会启动真实删除任务，无法靠撤销规则恢复。教程文件不再需要时再删除，仍被重定向引用的目标请先修改或撤销相应规则。</p>\n<h3>属性、权限与所有者</h3>\n<p><strong>属性</strong>显示类型、大小、修改时间、权限、所有者 UID、用户组 GID；符号链接还显示链接目标。目录大小在此显示为“—”，不是完整递归统计。</p>\n<table><thead><tr><th>控制</th><th>如何理解</th><th>操作结果</th></tr></thead><tbody><tr><td>读 / 写 / 执行</td><td>分别按所有者、用户组、其它设置。对目录，执行位主要表示可遍历，读位主要表示可列举。</td><td>修改真实文件权限。八进制与符号预览会同步变化。</td></tr><tr><td>setuid / setgid / sticky</td><td>特殊权限位。只有明确需要时调整；Android 与文件系统仍有额外限制。</td><td>不是给普通应用绕过 SELinux 的开关。</td></tr><tr><td>所有者 / 用户组</td><td>可输入系统识别的名称，或数字 UID / GID。</td><td>修改真实归属，不改变某个应用本身的 UID。</td></tr><tr><td>同时应用到所有子文件 / 子文件夹</td><td>针对目录分别选择递归范围；不勾选时只处理当前对象。</td><td>会批量修改实际内容对象，执行前核对路径。</td></tr></tbody></table>\n<p>符号链接不能从这个窗口修改权限位，窗口会给出提示；可修改所有者与用户组。执行结果仍以任务反馈为准。不要将“权限改成可读”解释成所有应用必然可访问：父目录可遍历性、SELinux、存储授权与挂载视图仍会参与判断。</p>\n<h3>文本编辑器与零大小特殊文件</h3>\n<p>从文件菜单点<strong>编辑</strong>进入 UTF-8 编辑器。工具栏可选择语法语言、调整字号（默认 12px）、切换自动换行；底部可撤销、重做并查看行列。普通文本读写上限为 8 MiB；超过 1 MiB 或出现超长行时采用基础模式关闭语法高亮。编辑器保留 UTF-8 BOM 与原有换行信息。</p>\n<ol><li>修改内容后，点<strong>保存</strong>或按 <code>Ctrl+S</code>。这是保存真实文本，不需要再点 SUSFS“保存并应用”。</li><li>若其他程序已修改文件，编辑器会询问是否覆盖新版本；取消会保留编辑器草稿，不覆盖磁盘。</li><li>返回时如有未保存内容，会询问是否关闭。保留草稿时不要误确认丢弃。</li></ol>\n<div class=\"tip\"><p><code>/proc/cpuinfo</code> 等 procfs/sysfs 节点可能显示 0 B，却能读出内容。当前编辑器读取实际内容，不以 stat 大小代替内容长度；这类动态节点按<strong>只读快照</strong>分块展示，保存不可用。重新打开才能读取新的快照。打不开时还要区分权限、节点类型及内容编码，不能仅按“0 B”判为空文件。</p></div>\n<h3>图片、压缩包与 APK</h3>\n<p><strong>查看图片</strong>支持 PNG、JPEG、GIF、WebP、BMP；可拖动、双指缩放、点击“适应”或“100%”、加减缩放，双击切换适应与原始大小。图片读取上限 32 MiB、像素数上限 3200 万，单边不超过 32768；格式名符合但内容不匹配仍会报错。</p>\n<p><strong>压缩为 ZIP</strong>把选中项目输出到另一栏；弹窗显示默认文件名，同名时自动生成 <code>(1)</code>、<code>(2)</code> 等，不覆盖旧 ZIP。<strong>浏览压缩包</strong>支持单个 ZIP、7z 和普通单卷 RAR；RAR 分卷不支持。包内显示只读视图，可逐层浏览、选择并解压；包内不能复制、移动、删除、重命名、编辑或创建 SUSFS 对象规则。超过 500 条目分页时，“本页全选 / 本页反选”只影响当前页。</p>\n<ol><li>先把另一栏打开到实际解压目的目录。</li><li>对整个压缩文件选<strong>解压</strong>；或进入包内，选择若干项目再点解压。</li><li>包内选择的输出路径相对于当前包内目录。核对确认窗口中的目标展开路径与覆盖策略，再开始。</li><li>索引尚未完成时等待，或点上一级离开以取消索引。解压后检查失败与警告，不把完成进度等同于所有项成功。</li></ol>\n<p>单个 <code>.apk</code> 可选<strong>安装 APK</strong>，弹窗明确说明经系统包管理器 Root 安装、保留已有应用数据并允许版本降级；签名、ABI、版本和权限仍由系统校验。文件管理不提供终端、脚本执行或自动化入口。</p>\n<h3>书签、最近访问与规则入口</h3>\n<p>点顶部书签图标或上滑底部边缘打开<strong>最近 / 书签</strong>。点目录记录跳转；记录操作可添加书签、修改书签备注或删除记录。备注留空显示目录名称，最多 512 个 UTF-8 字节。删除书签或最近记录只删记录，不删目录。</p>\n<p>对象操作中的<strong>设置规则</strong>会带入所选文件路径；可用规则类型依对象类型决定。<strong>查看规则</strong>进入该对象相关规则。重定向编辑器进入目标选择状态时，普通文件菜单会出现<strong>选择为重定向目标</strong>。这里传回路径，不会复制文件；不可选压缩包内部虚拟条目。</p>\n<p>文件页规则底图的绿色用于已应用，黄橙色虚线用于待应用或状态未确认，红色用于失败，灰色用于停用等状态；与 SUSFS 规则页将“状态未确认”显示为灰色的做法不同。盾形标记为独立的隐藏保护，方形勾选是文件选择。目录可见性也可能受共享存储、FUSE、缓存或原有保护影响，文件管理视图不能替代目标应用的结果检查。</p>",
+    "figures": [
+      "files-overview",
+      "file-actions",
+      "file-properties",
+      "file-permissions",
+      "file-editor",
+      "file-archive",
+      "file-bookmarks"
+    ],
+    "sources": [
+      "module/webroot/index.html",
+      "module/webroot/file-manager.js",
+      "module/webroot/file-manager-model.js",
+      "module/webroot/text-editor.js",
+      "module/webroot/image-viewer.js",
+      "module/webroot/archive-browser.js"
+    ]
+  },
+  {
+    "id": "advanced",
+    "title": "高级：全局接口、边界与恢复方法",
+    "kicker": "高级配置",
+    "summary": "这些接口独立于作用组。先理解“不设置”和“关闭”的区别，再填写 uname、启动信息、模块列表及日志设置。",
+    "body": "<h3>共同操作与最重要的区别</h3>\n<ol><li>打开 SUSFS → <strong>高级</strong>，点卡片标题展开。</li><li>只配置明确需要的功能。修改后，点导航栏上方浮动的<strong>保存并应用</strong>。</li><li>到监控页展开<strong>运行诊断</strong>，查看对应全局项目的逐项结果。保存成功不保证每项内核接口都接受了设置。</li></ol>\n<p>这里的 uname、bootconfig、模块和 AVC 等功能遵循上游全局语义，<strong>不接入应用作用组</strong>。不能通过“只指定 Probe 的作用组”把这些高级接口也限制到 Probe。</p>\n<table><thead><tr><th>选择</th><th>保存配置</th><th>当前内核状态</th></tr></thead><tbody><tr><td>不设置</td><td>移除对应保存项，后续应用不再写这项。</td><td>不自动恢复以前已经写入的状态。</td></tr><tr><td>开启</td><td>保存明确开启值。</td><td>应用时写入开启；具体结果看诊断。</td></tr><tr><td>关闭</td><td>保存明确关闭值。</td><td>应用时写入关闭；与删除配置不同。</td></tr><tr><td>清空文本</td><td>文本字段从配置移除。</td><td>不是通用的“清空内核替换值”命令；恢复方法逐项不同。</td></tr></tbody></table>\n<div class=\"note\"><p>新建空配置不等于所有内核功能都已关闭。未设置的功能保留加载时的默认语义或当前状态。为判断当前效果，应查看诊断和真实接口；高级卡片显示的是当前配置草稿。</p></div>\n<h3>内核版本 · uname</h3>\n<p><strong>版本伪装</strong>有“不设置 / 开启 / 关闭”。选开启后可编辑 <strong>release</strong> 与 <strong>version</strong>。每项最多 64 个 UTF-8 字节，不能含空字符；字符数不等于字节数，中文通常占多个字节。</p>\n<table><thead><tr><th>字段</th><th>含义</th><th>教程示例</th></tr></thead><tbody><tr><td>release</td><td>uname 返回的内核发行版本字符串。</td><td><code>6.12.0-tutorial</code></td></tr><tr><td>version</td><td>uname 返回的构建版本说明。</td><td><code>#1 SMP PREEMPT Tutorial</code></td></tr><tr><td>留空 / default</td><td>使用设备的原始对应字段。</td><td>只需改 release 时，让 version 留空。</td></tr></tbody></table>\n<ol><li>先记录原始返回值或保留备份，选择“开启”。</li><li>填写需要替换的字段，不需要替换的字段留空。</li><li>保存并应用，核对诊断；再通过合适的读取工具观察 uname。</li><li>恢复时选择<strong>关闭</strong>并保存应用。此操作同时移除配置中的自定义字段并关闭伪装；仅选“不设置”不会立即恢复。</li></ol>\n<p>该功能不会改变实际内核版本、驱动、API 或系统版本属性，不会让 6.6 获得 6.12 的能力。若旧配置同时含关闭值与自定义字段，界面显示“配置冲突”：重新选开启保留字段，或选关闭移除字段，再保存。</p>\n<h3>启动信息 · bootconfig 与 cmdline 兼容字段</h3>\n<p><strong>bootconfig 内容</strong>用于完整替换 <code>/proc/bootconfig</code> 的文本，最多 8191 个 UTF-8 字节。它不是键值补丁或逐项合并：只填一行时，替换内容就只有这一行。应先准备要展示的完整内容，再保存应用。</p>\n<p>例如教学数据可填 <code>tutorial.mode = \"demo\"</code>；若要保留原有其余信息，先读取并整理整份文本。这里的字符串只是展示内容，不会改变真实启动参数或重启流程。</p>\n<p>展开<strong>cmdline 兼容配置</strong>，可看到 <strong>cmdline（同一启动信息接口）</strong>。它用于旧配置兼容，与 bootconfig 共享同一接口。两个字段都填写时，内容必须完全一致；通常只填写上方 bootconfig 即可。</p>\n<div class=\"warning\"><p><strong>当前全局接口只处理 /proc/bootconfig，不会经 cmdline 兼容字段修改 /proc/cmdline。</strong>名字中有 cmdline 不能证明会改这个节点。对某个来源文件建立内容替换规则，是规则页的另一种功能，不能混为同一接口。</p></div>\n<p>撤销保存项可清空对应文本并保存，但当前内核已经替换的文本仍保持。当前接口没有网页中的立即恢复按钮；需要重新加载模块或重启，在不再保存替换项的条件下恢复原始展示。不要把“清空表单后应用成功”理解成已恢复当前文本。</p>\n<h3>内核模块隐藏</h3>\n<ol><li>展开卡片，点虚线<strong>＋ 添加模块</strong>。</li><li>手动点输入框，填写<strong>实际内核模块名称</strong>，例如 <code>fixture_module</code>；每次一个。</li><li>点<strong>确认添加</strong>，检查列表，再点底部<strong>保存并应用</strong>。</li><li>去除自定义项时点其右侧 <strong>×</strong>，再保存应用。列表超过 5 项时可滚动。</li></ol>\n<p>总计最多 16 项，含灰色固定项 <code>susfs_guard_lkm</code>。固定项代表 SUSFS 自身，不允许删除；每次编辑保存完整列表时始终保留它。名字最多 55 个 UTF-8 字节，不填路径、<code>.ko</code> 后缀、空格、逗号、斜杠、反斜杠或空字符。不能把 ZIP 文件名、模块 ID、SKP 安装目录名当成内核模块名。</p>\n<table><thead><tr><th>接口</th><th>隐藏含义</th></tr></thead><tbody><tr><td>/proc/modules</td><td>隐藏匹配模块的列表条目。</td></tr><tr><td>/proc/kallsyms</td><td>隐藏对应模块的符号条目。</td></tr><tr><td>/sys/module</td><td>对应目录对非 root 调用者隐藏，root 保留访问。</td></tr></tbody></table>\n<p>它不会卸载内核模块、关闭模块功能或删除模块文件。列表也不是“扫描到的所有已加载模块”，而是保存配置能确认的隐藏名称。旧配置若用单次 add/del 操作，首次编辑后会转为当前完整列表；界面会提示是否存在旧内容或需要<strong>恢复默认隐藏项</strong>。打开卡片本身不会自动改写旧配置。</p>\n<h3>SELinux AVC 日志伪装</h3>\n<div class=\"warning\"><p><strong>SKP 无需使用该功能，仅做接口保留。SKP 本身无任何 AVC 日志暴露风险，非调试请勿开启。</strong></p></div>\n<p>下拉状态为“不设置 / 开启 / 关闭”，新配置未显式设置。它仅处理匹配模块加载时配置的 su 安全域的 AVC 审计记录，使用 priv_app 上下文展示。不会改变真实进程身份、SELinux 策略或访问权限，也不能修复重定向目标的权限问题。</p>\n<p>如确有调试需要，再选择开启、保存应用并核对诊断；结束后选择<strong>关闭</strong>并应用。选择“不设置”只停止后续写入，不能代替关闭。内核支持和 su 安全域匹配也影响实际处理范围。</p>\n<h3>上游路径作用范围</h3>\n<table><thead><tr><th>选项</th><th>含义</th></tr></thead><tbody><tr><td>不设置</td><td>不写这项上游门限，保留当前状态。</td></tr><tr><td>应用门限（上游默认）</td><td>遵循上游路径隐藏判断，面向 KernelSU 判断需要卸载模块的应用，并保留文件所有者访问语义。</td></tr><tr><td>所有进程</td><td>绕过这项门限，可能影响 root 和系统进程。</td></tr></tbody></table>\n<p>这一项是<strong>未被作用组覆盖时的上游路径隐藏门限</strong>。规则已有作用组选择器时优先使用该选择器；它不是模块总开关，不控制所有高级功能，也不能替代组内“排除模式 / 指定模式”。不要为了让某个组生效就无差别切换到所有进程。</p>\n<h3>内核日志</h3>\n<p><strong>功能状态</strong>同样为“不设置 / 开启 / 关闭”。上游加载默认开启 SUSFS 常规信息日志；排查时可明确开启，常规使用可关闭。关闭只抑制这一类常规输出，不会清除已写出的日志；内核警告、错误和必要的加载提示仍可能出现。</p>\n<p>排查流程：开启 → 保存应用 → 复现相关操作 → 查看监控诊断或授权的内核日志 → 结束后关闭并保存。它不控制浏览器控制台、不代替运行诊断，也不是隐藏所有内核消息的功能。</p>\n<h3>如何恢复：按功能分别处理</h3>\n<ul><li><strong>uname：</strong>选关闭并应用，移除字段并关闭伪装。</li><li><strong>bootconfig：</strong>先清空保存项；当前替换通常需模块重新加载或重启后恢复。</li><li><strong>模块列表：</strong>删除自定义名称后应用当前完整列表；默认自身项保留。</li><li><strong>AVC 与日志：</strong>选明确关闭并应用；“不设置”不执行关闭命令。</li><li><strong>上游路径范围：</strong>明确切回“应用门限（上游默认）”并应用；仅移除配置不保证立即改回。</li></ul>",
+    "figures": [
+      "advanced-overview",
+      "advanced-uname",
+      "advanced-boot",
+      "advanced-modules",
+      "module-add",
+      "advanced-avc",
+      "advanced-scope",
+      "advanced-log"
+    ],
+    "sources": [
+      "module/webroot/susfs-advanced.js",
+      "management/backend.cpp",
+      "kernel/susfs_uname.c",
+      "kernel/spoof_cmdline.c",
+      "kernel/susfs_hide_syms.c",
+      "kernel/susfs_avc_spoof.c",
+      "kernel/susfs_enable_log.c",
+      "kernel/sus_path.c"
+    ]
+  },
+  {
+    "id": "background",
+    "title": "不保留后台：退出条件与重新启动",
+    "kicker": "生命周期",
+    "summary": "明确保存开启后，临时切后台、页面失焦或关闭页面都会结束 WebUI 用户态服务。",
+    "body": "<h3>什么时候用</h3>\n<p>希望使用后释放 WebUI 进程与端口时，可以开启。默认<strong>关闭</strong>；它不按作用组设置，会随配置文件一同导入导出。</p>\n<ol><li>进入 SUSFS → 高级，展开<strong>不保留后台</strong>。</li><li>从“关闭”改成“开启”。此时只是草稿。</li><li>点底部<strong>保存并应用</strong>，确认保存结果后开始生效。</li><li>完成配置和文件操作后，返回管理器、切换应用或关闭页面。之后需从<strong>SKP 管理器重新启动本模块 WebUI</strong>。</li></ol>\n<table><thead><tr><th>事件</th><th>保存开启后的行为</th></tr></thead><tbody><tr><td>临时切到其他应用 / 页面变为隐藏</td><td>退出，不保留临时后台。</td></tr><tr><td>WebUI 窗口失焦</td><td>退出；系统通知、锁屏、外部面板等也可能导致退出。</td></tr><tr><td>关闭页面 / pagehide</td><td>请求服务收尾并退出。</td></tr><tr><td>在当前 WebUI 内切换规则、高级或文件页</td><td>仍在同一 WebUI，不因内部导航主动退出。</td></tr><tr><td>内置文件选择器、内部弹窗</td><td>仍在当前页面；用于导入导出时不调用外部文件选择器。</td></tr><tr><td>旧页面重新获得焦点 / 浏览器返回旧页</td><td>关闭状态不可恢复，不能用旧页重新开启服务。</td></tr></tbody></table>\n<p>这里只监听<strong>窗口</strong>失焦。把光标从一个输入框移到另一个输入框，不等于窗口失焦；但设备上的外部界面是否造成失焦，由实际 WebView 行为决定。开启后先保存文件与规则，不依赖临时切出去以后继续编辑。</p>\n<h3>关闭的是什么，保留的是什么</h3>\n<ul><li>退出的是 WebUI 与相关用户态服务、监听端口；已应用的内核规则继续存在。</li><li>未保存的规则与高级配置草稿不会自动保存；再次启动会读取已保存配置。</li><li>正在进行的文件任务会取消或完成必要收尾，不能承诺取消会还原已经完成的操作。</li><li>不卸载 LKM，不清空内核规则，不等于重启设备，也不是停止整个 SKP。</li></ul>\n<div class=\"note\"><p>正常失焦或退出事件会立即发出关闭请求；事件丢失或页面异常消失时，服务用心跳兜底：页面约每 3 秒续期，失去心跳约 20 秒后开始回收。当前请求收尾还可能增加时间，因此不是“强制零延迟杀进程”的承诺。</p></div>\n<h3>如何关闭这个选项</h3>\n<p>如果页面显示<strong>WebUI 已关闭</strong>，先返回 SKP 管理器重新启动。进入高级，把“不保留后台”改成<strong>关闭</strong>并保存应用。仅在草稿里改成关闭但未保存，服务仍按已保存的开启状态处理。导入配置会替换该开关草稿，确认保存后才生效。</p>",
+    "figures": [
+      "advanced-background",
+      "webui-closed"
+    ],
+    "sources": [
+      "module/webroot/susfs-advanced.js",
+      "module/webroot/webui-lifecycle.js",
+      "module/webui_lifecycle.h",
+      "management/embedded.cpp"
+    ]
+  },
+  {
+    "id": "transfer",
+    "title": "配置导入、导出与跨设备分享",
+    "kicker": "备份与迁移",
+    "summary": "使用内置文件管理器选择 JSON 或导出目录；导入先预览再载入草稿，导出始终读取已保存配置。",
+    "body": "<h3>配置文件保存什么</h3>\n<p>它备份作用组、包名策略、各类规则与高级配置。导出为便携 JSON，外层标记格式 <code>susfs4skp-config</code>、版本 <code>1</code>；也可以导入兼容的普通配置 JSON。当前支持的配置 schema 为 10、11、12、13，校验不通过时不会直接写入。</p>\n<table><thead><tr><th>包含</th><th>不包含</th></tr></thead><tbody><tr><td>已保存的路径、名称、属性、重定向、映射、挂载规则及作用组、全部高级字段和“不保留后台”开关。</td><td>未保存草稿、会话凭据、运行诊断、内核状态。</td></tr><tr><td>重定向目标 B 的路径字符串。</td><td>B 的文件内容，及教程文件、图片、压缩包等实际文件。</td></tr></tbody></table>\n<p>逻辑配置上限为 <strong>512 KiB</strong>（524288 字节）；导出包装另预留少量空间，不代表规则数可以无限增加。文件中的路径、包名和高级字符串本身仍可能包含个人信息，分享前应查看并整理。</p>\n<h3>导入：选择 → 预览 → 草稿 → 应用</h3>\n<ol><li>将 JSON 放在本模块文件管理能够访问的位置，例如 <code>/sdcard/Download/susfs-tutorial.json</code>。</li><li>进入 SUSFS → 高级 → <strong>配置导入与导出</strong>，点<strong>导入配置</strong>。</li><li>进入内置文件选择模式，点文件夹继续浏览，点实际普通 JSON 文件选择。不要选压缩包内部虚拟条目或符号链接。</li><li>检查<strong>导入配置预览</strong>中的作用组数量、规则数量和提示。若不打算替换当前草稿，点取消。</li><li>点<strong>载入草稿</strong>。导入内容将<strong>替换当前规则与高级配置草稿</strong>，不是追加合并。“不保留后台”开关也按导入值替换；旧文件未包含该字段时默认为关闭。确认保存前不会改变当前会话行为。</li><li>逐页核对路径、包名、作用模式、三项排除、目标文件和高级项。此时还没持久保存，也没应用内核。</li><li>确认后点浮动的<strong>保存并应用</strong>，到监控诊断检查逐项结果。</li></ol>\n<div class=\"warning\"><p>“预览成功”表示格式与配置约束通过，不代表目标路径存在或设备内核支持所有功能。“载入草稿”不应用；“保存成功”也不能替代逐项应用结果。导入前如需保留原配置，应先导出已保存版本；原有未保存草稿需要先处理。</p></div>\n<p>导入失败会显示错误，不会直接保存或清空现有内核规则。非普通文件、符号链接、空文件、过大文件、无效 JSON、不支持的 schema、缺少默认组或字段不合法等都可能被拒绝；正在被别的程序修改的文件也会拒绝。可以回到文件管理编辑或重新复制一份稳定文件后再试。</p>\n<h3>导出：选择目录 → 文件名 → 保存文件</h3>\n<ol><li>如果希望备份最近修改，先完成<strong>保存并应用</strong>；导出不读取当前未保存草稿。</li><li>在高级页点<strong>导出配置</strong>，进入内置目录选择。</li><li>浏览到输出目录，例如 <code>/sdcard/Download/SUSFS-Tutorial</code>，点<strong>选择当前目录</strong>。</li><li>在<strong>导出配置</strong>弹窗核对目录，手动点输入框填写文件名。默认带时间，未写 <code>.json</code> 会自动补上。</li><li>点<strong>保存文件</strong>，成功提示会显示完整输出路径。再到文件管理确认该文件，之后可用自己选择的方式分享。</li></ol>\n<p>文件名不能空白，不能是 <code>.</code> 或 <code>..</code>，不能含 <code>/</code>、反斜杠或空字符；补齐后最多 255 个 UTF-8 字节。<strong>已有同名文件不会覆盖</strong>，出现提示后改文件名再保存。导出目录权限不足或文件系统不支持相应发布操作时，界面会返回实际错误；换到合适目录再试。</p>\n<h3>为什么使用内置文件管理</h3>\n<p>导入导出不调用系统文件选择器或分享面板，整个选择过程留在同一 WebUI，适合已经开启“不保留后台”的用户。取消选择会返回，不产生导入写入或导出文件。若主动切到系统应用处理分享，窗口仍可能失焦并关闭，应先完成保存导出。</p>\n<h3>跨设备检查清单</h3>\n<ul><li><strong>内核：</strong>安装包自动选择 6.6 / 6.12 产物；6.6 不支持“按源权限替换只读内容”。配置不会把该能力迁移到 6.6，也不会自动降级为普通路径模式。</li><li><strong>路径：</strong>确认绝对路径在新设备存在，用户编号与存储视图匹配。不能因为路径字符串相同就保证对象相同。</li><li><strong>包名：</strong>新设备需安装目标应用；保存时重新解析包名对应 UID。共享 UID 按整体身份处理，当前对 UID ≥ 100000 的多用户 / 分身应用不作兼容承诺。</li><li><strong>重定向：</strong>另行准备 B 文件及其正确内容；路径模式还须让目标应用具备访问 B 的条件。</li><li><strong>高级：</strong>检查 uname 和整份 bootconfig 是否适合新设备，避免照搬与设备矛盾的信息。</li><li><strong>结果：</strong>保存后看逐项诊断，保留迁移前配置；再在允许的应用与自建数据中核对实际效果。</li></ul>",
+    "figures": [
+      "advanced-transfer",
+      "import-picker",
+      "import-preview",
+      "export-directory",
+      "export-name"
+    ],
+    "sources": [
+      "module/webroot/susfs-advanced.js",
+      "module/webroot/susfs.js",
+      "module/webroot/file-manager.js",
+      "management/config_transfer.cpp",
+      "management/config.cpp"
+    ]
+  },
+  {
+    "id": "reference",
+    "title": "速查：规则选型、单位与容量",
+    "kicker": "参数参考",
+    "summary": "遇到选项相似、数值含义或容量错误时，在这里快速核对。上限按当前 0.3.0 实现记录。",
+    "body": "<h3>规则选型</h3>\n<table><thead><tr><th>你要改变的内容</th><th>选择</th><th>不等同于</th></tr></thead><tbody><tr><td>某个具体路径对象的可见性</td><td>路径隐藏</td><td>删除对象；也不是按名称匹配所有路径。</td></tr><tr><td>任意位置出现的同名目录和普通文件</td><td>名称匹配隐藏</td><td>关键词子串、通配符或正则表达式。</td></tr><tr><td>stat 类读取的文件属性</td><td>属性伪装</td><td>修改实际文件内容或实际权限。</td></tr><tr><td>打开 A 改为 B，目标应用能访问 B</td><td>路径重定向：路径模式</td><td>保留 A 的全部权限语义。</td></tr><tr><td>只读打开 A 时由 A 判断权限并提供预读 B 内容</td><td>按源权限替换只读内容（6.12）</td><td>适用于所有文件、写入、执行、mmap 或实时透传。</td></tr><tr><td>隐藏映射记录中的对应对象</td><td>映射隐藏</td><td>卸载或禁止实际映射。</td></tr><tr><td>隐藏挂载信息中的对应记录</td><td>挂载隐藏</td><td>卸载挂载点。</td></tr></tbody></table>\n<h3>属性伪装全部数值字段</h3>\n<p>所有值按<strong>十进制字符串</strong>输入；不使用十六进制前缀、千位分隔、小数或科学计数法。只勾选需要替换的字段；每条规则至少选一个。秒字段按 Unix 时间纪元理解，纳秒是同一秒中的分量。</p>\n<table><thead><tr><th>字段</th><th>单位 / 含义</th><th>合法范围</th></tr></thead><tbody><tr><td>inode · ino</td><td>对象编号，无单位</td><td>0～18446744073709551615（无符号 64 位）</td></tr><tr><td>设备号 · dev_encoded</td><td>编码设备号，无单位</td><td>0～4294967295（无符号 32 位），不是主次设备号文本</td></tr><tr><td>链接数 · nlink</td><td>硬链接数量</td><td>0～4294967295</td></tr><tr><td>大小 · size</td><td>字节</td><td>0～9223372036854775807</td></tr><tr><td>访问时间秒 · atime_sec</td><td>秒，Unix 时间</td><td>−9223372036854775808～9223372036854775807</td></tr><tr><td>访问时间纳秒 · atime_nsec</td><td>纳秒分量</td><td>0～999999999</td></tr><tr><td>修改时间秒 · mtime_sec</td><td>内容修改时间的秒部分</td><td>有符号 64 位整数</td></tr><tr><td>修改时间纳秒 · mtime_nsec</td><td>纳秒分量</td><td>0～999999999</td></tr><tr><td>变更时间秒 · ctime_sec</td><td>元数据变更时间的秒部分</td><td>有符号 64 位整数；ctime 不是创建时间</td></tr><tr><td>变更时间纳秒 · ctime_nsec</td><td>纳秒分量</td><td>0～999999999</td></tr><tr><td>块数 · blocks</td><td>以 512 字节为一块的占用数量</td><td>0～9223372036854775807</td></tr><tr><td>块大小 · blksize</td><td>建议 I/O 块大小，字节</td><td>1～2147483647</td></tr></tbody></table>\n<p>数值能被解析不等于组合合理。大小与占用块数可能不同，尤其稀疏文件；<code>blksize</code> 也不等于固定 512 字节计量块。填写大整数时复制完整十进制文本，避免先经电子表格转换为科学计数。</p>\n<h3>文本、路径和列表容量</h3>\n<table><thead><tr><th>项目</th><th>当前限制</th><th>备注</th></tr></thead><tbody><tr><td>作用组</td><td>最多 8 组，含默认组</td><td>默认 id=0 不可删除；组名最多 128 UTF-8 字节。</td></tr><tr><td>对象路径、重定向 A / B</td><td>少于 256 UTF-8 字节，即最多 255 字节</td><td>网页要求绝对路径；不含末尾字符串终止符。</td></tr><tr><td>精确匹配名称</td><td>1～255 UTF-8 字节</td><td>不含 / 或空字符，不能为 . 或 ..；同组不重复。</td></tr><tr><td>路径 + 名称隐藏</td><td>内核累计共 8192 条</td><td>所有组共享该类容量，名称隐藏占路径类额度。</td></tr><tr><td>属性伪装</td><td>内核累计 32 条</td><td>跨组共享。</td></tr><tr><td>映射隐藏</td><td>内核累计 64 条</td><td>跨组共享。</td></tr><tr><td>重定向</td><td>内核累计 64 条</td><td>两种模式合计，跨组共享。</td></tr><tr><td>挂载隐藏</td><td>内核累计 64 条</td><td>跨组共享。</td></tr><tr><td>包名排除列表 / 指定列表</td><td>各最多 128 项配置</td><td>解析还受 UID 名单容量约束；共享 UID 按整体处理。</td></tr><tr><td>uname release / version</td><td>每项 64 UTF-8 字节</td><td>留空或 default 用原始值。</td></tr><tr><td>bootconfig / cmdline 兼容字段</td><td>每项 8191 UTF-8 字节</td><td>同一接口，不可配置不同内容。</td></tr><tr><td>内核模块隐藏</td><td>共 16 项，含固定自身项；单名 55 UTF-8 字节</td><td>不填路径和 .ko 后缀。</td></tr><tr><td>配置 JSON</td><td>512 KiB</td><td>导出封装另有 1024 字节文件余量；不是附加规则容量。</td></tr><tr><td>导出文件名</td><td>含自动追加的 .json 在内最多 255 UTF-8 字节</td><td>不覆盖同名文件。</td></tr><tr><td>内容替换目标</td><td>最多 1 MiB</td><td>应用时预读；目标文件更新不会自动改变已加载内容。</td></tr><tr><td>文本编辑器</td><td>8 MiB</td><td>UTF-8；动态特殊文件为只读快照。</td></tr><tr><td>文件多选 / 包内每页</td><td>500 项</td><td>包内全选仅本页。</td></tr></tbody></table>\n<div class=\"note\"><p>规则数组的配置校验上限不能解读成“每组都有一份独立内核容量”。上表规则容量是当前内核五类全局表的累计容量。配置可能成功保存，但某些逐条添加因容量或资源失败；应查看运行诊断，不用拆成更多组来绕过总容量。</p></div>\n<h3>6.6 与 6.12 能力对照</h3>\n<table><thead><tr><th>功能</th><th>6.6</th><th>6.12</th></tr></thead><tbody><tr><td>路径 / 名称 / 属性 / 映射 / 挂载与作用组</td><td>提供对应接口</td><td>提供对应接口</td></tr><tr><td>普通路径重定向</td><td>可选</td><td>可选</td></tr><tr><td>按源权限替换只读内容</td><td>暂时禁用，网页灰色不可选</td><td>按内核报告能力与来源限制可选</td></tr><tr><td>高级与导入导出、后台偏好</td><td>同一界面</td><td>同一界面</td></tr><tr><td>模块选择</td><td>安装包按实际内核 / KMI 自动选择</td><td>安装包按实际内核 / KMI 自动选择</td></tr></tbody></table>\n<p>6.12 的内容替换仅支持当前内核报告的 proc 节点和受支持的普通文件：proc 列表包括 <code>/proc/cpuinfo</code>、<code>/proc/meminfo</code>、<code>/proc/version</code>、<code>/proc/uptime</code>、<code>/proc/loadavg</code>、<code>/proc/stat</code>、<code>/proc/cmdline</code>、<code>/proc/bootconfig</code>；普通文件限已识别的 ext4、F2FS、tmpfs、EROFS 读取实现及其安全约束。可选范围以当前设备返回的能力为准，不保证每个相同名字的文件系统、厂商实现或特殊节点均适用。FUSE 来源不支持。6.6 导入已有内容规则不会自动变成路径重定向。</p>\n<h3>最后一次操作核对</h3>\n<ul><li>弹窗“保存规则”只更新草稿；底部“保存并应用”才持久保存并顺序应用。</li><li>规则内容与配置一致时没有浮动保存条；仅点刷新只更新状态，不重新加载目标内容。</li><li>内容替换修改 B 后需再次实际应用。当前 UI 如无其它配置变化，可复制 B 为新目标路径，在规则中改选新路径后保存应用。</li><li>监控显示成功是接口结果。目标应用的身份、共享 UID、缓存、已有 FD、挂载视图与权限仍影响观察结果。</li><li>当前不承诺多用户 / 分身 UID ≥ 100000 的兼容，包名解析可能报告 unsupported_package_uid。</li></ul>",
+    "figures": [],
+    "sources": [
+      "management/config.cpp",
+      "management/config.hpp",
+      "management/config_transfer.cpp",
+      "kernel/skp_policy_adapter.c",
+      "kernel/skp_group_objects.h",
+      "kernel/skp_full_objects.h",
+      "kernel/skp_group_paths.h",
+      "kernel/skp_subject_policy.h",
+      "kernel/susfs_content.c",
+      "module/webroot/object-policy.js",
+      "module/webroot/text-editor.js"
+    ]
+  }
+]

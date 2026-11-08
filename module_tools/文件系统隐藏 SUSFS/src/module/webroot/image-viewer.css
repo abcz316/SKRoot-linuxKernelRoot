@@ -1,0 +1,85 @@
+.image-viewer {
+  --image-canvas: #171923;
+  --image-grid: #242735;
+  position: fixed;
+  inset: 0;
+  z-index: 370;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  background: var(--image-canvas);
+  color: var(--color-text-primary, #0f172a);
+  font-family: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
+}
+.image-viewer[hidden], .image-viewer [hidden] { display: none !important; }
+.image-viewer-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 8px);
+  flex: 0 0 auto;
+  min-width: 0;
+  min-height: 60px;
+  padding: calc(var(--space-2, 8px) + env(safe-area-inset-top)) var(--space-3, 12px) var(--space-2, 8px);
+  border-bottom: 1px solid var(--color-border-subtle, #e2e8f0);
+  background: var(--color-surface-overlay, rgba(248, 250, 252, .92));
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+.image-viewer button {
+  flex: 0 0 auto;
+  min-height: 44px;
+  min-width: 44px;
+  margin: 0;
+  padding: 0 var(--space-3, 12px);
+  border: 1px solid var(--color-border-subtle, #e2e8f0);
+  border-radius: var(--radius-lg, 8px);
+  background: var(--color-surface-primary, #fff);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .72), var(--shadow-sm, 0 1px 3px rgba(15, 23, 42, .05));
+  color: var(--color-text-secondary, #475569);
+  font: inherit;
+  font-size: var(--text-base, 13px);
+  line-height: 1.4;
+  white-space: nowrap;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.image-viewer button:focus-visible { outline: 2px solid var(--color-accent-default, #7c3aed); outline-offset: 2px; }
+.image-viewer-viewport:focus-visible { outline: 3px solid var(--color-accent-muted, #ddd6fe); outline-offset: -3px; }
+.image-viewer button:disabled { border-color: var(--color-border-subtle, #e2e8f0); background: var(--color-surface-tertiary, #f1f5f9); color: var(--color-text-tertiary, #64748b); cursor: default; }
+.image-viewer .image-viewer-close { border-color: transparent; background: transparent; box-shadow: none; font-size: 28px; padding: 0; }
+.image-viewer-title { flex: 1; min-width: 0; }
+.image-viewer-path { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: var(--text-lg, 15px); font-weight: 600; }
+.image-viewer-meta { margin-top: var(--space-1, 4px); color: var(--color-text-tertiary, #64748b); font-size: var(--text-sm, 12px); overflow-wrap: anywhere; }
+.image-viewer-meta[data-state="error"] { color: var(--color-error-text, #b91c1c); }
+.image-viewer-viewport {
+  position: relative;
+  flex: 1 1 0;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+  background-color: var(--image-canvas);
+  background-image: repeating-conic-gradient(var(--image-grid) 0% 25%, var(--image-canvas) 0% 50%);
+  background-size: 24px 24px;
+  cursor: grab;
+}
+.image-viewer-viewport:active { cursor: grabbing; }
+.image-viewer-image { position: absolute; top: 50%; left: 50%; max-width: none; max-height: none; transform-origin: center; pointer-events: none; user-select: none; }
+.image-viewer-message { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; overflow: auto; padding: var(--space-6, 24px); background: var(--image-canvas); color: var(--color-text-inverse, #f8fafc); text-align: center; font-size: var(--text-md, 14px); overflow-wrap: anywhere; }
+.image-viewer-tools { display: flex; flex: 0 0 auto; flex-wrap: wrap; justify-content: center; align-items: center; gap: var(--space-2, 8px); padding: var(--space-2, 8px) var(--space-3, 12px) calc(var(--space-2, 8px) + env(safe-area-inset-bottom)); border-top: 1px solid var(--color-border-subtle, #e2e8f0); background: var(--color-surface-overlay, rgba(248, 250, 252, .92)); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); }
+.image-viewer-scale { min-width: 48px; color: var(--color-text-secondary, #475569); text-align: center; font-size: var(--text-base, 13px); font-variant-numeric: tabular-nums; }
+@media (hover: hover) {
+  .image-viewer button:not(:disabled):hover { border-color: var(--color-accent-muted, #ddd6fe); background: var(--color-accent-subtle, #ede9fe); color: var(--color-accent-active, #5b21b6); }
+}
+@media (max-width: 380px) {
+  .image-viewer-head, .image-viewer-tools { padding-left: var(--space-2, 8px); padding-right: var(--space-2, 8px); }
+  .image-viewer-tools { gap: var(--space-1, 4px); }
+  .image-viewer-tools button { padding-inline: var(--space-2, 8px); }
+}
+@media (max-height: 440px) {
+  .image-viewer-head { min-height: 52px; padding-top: calc(var(--space-1, 4px) + env(safe-area-inset-top)); padding-bottom: var(--space-1, 4px); }
+  .image-viewer-tools { padding-top: var(--space-1, 4px); padding-bottom: calc(var(--space-1, 4px) + env(safe-area-inset-bottom)); }
+}

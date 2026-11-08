@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#f6f5fb">
+  <title>SUSFS · 跟着做就会</title>
+  <link rel="stylesheet" href="interactive.css">
+  <link rel="stylesheet" href="app-perspective.css">
+</head>
+<body>
+  <main id="homeScreen" class="screen home-screen">
+    <header class="home-header"><a class="wordmark" href="#home" aria-label="SUSFS 学习首页"><span class="brand-icon" data-icon="spark"></span><span>SUSFS <small>学着做</small></span></a><button id="settingsButton" class="icon-button" aria-label="学习设置" data-icon="settings"></button></header>
+    <section class="hero">
+      <div class="hero-copy"><p class="eyebrow">从认识功能，到亲手配置</p><h1>面向0基础用户的<br>基础SUSFS配置教学</h1><div class="hero-description"><p>文件系统隐藏 SUSFS 模块提供文件隐藏、属性伪装、重定向，以及内核版本、启动信息等配置能力。</p><p>本模块部分覆盖隐藏/data目录、内核拦截模块的功能，可以根据需求灵活配置。</p></div></div>
+      <div class="hero-demo-row"><div class="hero-demo-copy"><div class="hero-switch" role="group" aria-label="看看 SUSFS 能做什么"><button data-demo="path" aria-pressed="true">藏起来</button><button data-demo="kstat" aria-pressed="false">改属性</button><button data-demo="redirect" aria-pressed="false">换内容</button></div><p id="heroCaption" class="hero-caption">让指定应用看不到你选中的文件或目录。</p></div><div id="heroScene" class="hero-scene" data-demo="path" aria-hidden="true"></div></div>
+    </section>
+    <aside class="home-warning" aria-labelledby="homeWarningTitle"><div class="home-warning-heading"><span class="home-warning-sign" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13.4 5a3 3 0 0 1 5.2 0l11 19a3 3 0 0 1-2.6 4.5H5A3 3 0 0 1 2.4 24l11-19Z" fill="#ffe0ac"/><path d="M16 11v7"/><circle cx="16" cy="23" r="1" fill="currentColor" stroke="none"/></svg></span><h2 id="homeWarningTitle">注意！！</h2></div><p>模块部分功能较为危险，对风险操作无校验与拦截，随意配置可能造成但不限于：文件丢失、系统异常、设备重启、SKP环境崩溃、设备环境损坏、游戏封号等严重后果，请务必确认自己配置的规则是否合理，造成以上所有情况概不负责。</p></aside>
+    <section class="continue-card"><div><p class="eyebrow" id="progressLabel">你的第一步</p><h2 id="continueTitle">先认识“保存并应用”</h2><p id="continueDescription">跟着高亮按钮，完成第一条规则。</p></div><button id="continueButton" class="round-next" aria-label="开始推荐练习" data-icon="arrow"></button><div class="progress-track"><i id="totalProgress"></i></div></section>
+    <div class="section-heading"><div><p class="eyebrow">选一个想解决的问题</p><h2>我想让它……</h2></div><span id="lessonCount" class="count-label"></span></div>
+    <label class="lesson-search"><span data-icon="search"></span><input id="lessonSearch" type="search" placeholder="例如：隐藏文件、只对某个应用生效" aria-label="搜索用途和课程" autocomplete="off"><button id="clearSearch" hidden aria-label="清空搜索" data-icon="x"></button></label>
+    <div id="categoryFilters" class="category-filters" aria-label="课程分类"><button data-category="all" aria-pressed="true">全部</button><button data-category="start" aria-pressed="false">先学基础</button><button data-category="rules" aria-pressed="false">配置规则</button><button data-category="advanced" aria-pressed="false">更多功能</button></div>
+    <div id="lessonGrid" class="lesson-grid"></div><p id="noResults" class="empty-state" hidden>没有找到。试试“隐藏”“作用组”或“备份”。</p>
+    <section class="reference-card"><span class="reference-icon" data-icon="book"></span><div><h2>参数忘了？随时查</h2><p>完整图文、限制和高级说明。</p></div><button id="openReference" class="icon-button" aria-label="打开图文参考" data-icon="arrow"></button></section>
+    <footer class="home-footer"><span class="offline-dot"></span>离线演练 · 不需要 Root · 不修改设备文件<br><small>教学 WebUI 对应 SUSFS 0.3.0 · 学习 App 0.4.2</small></footer>
+  </main>
+
+  <main id="introScreen" class="screen intro-screen" hidden>
+    <header class="screen-header"><button class="icon-button" data-home aria-label="返回课程" data-icon="back"></button><span id="introCategory">认识功能</span><span id="introDuration" class="muted"></span></header>
+    <div class="intro-content"><p id="introEyebrow" class="eyebrow"></p><h1 id="introTitle"></h1><p id="introPurpose" class="intro-purpose"></p><div id="introPerspective"></div><div id="introScene" class="concept-scene" aria-hidden="true"></div>
+      <div id="introComparison" class="before-after"><div><span>配置前</span><p id="introBefore"></p></div><span class="change-arrow" data-icon="arrow"></span><div><span>配置后</span><p id="introAfter"></p></div></div>
+      <div class="scenario"><span data-icon="lightbulb"></span><div><strong>这次练什么</strong><p id="introExample"></p></div></div>
+      <details id="introAdvanced" class="advanced-details"><summary>先看看限制与进阶说明</summary><div id="introAdvancedContent"></div></details>
+    </div>
+    <div class="intro-actions"><p>操作的是 App 内的示例文件，不会改动你的设备。</p><button id="startLesson" class="primary-button">开始引导练习 <span data-icon="arrow"></span></button><button id="freePractice" class="text-button">我想自己试试</button></div>
+  </main>
+
+  <main id="practiceScreen" class="screen practice-screen" hidden>
+    <header class="practice-header"><button id="tourHome" class="icon-button" aria-label="退出练习" data-icon="back"></button><div class="practice-title"><span id="tourTitle"></span><small><span class="practice-dot"></span>真实界面 · 本地演练</small></div><button id="tourMore" class="icon-button" aria-label="练习选项" data-icon="more"></button></header>
+    <div class="tour-progress"><i id="stepProgress"></i></div>
+    <div id="practiceCanvas" class="practice-canvas"><iframe id="lessonFrame" title="SUSFS 真实 WebUI 离线练习" src="about:blank"></iframe><div id="tourMask" class="tour-mask" hidden aria-hidden="true"><i class="scrim top"></i><i class="scrim left"></i><i class="scrim right"></i><i class="scrim bottom"></i><i id="targetRing" class="target-ring"></i><span id="targetGesture" class="target-gesture">点这里</span></div><button id="continueLayer" class="continue-layer" type="button" aria-label="阅读后轻点任意位置继续" hidden></button><div id="practiceLoading" class="practice-loading"><span class="loading-shape"></span><strong>正在准备练习桌面</strong><span>每一课都有干净的示例数据</span></div></div>
+    <section id="coachCard" class="coach-card" aria-live="polite" aria-atomic="true"><div class="coach-top"><span id="stepNumber" class="step-badge">01</span><div><p id="stepKicker" class="eyebrow">现在轮到你</p><h2 id="stepTitle"></h2></div><span id="stepCounter" class="step-counter"></span></div><p id="stepInstruction" class="step-instruction"></p><button id="tapContinueNotice" class="tap-continue-notice" type="button" hidden><i aria-hidden="true"></i><span>轻点任意位置继续</span><span aria-hidden="true">→</span></button><div class="coach-actions"><button id="tourHint" class="text-button">为什么这样做？</button><button id="tourLocate" class="text-button"><span data-icon="locate"></span>找到按钮</button><button id="tourNext" class="small-primary" hidden>明白了，继续</button></div><p id="stepWhy" class="step-why" hidden></p><div id="stepFeedback" class="step-feedback" hidden></div></section>
+  </main>
+
+  <main id="successScreen" class="screen success-screen" hidden><header class="screen-header"><button class="icon-button" data-home aria-label="返回课程" data-icon="back"></button><span>完成一次，记住一种用法</span></header><div class="success-content"><div class="celebration" aria-hidden="true"><span data-icon="check"></span><i></i><i></i><i></i><i></i><i></i><i></i></div><p class="eyebrow">这次你自己配好了</p><h1 id="successTitle"></h1><p id="successDescription"></p><div class="outcome-card"><span class="outcome-label">本次演练的配置结果</span><p id="successOutcome"></p><small>演练应用成功；设备上的实际效果仍需安装模块后核对。</small></div><div id="successPerspective"></div><section id="quiz" class="quiz"><p class="eyebrow">再确认一个小知识</p><h2 id="quizQuestion"></h2><div id="quizChoices"></div><p id="quizExplanation" hidden></p></section><details class="advanced-details"><summary>以后在真实模块里怎么做？</summary><p>从 SKP 管理器打开 SUSFS，按相同步骤选你自己的文件和应用，最后点“保存并应用”。先检查应用结果，再在目标应用中核对效果。</p></details><button id="nextLesson" class="primary-button">继续下一课 <span data-icon="arrow"></span></button><div class="success-secondary"><button id="tourRetry" class="text-button">再练一次</button><button class="text-button" data-home>回到全部课程</button></div></div></main>
+
+  <section id="referenceScreen" class="screen reference-screen" hidden><header class="screen-header"><button id="referenceBack" class="icon-button" aria-label="返回学习首页" data-icon="back"></button><strong>图文参考</strong><small>需要时再查</small></header><iframe id="referenceFrame" title="SUSFS 完整图文参考"></iframe></section>
+  <dialog id="settingsDialog" class="app-dialog"><form method="dialog"><header><h2>按你的节奏学</h2><button value="close" class="icon-button" aria-label="关闭设置" data-icon="x"></button></header><label class="setting-row"><span><strong>减少动画</strong><small>减少动效，保留操作反馈</small></span><input id="reduceMotion" type="checkbox"></label><label class="setting-row"><span><strong>练习内核</strong><small>6.6 的只读内容替换保持不可用</small></span><select id="kernelSelect" aria-label="选择练习内核"><option value="6.12">6.12</option><option value="6.6">6.6</option></select></label><button id="nativeSettings" type="button" class="outline-button">调整阅读字号</button><button id="resetProgress" type="button" class="text-button danger">清除学习记录</button><p class="dialog-note">只清除本 App 的学习进度。SUSFS 模块和设备文件不会受到影响。</p></form></dialog>
+  <dialog id="tourMenu" class="app-dialog"><form method="dialog"><header><h2>练习选项</h2><button value="close" class="icon-button" aria-label="关闭练习选项" data-icon="x"></button></header><button id="restartLesson" class="outline-button" type="button">清空示例，重新练习</button><button id="toggleGuidance" class="outline-button" type="button">切换到自由练习</button><button id="reviewIntro" class="outline-button" type="button">回看用途介绍</button><button id="exitLesson" class="text-button" type="button">返回课程</button><p class="dialog-note">重新练习会恢复本课的示例数据；回看介绍会保留当前操作。</p></form></dialog>
+  <div id="toast" class="app-toast" role="status" hidden></div>
+  <script src="simulator/lucide-icons.js"></script><script src="lessons.js"></script><script src="scenes.js"></script><script src="app-perspective.js"></script><script src="interactive.js"></script>
+</body>
+</html>

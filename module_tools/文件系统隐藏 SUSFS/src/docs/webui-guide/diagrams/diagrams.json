@@ -1,0 +1,38 @@
+[
+  {
+    "id": "save-flow",
+    "title": "从编辑到生效：两次“保存”分别做什么？",
+    "description": "规则弹窗保存只更新草稿，底部保存并应用才保存配置并顺序下发内核；监控可能显示部分成功。",
+    "file": "save-flow.svg"
+  },
+  {
+    "id": "scope-decision",
+    "title": "作用组：当前规则会影响哪些应用？",
+    "description": "排除模式检查广域排除和包名对应 UID，指定模式只影响选中的 UID。规则组独立判断，精确管理身份不是系统所有功能的总豁免。",
+    "file": "scope-decision.svg"
+  },
+  {
+    "id": "redirect-compare",
+    "title": "打开 A，读到 B：两种重定向模式",
+    "description": "路径模式要求调用应用能访问 B；内容模式保留 A 的打开和读取权限检查，由模块预读 B 并保存快照，仅 6.12 启用。",
+    "file": "redirect-compare.svg"
+  },
+  {
+    "id": "name-vs-path",
+    "title": "路径隐藏与名称匹配：如何选对规则？",
+    "description": "路径规则针对选定路径对应对象，名称规则精确匹配完整名称，适用于任意位置的同名普通文件和目录，区分大小写且不支持通配符。",
+    "file": "name-vs-path.svg"
+  },
+  {
+    "id": "kernel-matrix",
+    "title": "6.6 与 6.12：能力与自动选核",
+    "description": "0.3.0 双内核包按真实内核 release 和 KMI 选择模块，6.6 禁用按源权限替换只读内容，SDK 功能一致，构建支持不代表真机效果已验证。",
+    "file": "kernel-matrix.svg"
+  },
+  {
+    "id": "restore-guide",
+    "title": "修改与撤销：保存项移除 ≠ 当前状态立即恢复",
+    "description": "对象规则删除后保存并应用可以重建规则表；高级全局项的不设置只停止写入，支持关闭的项目应明确关闭，bootconfig 清空后需重新加载或重启恢复。",
+    "file": "restore-guide.svg"
+  }
+]
