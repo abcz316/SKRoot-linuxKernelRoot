@@ -85,7 +85,7 @@ public class SuAuthListPage {
             Drawable icon =  packageInfo.applicationInfo.loadIcon(mActivity.getPackageManager());
             return icon;
         }
-        return null;
+        return mActivity.getDrawable(android.R.drawable.sym_def_app_icon);
     }
 
     private List<SuAuthItem> parseSuAuthList(String jsonStr) {

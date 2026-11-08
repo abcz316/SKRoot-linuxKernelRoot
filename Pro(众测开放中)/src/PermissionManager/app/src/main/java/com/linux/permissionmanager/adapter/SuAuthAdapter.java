@@ -41,7 +41,7 @@ public class SuAuthAdapter extends RecyclerView.Adapter<SuAuthAdapter.ViewHolder
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
         SuAuthItem suAuth = suAuths.get(position);
-        if(suAuth.getIcon() != null) holder.tvAppIcon.setImageDrawable(suAuth.getIcon());
+        holder.tvAppIcon.setImageDrawable(suAuth.getIcon());
         holder.tvAppName.setText(suAuth.getAppName());
         holder.tvAppPackageName.setText(suAuth.getAppPackageName());
         holder.btnRemove.setOnClickListener(v -> {

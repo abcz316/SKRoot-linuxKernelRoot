@@ -90,7 +90,7 @@ public class SuProbeRecordsPage {
             Drawable icon = packageInfo.applicationInfo.loadIcon(mActivity.getPackageManager());
             return icon;
         }
-        return null;
+        return mActivity.getDrawable(android.R.drawable.sym_def_app_icon);
     }
 
     private Set<String> loadSuAuthPkgsNames() {
@@ -118,12 +118,14 @@ public class SuProbeRecordsPage {
             for (int i = 0; i < jsonArray.length(); i++) {
                 JSONObject jsonObject = jsonArray.getJSONObject(i);
                 String appPackageName = URLDecoder.decode(jsonObject.getString("app_package_name"), "UTF-8");
+                long appId = jsonObject.optLong("app_id", 0);
                 int probeCount = jsonObject.getInt("probe_count");
                 long lastProbeTimeS = jsonObject.getLong("last_probe_time_s");
                 Drawable icon = findAppIcon(packages, appPackageName);
                 String appName = findAppName(packages, appPackageName);
+                if (appName.isEmpty()) appName = appPackageName;
                 boolean isAuthorized = suAuthPkgs.contains(appPackageName);
-                SuProbeItem e = new SuProbeItem(icon, appName, appPackageName, probeCount, lastProbeTimeS, isAuthorized);
+                SuProbeItem e = new SuProbeItem(icon, appName, appPackageName, appId, probeCount, lastProbeTimeS, isAuthorized);
                 list.add(e);
             }
         } catch (Exception e) {

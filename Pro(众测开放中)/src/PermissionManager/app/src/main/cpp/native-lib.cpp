@@ -47,6 +47,7 @@ static cJSON * suProbeToJsonObj(su_probe_item & probe) {
     cJSON *item = cJSON_CreateObject();
     string encodeAppName = urlEncodeToStr(probe.app_package_name);
     cJSON_AddStringToObject(item, "app_package_name", encodeAppName.c_str());
+    cJSON_AddNumberToObject(item, "app_id", probe.app_id);
     cJSON_AddNumberToObject(item, "probe_count", probe.probe_count);
     cJSON_AddNumberToObject(item, "last_probe_time_s", (double)probe.last_probe_time_s);
     return item;

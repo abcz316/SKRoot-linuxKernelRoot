@@ -509,7 +509,6 @@ void aarch64_asm_mrs_ctr_el0(Assembler* a, GpX x) {
  * 生成 MRS 指令，将 CNTVCT_EL0 读入指定 X 寄存器。
  ******************************************************************/
 void aarch64_asm_mrs_cntvct_el0(Assembler* a, GpX x) {
-	a->isb(Imm(Predicate::ISB::kSY)); // ISB 保证读取时间位置与前面指令排序
 	a->mrs(x, Imm(Predicate::SysReg::encode(3, 3, 14, 0, 2)));
 }
 

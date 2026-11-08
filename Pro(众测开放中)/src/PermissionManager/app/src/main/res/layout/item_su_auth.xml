@@ -36,7 +36,8 @@
                         android:id="@+id/app_icon_iv"
                         android:layout_width="45dp"
                         android:layout_height="45dp"
-                        app:srcCompat="@mipmap/dynamic_app_icon" />
+                        android:scaleType="fitCenter"
+                        app:srcCompat="@android:drawable/sym_def_app_icon" />
                 </LinearLayout>
 
                 <TextView

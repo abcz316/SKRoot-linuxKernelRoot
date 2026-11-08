@@ -36,7 +36,7 @@ public class SuProbeAdapter extends RecyclerView.Adapter<SuProbeAdapter.ViewHold
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
         SuProbeItem suProbe = suProbes.get(position);
-        if (suProbe.getIcon() != null) holder.tvAppIcon.setImageDrawable(suProbe.getIcon());
+        holder.tvAppIcon.setImageDrawable(suProbe.getIcon());
         holder.tvAppName.setText(suProbe.getAppName());
         holder.tvAppPackageName.setText(suProbe.getAppPackageName());
 

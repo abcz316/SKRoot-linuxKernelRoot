@@ -176,8 +176,9 @@ std::vector<uint8_t> make_avc_denied_after_hook_bytes() {
 
 KModErr Test_install_kernel_function_after_hook() {
 	uint64_t avc_denied_addr = 0, ret_addr = 0;
-	RETURN_IF_ERROR(kernel_module::get_avc_denied_kaddr(avc_denied_addr, ret_addr));
-	printf("get_avc_denied_kaddr Output start addr: %p, ret addr: %p\n", (void*)avc_denied_addr, (void*)ret_addr);
+	uint32_t first_arg_size = 0;
+	RETURN_IF_ERROR(kernel_module::get_avc_denied_kaddr(avc_denied_addr, ret_addr, first_arg_size));
+	printf("get_avc_denied_kaddr Output start addr:%p, ret addr:%p, first arg sz:%d\n", (void*)avc_denied_addr, (void*)ret_addr, first_arg_size);
 
 	std::vector<uint8_t> my_func_bytes = make_avc_denied_after_hook_bytes();
 	KModErr err = kernel_module::install_kernel_function_after_hook(avc_denied_addr, my_func_bytes);

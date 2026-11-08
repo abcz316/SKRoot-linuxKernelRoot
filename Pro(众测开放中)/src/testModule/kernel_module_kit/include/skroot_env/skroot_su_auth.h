@@ -2,14 +2,19 @@
 #include <unistd.h>
 #include <iostream>
 namespace skroot_env {
+// SU 授权项
 struct su_auth_item {
-    char app_package_name[256] = {0};
+    char app_package_name[256] = {0}; // APP 包名
 };
+
+// SU 嗅探记录项
 struct su_probe_item {
-    char app_package_name[256] = {0};
-    int probe_count = 0;
-    uint64_t last_probe_time_s = 0; // Unix 秒时间戳
+    char app_package_name[256] = {0}; // APP 包名；无法唯一确定时为 appId 字符串
+    uint32_t app_id = 0;              // appId（uid % 100000）
+    int probe_count = 0;              // 嗅探次数
+    uint64_t last_probe_time_s = 0;   // 最后嗅探时间（Unix 秒）
 };
+
 /***************************************************************************
  * 获取 SU 授权列表
  * 参数: root_key   ROOT权限密钥文本

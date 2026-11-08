@@ -163,9 +163,9 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
         } else if(curState.indexOf("Fault") != -1) {
             appendConsoleMsg("SKRoot环境出现故障，核心版本：" + installedVer); isFault = true;
         } else if(curState.indexOf("Running") != -1) {
-            if (sdkVer.equals(installedVer)) {  
-                appendConsoleMsg("SKRoot环境运行中，核心版本：" + installedVer);
+            if (sdkVer.equals(installedVer)) {
                 appendConsoleMsg("【安全提示】目前正在众测中，请认准官方渠道。请勿使用非官方修补文件，隐蔽性无法保证，请慎用，以免造成损失。官方Q群：582990929");
+                appendConsoleMsg("SKRoot环境运行中，核心版本：" + installedVer);
             } else {
                 appendConsoleMsg("SKRoot环境运行中，核心版本：" + installedVer + "，版本太低，请升级！");
                 appendConsoleMsg("升级方式：请重新安装 SKRoot 环境。");
