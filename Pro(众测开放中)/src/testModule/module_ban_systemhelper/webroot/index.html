@@ -212,12 +212,14 @@
       white-space: nowrap;
     }
 
-    .status-line.running .status-dot { background: var(--red); }
-    .status-line.running .status-text { color: var(--red); }
-    .status-line.stopped .status-dot { background: var(--green); }
-    .status-line.stopped .status-text { color: var(--green); }
-    .status-line.error .status-dot { background: var(--amber); }
-    .status-line.error .status-text { color: var(--amber); }
+    .status-line + .status-line { margin-top: 8px; }
+
+    .status-line.bad .status-dot { background: var(--red); }
+    .status-line.bad .status-text { color: var(--red); }
+    .status-line.ok .status-dot { background: var(--green); }
+    .status-line.ok .status-text { color: var(--green); }
+    .status-line.warn .status-dot { background: var(--amber); }
+    .status-line.warn .status-text { color: var(--amber); }
 
     .status-meta {
       display: flex;
@@ -288,13 +290,17 @@
 
     <section aria-labelledby="statusHeading" aria-live="polite">
       <div class="status-heading">
-        <h2 id="statusHeading">进程状态</h2>
+        <h2 id="statusHeading">目标状态</h2>
         <button class="button button-refresh" id="refreshBtn" type="button">刷新检测</button>
       </div>
-      <div class="status-line" id="statusLine">
+      <div class="status-line" id="pkgLine">
         <span class="status-dot" aria-hidden="true"></span>
-        <span class="status-text" id="statusText">正在检测…</span>
-        <span class="status-detail">每 3 秒自动检测</span>
+        <span class="status-text" id="pkgText">正在检测包名…</span>
+      </div>
+      <div class="status-line" id="runLine">
+        <span class="status-dot" aria-hidden="true"></span>
+        <span class="status-text" id="runText">正在检测进程…</span>
+        <span class="status-detail">每 5 秒自动检测</span>
       </div>
       <div class="status-meta">
         <span>上次检测</span>
@@ -306,6 +312,20 @@
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script>
+    // 状态文案集中在这里，改措辞只动这一块
+    const STATUS_TEXT = {
+      checkingPkg: "正在检测包名…",
+      checkingRun: "正在检测进程…",
+      pkgExists: "包名存在",
+      pkgMissing: "包名不存在，请检查输入",
+      pkgListError: "应用列表读取失败",
+      procRunning: "运行中，拦截未生效",
+      procStopped: "拦截生效，未检测到进程",
+      procSkipped: "包名不存在，跳过进程检测",
+      procError: "进程检测失败",
+      checkFailed: "检测失败"
+    };
+
     let checkInFlight = false;
     let toastTimer = null;
 
@@ -328,22 +348,39 @@
       toastTimer = setTimeout(() => toast.classList.remove("show"), 2600);
     }
 
-    function setStatus(state) {
-      const line = document.getElementById("statusLine");
-      const text = document.getElementById("statusText");
-      line.classList.remove("running", "stopped", "error");
+    function setLineState(lineId, textId, state, message) {
+      const line = document.getElementById(lineId);
+      const text = document.getElementById(textId);
+      line.classList.remove("ok", "bad", "warn");
+      if (state) line.classList.add(state);
+      text.textContent = message;
+    }
 
+    // 包名存在性：exists 存在 / missing 不存在 / error 应用列表读取失败
+    function renderPackageState(state) {
+      if (state === "exists") {
+        setLineState("pkgLine", "pkgText", "ok", STATUS_TEXT.pkgExists);
+        return true;
+      }
+      if (state === "missing") {
+        setLineState("pkgLine", "pkgText", "warn", STATUS_TEXT.pkgMissing);
+        return false;
+      }
+      setLineState("pkgLine", "pkgText", "warn", STATUS_TEXT.pkgListError);
+      return null;
+    }
+
+    function renderProcessState(state, pkgExists) {
+      if (pkgExists === false) {
+        setLineState("runLine", "runText", "", STATUS_TEXT.procSkipped);
+        return;
+      }
       if (state === "running") {
-        line.classList.add("running");
-        text.textContent = "检测到目标进程";
+        setLineState("runLine", "runText", "bad", STATUS_TEXT.procRunning);
       } else if (state === "stopped") {
-        line.classList.add("stopped");
-        text.textContent = "未发现目标进程";
-      } else if (state === "error") {
-        line.classList.add("error");
-        text.textContent = "检测失败";
+        setLineState("runLine", "runText", "ok", STATUS_TEXT.procStopped);
       } else {
-        text.textContent = "正在检测…";
+        setLineState("runLine", "runText", "warn", STATUS_TEXT.procError);
       }
     }
 
@@ -358,23 +395,25 @@
       document.getElementById("pkgInput").value = pkg;
     }
 
-    async function checkProcess(showLoading = false) {
+    async function checkState(showLoading = false) {
       if (checkInFlight) return;
       checkInFlight = true;
-      if (showLoading) setStatus("checking");
+      if (showLoading) {
+        setLineState("pkgLine", "pkgText", "", STATUS_TEXT.checkingPkg);
+        setLineState("runLine", "runText", "", STATUS_TEXT.checkingRun);
+      }
 
       try {
-        const result = await postText("/checkProcess");
-        if (result === "1") {
-          setStatus("running");
-        } else if (result === "0") {
-          setStatus("stopped");
-        } else {
-          throw new Error("Unexpected response: " + result);
-        }
+        const [pkgState, procState] = await Promise.all([
+          postText("/checkPackage"),
+          postText("/checkProcess")
+        ]);
+        const pkgExists = renderPackageState(pkgState);
+        renderProcessState(procState, pkgExists);
       } catch (error) {
-        console.error("checkProcess failed:", error);
-        setStatus("error");
+        console.error("checkState failed:", error);
+        setLineState("pkgLine", "pkgText", "warn", STATUS_TEXT.checkFailed);
+        setLineState("runLine", "runText", "warn", STATUS_TEXT.checkFailed);
       } finally {
         updateCheckTime();
         checkInFlight = false;
@@ -388,7 +427,7 @@
         console.error("loadConfig failed:", error);
         showToast("读取目标包名失败：" + error.message);
       });
-      await Promise.all([configTask, checkProcess(true)]);
+      await Promise.all([configTask, checkState(true)]);
       button.disabled = false;
     }
 
@@ -421,7 +460,7 @@
 
     document.addEventListener("DOMContentLoaded", () => {
       refresh();
-      window.setInterval(() => checkProcess(false), 3000);
+      window.setInterval(() => checkState(false), 5000);
       document.getElementById("refreshBtn").addEventListener("click", refresh);
       document.getElementById("saveBtn").addEventListener("click", save);
       document.getElementById("pkgInput").addEventListener("keydown", event => {

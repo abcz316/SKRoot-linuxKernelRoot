@@ -162,4 +162,24 @@ inline uint32_t get_uid_for_package(const std::string& pkg,
     return 0;
 }
 
+/**
+ * 判断包名是否已安装（即 packages.list 中是否存在该包名）。
+ * @return 1 存在；0 不存在；-1 packages.list 无法读取
+ */
+inline int package_exists(const std::string& pkg,
+                          const std::string& path = "/data/system/packages.list")
+{
+    if (pkg.empty()) return 0;
+    std::ifstream fin(path);
+    if (!fin.is_open()) return -1;
+
+    std::string line, name;
+    uint32_t uid = 0;
+    while (std::getline(fin, line)) {
+        if (!detail::parse_line_pkg_uid(line, name, uid)) continue;
+        if (name == pkg) return 1;
+    }
+    return 0;
+}
+
 } // namespace android_pkgmap

@@ -75,7 +75,12 @@ public:
     bool handlePost(CivetServer* server, struct mg_connection* conn, const std::string& path, const std::string& body) override {
         std::string resp;
         if (path == "/getTargetPkg") resp = get_target_pkg();
-        else if (path == "/checkProcess") resp = process_utils::pkg_present_in_cmdline(get_target_pkg()) ? "1" : "0";
+        else if (path == "/checkPackage") {
+            // "exists": 包名存在（已安装）；"missing": 包名不存在；"error": packages.list 读取失败
+            int state = android_pkgmap::package_exists(get_target_pkg());
+            resp = (state == 1) ? "exists" : (state == 0 ? "missing" : "error");
+        }
+        else if (path == "/checkProcess") resp = process_utils::pkg_present_in_cmdline(get_target_pkg()) ? "running" : "stopped";
         else if (path == "/setTargetPkg") resp = is_ok(kernel_module::write_string_disk_storage(STORAGE_KEY_TARGET_PKG, body.c_str())) ? "OK" : "FAILED";
         kernel_module::webui::send_text(conn, 200, resp);
         return true;
