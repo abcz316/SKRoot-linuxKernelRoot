@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#f5f6f8" />
+  <title>拦截目标配置</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --page: #f5f6f8;
+      --surface: #ffffff;
+      --text: #202938;
+      --muted: #7b8492;
+      --line: #e8ebef;
+      --blue: #2875df;
+      --blue-hover: #1f65c5;
+      --green: #159b69;
+      --red: #d94b50;
+      --amber: #a87522;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      padding: 28px 16px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      color: var(--text);
+      background: var(--page);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+        "PingFang SC", "Microsoft YaHei", sans-serif;
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+    }
+
+    button, input { font: inherit; }
+
+    .panel {
+      width: 100%;
+      max-width: 480px;
+      margin: 28px 0;
+      padding: 26px;
+      border: 1px solid #eceff2;
+      border-radius: 14px;
+      background: var(--surface);
+      box-shadow: 0 5px 20px rgba(25, 39, 60, .045);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      line-height: 1.4;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+
+    .intro {
+      margin: 6px 0 23px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .field-label {
+      display: block;
+      margin-bottom: 9px;
+      color: #111827;
+      font-size: 14px;
+      font-weight: 650;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 9px;
+    }
+
+    .input-row input {
+      flex: 1;
+      width: 100%;
+      min-width: 0;
+      height: 48px;
+      padding: 0 13px;
+      border: 1px solid #cbd2dc;
+      border-radius: 8px;
+      outline: none;
+      color: #111111;
+      caret-color: #111111;
+      background: #fff;
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-size: 16px;
+      font-weight: 500;
+      -webkit-text-fill-color: #111111;
+    }
+
+    .input-row input::placeholder {
+      color: #7b8492;
+      opacity: 1;
+      -webkit-text-fill-color: #7b8492;
+    }
+
+    .input-row input:focus {
+      border-color: #78a8e8;
+      box-shadow: 0 0 0 3px rgba(40, 117, 223, .09);
+    }
+
+    .button {
+      min-height: 48px;
+      padding: 0 17px;
+      border: 0;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .button:disabled { cursor: wait; opacity: .6; }
+
+    .button-save {
+      flex: 0 0 auto;
+      color: #fff;
+      background: var(--blue);
+    }
+
+    .button-save:hover { background: var(--blue-hover); }
+
+    .restart-tip {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      margin-top: 13px;
+      color: var(--amber);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .restart-tip::before {
+      width: 6px;
+      height: 6px;
+      flex: 0 0 6px;
+      margin-top: 6px;
+      border-radius: 50%;
+      background: #d6a34d;
+      content: "";
+    }
+
+    .divider {
+      height: 1px;
+      margin: 24px 0 18px;
+      background: var(--line);
+    }
+
+    .status-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 13px;
+    }
+
+    .status-heading h2 {
+      margin: 0;
+      color: #465160;
+      font-size: 14px;
+      font-weight: 650;
+    }
+
+    .button-refresh {
+      min-height: 30px;
+      padding: 0 10px;
+      border: 1px solid #dfe5ec;
+      color: #586577;
+      background: #fff;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .button-refresh:hover { background: #f7f8fa; }
+
+    .status-line {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 42px;
+      padding: 10px 12px;
+      border: 1px solid #edf0f3;
+      border-radius: 8px;
+      background: #fafbfc;
+    }
+
+    .status-dot {
+      width: 9px;
+      height: 9px;
+      flex: 0 0 9px;
+      border-radius: 50%;
+      background: #aab2bd;
+    }
+
+    .status-text {
+      color: #626d7b;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .status-detail {
+      margin-left: auto;
+      color: #929ba7;
+      font-size: 11px;
+      white-space: nowrap;
+    }
+
+    .status-line.running .status-dot { background: var(--red); }
+    .status-line.running .status-text { color: var(--red); }
+    .status-line.stopped .status-dot { background: var(--green); }
+    .status-line.stopped .status-text { color: var(--green); }
+    .status-line.error .status-dot { background: var(--amber); }
+    .status-line.error .status-text { color: var(--amber); }
+
+    .status-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 9px;
+      color: #929ba7;
+      font-size: 11px;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 22px;
+      z-index: 10;
+      max-width: calc(100vw - 32px);
+      padding: 10px 15px;
+      border-radius: 8px;
+      color: #fff;
+      background: rgba(35, 43, 55, .94);
+      box-shadow: 0 5px 18px rgba(20, 30, 45, .16);
+      font-size: 12px;
+      line-height: 1.5;
+      text-align: center;
+      opacity: 0;
+      pointer-events: none;
+      transform: translate(-50%, 7px);
+      transition: opacity .18s ease, transform .18s ease;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+
+    @media (max-width: 520px) {
+      body { padding: 12px; }
+      .panel { margin: 12px 0; padding: 21px 18px; }
+      .input-row { flex-direction: column; }
+      .input-row input { width: 100%; min-height: 48px; }
+      .button-save { width: 100%; }
+      .status-detail { font-size: 10px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="panel">
+    <h1>拦截目标配置</h1>
+    <p class="intro">设置需要禁止运行的应用包名。</p>
+
+    <section aria-label="拦截目标配置">
+      <label class="field-label" for="pkgInput">应用包名</label>
+      <div class="input-row">
+        <input
+          id="pkgInput"
+          type="text"
+          placeholder="请输入包名"
+          autocomplete="off"
+          spellcheck="false"
+          maxlength="255"
+        />
+        <button class="button button-save" id="saveBtn" type="button">保存配置</button>
+      </div>
+      <div class="restart-tip">保存后需重启设备生效</div>
+    </section>
+
+    <div class="divider"></div>
+
+    <section aria-labelledby="statusHeading" aria-live="polite">
+      <div class="status-heading">
+        <h2 id="statusHeading">进程状态</h2>
+        <button class="button button-refresh" id="refreshBtn" type="button">刷新检测</button>
+      </div>
+      <div class="status-line" id="statusLine">
+        <span class="status-dot" aria-hidden="true"></span>
+        <span class="status-text" id="statusText">正在检测…</span>
+        <span class="status-detail">每 3 秒自动检测</span>
+      </div>
+      <div class="status-meta">
+        <span>上次检测</span>
+        <span id="lastChecked">尚未检测</span>
+      </div>
+    </section>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    let checkInFlight = false;
+    let toastTimer = null;
+
+    async function postText(path, bodyText = "") {
+      const url = new URL(path, window.location.href);
+      const response = await fetch(url, {
+        method: "POST",
+        body: bodyText,
+        cache: "no-store"
+      });
+      if (!response.ok) throw new Error("HTTP " + response.status);
+      return (await response.text()).trim();
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("show");
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove("show"), 2600);
+    }
+
+    function setStatus(state) {
+      const line = document.getElementById("statusLine");
+      const text = document.getElementById("statusText");
+      line.classList.remove("running", "stopped", "error");
+
+      if (state === "running") {
+        line.classList.add("running");
+        text.textContent = "检测到目标进程";
+      } else if (state === "stopped") {
+        line.classList.add("stopped");
+        text.textContent = "未发现目标进程";
+      } else if (state === "error") {
+        line.classList.add("error");
+        text.textContent = "检测失败";
+      } else {
+        text.textContent = "正在检测…";
+      }
+    }
+
+    function updateCheckTime() {
+      document.getElementById("lastChecked").textContent = new Date().toLocaleTimeString("zh-CN", {
+        hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false
+      });
+    }
+
+    async function loadConfig() {
+      const pkg = await postText("/getTargetPkg");
+      document.getElementById("pkgInput").value = pkg;
+    }
+
+    async function checkProcess(showLoading = false) {
+      if (checkInFlight) return;
+      checkInFlight = true;
+      if (showLoading) setStatus("checking");
+
+      try {
+        const result = await postText("/checkProcess");
+        if (result === "1") {
+          setStatus("running");
+        } else if (result === "0") {
+          setStatus("stopped");
+        } else {
+          throw new Error("Unexpected response: " + result);
+        }
+      } catch (error) {
+        console.error("checkProcess failed:", error);
+        setStatus("error");
+      } finally {
+        updateCheckTime();
+        checkInFlight = false;
+      }
+    }
+
+    async function refresh() {
+      const button = document.getElementById("refreshBtn");
+      button.disabled = true;
+      const configTask = loadConfig().catch(error => {
+        console.error("loadConfig failed:", error);
+        showToast("读取目标包名失败：" + error.message);
+      });
+      await Promise.all([configTask, checkProcess(true)]);
+      button.disabled = false;
+    }
+
+    async function save() {
+      const input = document.getElementById("pkgInput");
+      const button = document.getElementById("saveBtn");
+      const pkg = input.value.trim();
+
+      if (!pkg) {
+        showToast("请输入目标应用包名");
+        input.focus();
+        return;
+      }
+
+      button.disabled = true;
+      try {
+        const result = await postText("/setTargetPkg", pkg);
+        if (result === "OK") {
+          showToast("保存成功，重启设备后生效");
+        } else {
+          showToast("保存失败：" + (result || "未知错误"));
+        }
+      } catch (error) {
+        console.error("save config failed:", error);
+        showToast("保存失败：" + error.message);
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      refresh();
+      window.setInterval(() => checkProcess(false), 3000);
+      document.getElementById("refreshBtn").addEventListener("click", refresh);
+      document.getElementById("saveBtn").addEventListener("click", save);
+      document.getElementById("pkgInput").addEventListener("keydown", event => {
+        if (event.key === "Enter") save();
+      });
+    });
+  </script>
+</body>
+</html>

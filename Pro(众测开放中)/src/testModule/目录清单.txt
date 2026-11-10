@@ -23,5 +23,5 @@ testModule 模块目录清单：
 • 温控解除模块（源码）............................. module_fake_thermal
 • 防格机模块（源码）................................. module_protect_device
 • 修复/data/local/tmp目录 (源码)......... module_repair_data_local_tmp
-• Magisk模块转SKRoot模块(源码)......... module_convert_magisk_to_skroot
+• 禁止SystemHelper运行 (源码)............. module_ban_systemhelper
 ──────────────────────────────
