@@ -1,7 +1,7 @@
 SKRoot (Pro) 工程目录说明：
 ──────────────────────────────
-1. 内核修补工具 .................... patch_kernel_sk
-2. 环境安装管理 APP ............... PermissionManager
-3. 环境安装 JNI 程序 .............. testInstall
-4. 内核模块示例 ..................... testModule
+1. 内核修补工具 ................................... patch_kernel_sk
+2. SKRoot环境管理 APP ..................... PermissionManager
+3. SKRoot环境安装 JNI 独立程序 ....... testInstall
+4. SKRoot模块开发SDK+演示 ............. testModule
 ──────────────────────────────
