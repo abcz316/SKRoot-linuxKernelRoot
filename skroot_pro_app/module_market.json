@@ -290,6 +290,21 @@
             "download_eng_alert": ""
         },
         {
+            "chn_name": "禁止SystemHelper运行",
+            "eng_name": "",
+            "ver": "1.0.0",
+            "desc": "内核级拦截 SystemHelper APP运行（com.mobiletools.systemhelper 可修改），减少耗电。",
+            "author": "SKRoot",
+            "id32": "rBUTBgYOZ3HC0DHv1gDKRjCgeFcSl7Uk",
+            "update_date": "2026-11-10",
+			"ban": false,
+            "source_url": "https://github.com/abcz316/SKRoot-linuxKernelRoot/tree/master/Pro(%E4%BC%97%E6%B5%8B%E5%BC%80%E6%94%BE%E4%B8%AD)/src/testModule/module_ban_systemhelper",
+            "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_ban_systemhelper/module.zip",
+            "changelog_url": "",
+            "download_chn_alert": "",
+            "download_eng_alert": ""
+        },
+        {
             "chn_name": "伪装CPU信息为麒麟9000s",
             "eng_name": "",
             "ver": "1.0.0",
