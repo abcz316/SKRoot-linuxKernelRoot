@@ -25,7 +25,7 @@ void PatchBase::emit_check_current_allow_visible_to_x10(Assembler* a) {
 	Label label_end = a->newLabel();
 
 	a->mov(x10, Imm(0));
-	kernel_module::export_symbol::get_current(a, x11);
+	kernel_module::export_symbol::get_current(a, x11, label_end);
 	a->ldr(x12, ptr(x11, m_task_struct_offset_cred));
 	a->ldr(w12, ptr(x12, m_cred_euid_offset)); // 读euid就够了
 	a->cbnz(w12, label_end); // euid is not root

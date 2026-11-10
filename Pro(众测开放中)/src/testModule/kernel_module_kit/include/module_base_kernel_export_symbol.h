@@ -35,8 +35,8 @@
 namespace kernel_module {
 namespace export_symbol {
 using namespace asmjit::a64;
-// 原型：struct task_struct *current(void); 获取current指针并赋值到寄存器out_regs，需判空，因为kthread无法获取。无返回值。
-void get_current(Assembler* a, GpX out_regs);
+// 原型：struct task_struct *current(void); 获取current指针并赋值到寄存器out_regs。注意：当kthread场景下会获取到current为空，同时会跳转到 on_error 标签（可选）。无返回值。
+void get_current(Assembler* a, GpX out_regs, Label on_error = Label());
 
 // 获取当前线程的 thread_info 指针并赋值到寄存器 out_regs。需判空，无返回值。
 void get_current_thread_info(Assembler* a, GpX out_regs);
@@ -255,6 +255,21 @@ void find_vpid(Assembler* a, KModErr& out_err, GpW nr);
 
 // 原型：pid_t pid_vnr(struct pid *pid); 返回值为 X0 寄存器
 void pid_vnr(Assembler* a, KModErr& out_err, GpX pid);
+
+namespace linux_above_5_3_0 {
+void force_sig(Assembler* a, KModErr& out_err, GpW sig);
+void force_sig(Assembler* a, KModErr& out_err, uint32_t sig);
+}
+namespace linux_older {
+void force_sig(Assembler* a, KModErr& out_err, GpW sig, GpX task);
+void force_sig(Assembler* a, KModErr& out_err, uint32_t sig, GpX task);
+}
+
+void force_sig_current(Assembler* a, KModErr& out_err, GpW sig);
+void force_sig_current(Assembler* a, KModErr& out_err, uint32_t sig);
+
+void kill_pid(Assembler* a, KModErr& out_err, GpX pid, GpW sig, GpW priv);
+void kill_pid(Assembler* a, KModErr& out_err, GpX pid, uint32_t sig, uint32_t priv);
 
 namespace linux_above_4_19_0 {
 enum class PidType : uint32_t {

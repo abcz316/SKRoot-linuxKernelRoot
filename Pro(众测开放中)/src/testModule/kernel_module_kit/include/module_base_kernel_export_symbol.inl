@@ -77,22 +77,27 @@ inline void emit_huawei_kti_add_ce72c7e634f27712ee84f3dd5e8e0ec9(Assembler* a, G
 	kallsyms_lookup_huawei_failed = false;
 }
 
-inline void get_current(Assembler* a, GpX out_regs) {
+inline void get_current(Assembler* a, GpX out_regs, Label on_error) {
 	constexpr uint64_t kThreadSize = 0x4000;
 	struct thread_info {
 		uint64_t flags;
 		uint64_t addr_limit;
 		uint64_t task;
 	};
-	Label label_error = a->newLabel();
 	uint32_t sp_el0_id = SysReg::encode(3, 0, 4, 1, 0);
 	if (kernel_module::is_CONFIG_THREAD_INFO_IN_TASK()) {
 		a->mrs(out_regs, sp_el0_id);
+		if (on_error.isValid()) {
+			a->cbz(out_regs, on_error);
+		}
 		emit_huawei_kti_add_ce72c7e634f27712ee84f3dd5e8e0ec9(a, out_regs);
 		return;
 	}
 	if (kernel_module::is_CURRENT_FROM_SP_EL0_THREAD_INFO()) {
 		a->mrs(out_regs, sp_el0_id);
+		if (on_error.isValid()) {
+			a->cbz(out_regs, on_error);
+		}
 		emit_huawei_kti_add_ce72c7e634f27712ee84f3dd5e8e0ec9(a, out_regs);
 		a->ldr(out_regs, ptr(out_regs, offsetof(thread_info, task)));
 		return;
@@ -617,6 +622,39 @@ inline void find_vpid(Assembler* a, KModErr& out_err, GpW nr) {
 
 inline void pid_vnr(Assembler* a, KModErr& out_err, GpX pid) {
 	out_err = CallHelper::callNameAuto(a, "pid_vnr", NeedReturnX0::Yes, pid);
+}
+
+namespace linux_above_5_3_0 {
+inline void force_sig(Assembler* a, KModErr& out_err, GpW sig) {
+	RETURN_ERR_IF_KERNEL_VERSION_LESS("5.3.0");
+	out_err = CallHelper::callNameAuto(a, "force_sig", NeedReturnX0::No, sig);
+}
+
+inline void force_sig(Assembler* a, KModErr& out_err, uint32_t sig) {
+	RETURN_ERR_IF_KERNEL_VERSION_LESS("5.3.0");
+	out_err = CallHelper::callNameAuto(a, "force_sig", NeedReturnX0::No, sig);
+}
+}
+
+namespace linux_older {
+inline void force_sig(Assembler* a, KModErr& out_err, GpW sig, GpX task) {
+	RETURN_ERR_IF_KERNEL_VERSION_AT_LEAST("5.3.0");
+	out_err = CallHelper::callNameAuto(a, "force_sig", NeedReturnX0::No, sig, task);
+}
+
+inline void force_sig(Assembler* a, KModErr& out_err, uint32_t sig, GpX task) {
+	RETURN_ERR_IF_KERNEL_VERSION_AT_LEAST("5.3.0");
+	out_err = CallHelper::callNameAuto(a, "force_sig", NeedReturnX0::No, sig, task);
+}
+}
+
+
+inline void kill_pid(Assembler* a, KModErr& out_err, GpX pid, GpW sig, GpW priv) {
+	out_err = CallHelper::callNameAuto(a, "kill_pid", NeedReturnX0::Yes, pid, sig, priv);
+}
+
+inline void kill_pid(Assembler* a, KModErr& out_err, GpX pid, uint32_t sig, uint32_t priv) {
+	out_err = CallHelper::callNameAuto(a, "kill_pid", NeedReturnX0::Yes, pid, sig, priv);
 }
 
 namespace linux_above_4_19_0 {
