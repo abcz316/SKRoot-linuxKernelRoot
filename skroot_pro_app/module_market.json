@@ -290,21 +290,6 @@
             "download_eng_alert": ""
         },
         {
-            "chn_name": "自定义自启动模块",
-            "eng_name": "",
-            "ver": "1.0.3",
-            "desc": "一个自定义脚本模块，会启动/data/adb/.zqd目录下的所有sh",
-            "author": "蜃",
-            "id32": "d3f7a9c2e5b8f1a4d6c9e0b3f2a7c5e8",
-            "update_date": "2026-7-19",
-			"ban": false,
-            "source_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_tools/%E8%87%AA%E5%AE%9A%E4%B9%89%E8%87%AA%E5%90%AF%E5%8A%A8%E6%A8%A1%E5%9D%97/source.zip",
-            "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_tools/%E8%87%AA%E5%AE%9A%E4%B9%89%E8%87%AA%E5%90%AF%E5%8A%A8%E6%A8%A1%E5%9D%97/module.zip",
-            "changelog_url": "",
-            "download_chn_alert": "",
-            "download_eng_alert": ""
-        },
-        {
             "chn_name": "禁止SystemHelper运行",
             "eng_name": "",
             "ver": "1.0.0",
@@ -315,6 +300,21 @@
 			"ban": false,
             "source_url": "https://github.com/abcz316/SKRoot-linuxKernelRoot/tree/master/Pro(%E4%BC%97%E6%B5%8B%E5%BC%80%E6%94%BE%E4%B8%AD)/src/testModule/module_ban_systemhelper",
             "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_ban_systemhelper/module.zip",
+            "changelog_url": "",
+            "download_chn_alert": "",
+            "download_eng_alert": ""
+        },
+        {
+            "chn_name": "自定义自启动模块",
+            "eng_name": "",
+            "ver": "1.0.3",
+            "desc": "一个自定义脚本模块，会启动/data/adb/.zqd目录下的所有sh",
+            "author": "蜃",
+            "id32": "d3f7a9c2e5b8f1a4d6c9e0b3f2a7c5e8",
+            "update_date": "2026-7-19",
+			"ban": false,
+            "source_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_tools/%E8%87%AA%E5%AE%9A%E4%B9%89%E8%87%AA%E5%90%AF%E5%8A%A8%E6%A8%A1%E5%9D%97/source.zip",
+            "download_url": "https://abcz316.github.io/SKRoot-linuxKernelRoot/module_tools/%E8%87%AA%E5%AE%9A%E4%B9%89%E8%87%AA%E5%90%AF%E5%8A%A8%E6%A8%A1%E5%9D%97/module.zip",
             "changelog_url": "",
             "download_chn_alert": "",
             "download_eng_alert": ""
