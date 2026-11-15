@@ -1,0 +1,43 @@
+一、设备标识管理 v1.0.5
+========================================
+
+【新增功能】
+1. 6项设备标识管理
+   - 序列号（Serial）
+   - CPU ID（SoC Serial）
+   - Android ID（SSAID）
+   - UFS 序列号
+   - OAID
+   - DRM ID（Widevine）
+
+2. 双开用户实时同步
+   - 主应用和双开应用的 Android ID 保持一致
+   - inotify 实时监听 + 10秒轮询兜底
+   - 支持 MIUI 双开（用户ID 999）
+
+3. 内核级进程隐藏
+   - hook proc_pid_instantiate
+   - 遍历 /proc 时 daemon 和 worker 完全消失
+   - ps/top/游戏反作弊扫进程均不可见
+
+4. UFS 路径自动探测
+   - 支持天玑（16810000.ufshci）
+   - 支持骁龙（1d84000.ufshc）
+   - 自动扫描适配不同机型
+
+【优化改进】
+1. 进程名伪装
+   - daemon → lmkd（系统低内存守护）
+   - worker → drmserver64（系统DRM服务）
+
+2. 日志隐蔽性
+   - 日志文件名改为 runtime.log
+   - 减少敏感信息输出
+
+3. 版本号同步
+   - 代码、UI、模块配置统一为 1.0.5
+
+【修复问题】
+1. 修复双开应用 Android ID 不一致
+2. 修复骁龙设备 CPU ID 读取路径
+3. 修复 proc_pid_lookup hook 导致 kernel panic（已禁用该hook）
