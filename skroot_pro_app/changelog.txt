@@ -1,3 +1,15 @@
+4.7.0更新内容：
+  1.修复skroot pro升级更新会故障的问题。
+  2.修复天玑8000、天玑9400的兼容性问题。
+  3.修复手机在分身空间内，授权会失败的问题。  
+  4.新增支持 CVE-2026-98260 漏洞，Linux内核范围：5.7.x~5.9.x、5.10.x、5.15.x、6.1.x、6.6.x、6.12.x、6.18.x
+  5.解决 CVE-2026-98260 会残留痕迹被侦测的问题。
+  6.不卸载vr.ko的情况下，独创解决vivo反root问题。
+  7.取消execute_kernel_asm_func接口，调整为run_kernel_shellcode、run_kernel_shellcode_result_u64
+  8.新增偏移量接口 (跨内核)：struct* module->base\size，支持扫描+篡改任意内核模块的内存了、不依赖BTF。
+  9.新增内核API调用 (export_symbol.h)。
+  10.移除su嗅探记录。
+
 4.6.8更新内容：
   1.修复「su 嗅探记录」：系统APP会显示为空的问题
   2.解决某些APP会报环境异常的问题。
