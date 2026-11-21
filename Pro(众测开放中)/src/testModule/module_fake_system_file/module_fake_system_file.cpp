@@ -69,12 +69,12 @@ static KModErr kernel_file_hijack(const fs::path& system_file_path, const fs::pa
 
     RETURN_IF_ERROR(kernel_module::write_kernel_rw_mem_atomic64(i_mapping_pptr, fake_i_mapping_ptr));
    
-    RETURN_IF_ERROR(exec_kernel_shellcode_no_result([inode_ptr, i_mapping_pptr, i_mapping_ptr, fake_i_mapping_ptr](Assembler* a) -> KModErr {
+    RETURN_IF_ERROR(kernel_module::run_kernel_shellcode([inode_ptr, i_mapping_pptr, i_mapping_ptr, fake_i_mapping_ptr](Assembler* a) -> bool {
         KModErr err = KModErr::ERR_MODULE_PARAM;
         aarch64_asm_mov_x(a, x10, i_mapping_ptr);
         kernel_module::export_symbol::invalidate_inode_pages2(a, err, x10);
-        RETURN_IF_ERROR(err);
-        return KModErr::OK;
+        RETURN_FALSE_IF_ERROR(err);
+        return true;
     }));
 
     uint64_t i_size_pptr = inode_ptr + i_size_offset;

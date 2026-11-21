@@ -1,4 +1,4 @@
-package com.linux.permissionmanager.utils.repack;
+package com.linux.permissionmanager.repack;
 
 import android.graphics.Bitmap;
 import android.graphics.Canvas;

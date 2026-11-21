@@ -43,16 +43,6 @@ static cJSON * suAuthToJsonObj(su_auth_item & auth) {
     return item;
 }
 
-static cJSON * suProbeToJsonObj(su_probe_item & probe) {
-    cJSON *item = cJSON_CreateObject();
-    string encodeAppName = urlEncodeToStr(probe.app_package_name);
-    cJSON_AddStringToObject(item, "app_package_name", encodeAppName.c_str());
-    cJSON_AddNumberToObject(item, "app_id", probe.app_id);
-    cJSON_AddNumberToObject(item, "probe_count", probe.probe_count);
-    cJSON_AddNumberToObject(item, "last_probe_time_s", (double)probe.last_probe_time_s);
-    return item;
-}
-
 static cJSON * moduleDescToJsonObj(module_desc & desc) {
     cJSON *item = cJSON_CreateObject();
     string encodeName = urlEncodeToStr(desc.name);
@@ -104,6 +94,7 @@ Java_com_linux_permissionmanager_bridge_NativeBridge_installSkrootEnv(JNIEnv* en
     if(strExploitMethod == "MAGICA") insConfig.exploit = ExploitMethod::Magica;
     if(strExploitMethod == "CVE-2026-43499") insConfig.exploit = ExploitMethod::CVE2026_43499;
     if(strExploitMethod == "CVE-2026-43284") insConfig.exploit = ExploitMethod::CVE2026_43284;
+    if(strExploitMethod == "CVE-2026-98260") insConfig.exploit = ExploitMethod::CVE2026_98260;
     KModErr err = install_skroot_environment(strRootKey.c_str(), mode, insConfig);
     stringstream sstr;
     sstr << "install_skroot_environment: " << to_string(err).c_str();
@@ -228,35 +219,6 @@ Java_com_linux_permissionmanager_bridge_NativeBridge_clearSuAuthList(JNIEnv* env
     KModErr err = clear_su_auth_list(strRootKey.c_str());
     stringstream sstr;
     sstr << "clear_su_auth_list: " << to_string(err).c_str();
-    return env->NewStringUTF(sstr.str().c_str());
-}
-
-extern "C" JNIEXPORT jstring JNICALL
-Java_com_linux_permissionmanager_bridge_NativeBridge_getSuProbeRecords(JNIEnv* env, jclass /* this */, jstring rootKey) {
-    string strRootKey = jstringToStr(env, rootKey);
-    stringstream ss;
-    vector<su_probe_item> pkgs;
-    KModErr err = get_su_probe_records(strRootKey.c_str(), pkgs);
-    if(is_failed(err)) {
-        ss << "get_su_probe_records: " << to_string(err).c_str();
-        return env->NewStringUTF(ss.str().c_str());
-    }
-    cJSON *root = cJSON_CreateArray();
-    for (auto & iter : pkgs) {
-        cJSON *item = suProbeToJsonObj(iter);
-        cJSON_AddItemToArray(root, item);
-    }
-    ss << cJSON_Print(root);
-    cJSON_Delete(root);
-    return env->NewStringUTF(ss.str().c_str());
-}
-
-extern "C" JNIEXPORT jstring JNICALL
-Java_com_linux_permissionmanager_bridge_NativeBridge_clearSuProbeRecords(JNIEnv* env, jclass /* this */, jstring rootKey) {
-    string strRootKey = jstringToStr(env, rootKey);
-    KModErr err = clear_su_probe_records(strRootKey.c_str());
-    stringstream sstr;
-    sstr << "clear_su_probe_records: " << to_string(err).c_str();
     return env->NewStringUTF(sstr.str().c_str());
 }
 
@@ -404,7 +366,14 @@ Java_com_linux_permissionmanager_bridge_NativeBridge_testSkrootDefaultModule(JNI
     if(strName == "RootBridgePrint") defName = DeafultModuleName::RootBridgePrint;
     else if(strName == "RootBridgeExec") defName = DeafultModuleName::RootBridgeExec;
     else if(strName == "SuRedirectPrint") defName = DeafultModuleName::SuRedirectPrint;
+    else if(strName == "SuRedirectExec") defName = DeafultModuleName::SuRedirectExec;
     else if(strName == "TombstonesPurgePrint") defName = DeafultModuleName::TombstonesPurgePrint;
+    else if(strName == "BypassTest1") defName = DeafultModuleName::BypassTest1;
+    else if(strName == "BypassTest2") defName = DeafultModuleName::BypassTest2;
+    else if(strName == "BypassTest3") defName = DeafultModuleName::BypassTest3;
+    else if(strName == "BypassTest4") defName = DeafultModuleName::BypassTest4;
+    else if(strName == "BypassTest5") defName = DeafultModuleName::BypassTest5;
+    else if(strName == "BypassTest6") defName = DeafultModuleName::BypassTest6;
     else return env->NewStringUTF(strName.c_str());
 
     stringstream sstr;

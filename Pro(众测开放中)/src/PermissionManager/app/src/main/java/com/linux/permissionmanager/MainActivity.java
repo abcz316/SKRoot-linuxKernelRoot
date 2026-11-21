@@ -6,7 +6,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
-import android.content.pm.ApplicationInfo;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -32,25 +31,17 @@ import com.linux.permissionmanager.fragment.SuAuthFragment;
 import com.linux.permissionmanager.fragment.HomeFragment;
 import com.linux.permissionmanager.fragment.SettingsFragment;
 import com.linux.permissionmanager.fragment.SkrModFragment;
-import com.linux.permissionmanager.helper.dirtyfrag.ExploitRunner;
+import com.linux.permissionmanager.hotload.HotloadLauncher;
+import com.linux.permissionmanager.localadb.LocalAdbHelper;
 import com.linux.permissionmanager.model.HotloadMethod;
-import com.linux.permissionmanager.utils.repack.ApkGenerator;
-import com.linux.permissionmanager.utils.ApkInstallUtils;
-import com.linux.permissionmanager.utils.AppLaunchUtils;
 import com.linux.permissionmanager.utils.DialogUtils;
 import com.linux.permissionmanager.utils.FileUtils;
 import com.linux.permissionmanager.utils.GetAppListPermissionHelper;
 import com.linux.permissionmanager.utils.GetSdcardPermissionsHelper;
-import com.linux.permissionmanager.utils.ShellUtils;
 
 import org.json.JSONObject;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
     private String mRootKey = "";
@@ -58,6 +49,7 @@ public class MainActivity extends AppCompatActivity {
     private String mHotloadCmd = "";
     private HotloadMethod mHotloadMethod = HotloadMethod.NONE;
     private String mOneplusBypassResult = "";
+    private AlertDialog mHotloadKeyDlg;
 
     private HomeFragment mHomeFragm;
     private SuAuthFragment mSuAuthFragm;
@@ -67,12 +59,14 @@ public class MainActivity extends AppCompatActivity {
     private TabLayout mBottomTab;
     private MenuItem mMainMenu;
 
+    private final LocalAdbHelper mLocalAdb = new LocalAdbHelper(this);
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LOCKED);
         setContentView(R.layout.activity_main);
         AppSettings.init(this);
+        AppConfig.init(this);
         mRootKey = AppSettings.getString("rootKey", mRootKey);
         mIsHotloadMode = AppSettings.getBoolean("isHotloadMode", mIsHotloadMode);
         mHotloadCmd = AppSettings.getString("hotloadCmd", mHotloadCmd);
@@ -100,7 +94,8 @@ public class MainActivity extends AppCompatActivity {
 
     private void showModeSelectDlg(boolean currentIsHotload, @NonNull Runnable onSelectBoot, @NonNull Runnable onSelectHotload) {
         final String[] items = {"1.刷Boot", "2.热启动(内核漏洞)"};
-        DialogUtils.showSingleChoiceDialog(this, "请选择模式", items, -1,
+        final String footNote = "已支持内核漏洞：\n" + HotloadMethod.SUPPORTED_CVE_TEXT;
+        DialogUtils.showSingleChoiceDialog(this, "请选择模式", items, -1, footNote,
                 (dialog, which) -> {
                     if(which == 0) {
                         if (!currentIsHotload) return;
@@ -208,114 +203,10 @@ public class MainActivity extends AppCompatActivity {
         dialog.show();
     }
 
-    private String extractConfigValue(String text, String key) {
-        if(TextUtils.isEmpty(text)) return "";
-        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("(?m)^\\s*#.*?\\b" + java.util.regex.Pattern.quote(key) + "\\s*=\\s*(\\S+)");
-        java.util.regex.Matcher matcher = pattern.matcher(text);
-        return matcher.find() ? matcher.group(1).trim() : "";
-    }
-
-    private int extractConfigInt(String text, String key) {
-        String value = extractConfigValue(text, key);
-        if (TextUtils.isEmpty(value)) return 0;
-        try { return Integer.parseInt(value); } catch (NumberFormatException e) { return 0; }
-    }
-
-    private String getShortKey(String key) { return key.length() >= 5 ? key.substring(0, 5) : key; }
-
-    public File generateZygotePreloadTools(String script, String goBackPackageName, String goBackActivity, String newPackageName, String newAppName) throws Exception {
-        File sourceApk = FileUtils.copyAssetToCache(this, "ZygotePreloadTools.apk", ".apk");
-        File outputDir = new File(getFilesDir(), "generated-apks");
-        FileUtils.clearDirectory(outputDir);
-        try {
-            JSONObject json = new JSONObject();
-            json.put("goBackPackageName", goBackPackageName);
-            json.put("goBackActivityName", goBackActivity);
-            json.put("scriptSuccessTip", "加载完成！请返回SKRoot APP继续安装SKRoot环境");
-            json.put("scriptErrorTip", "加载出错，请重试或保存日志反馈");
-            String jsonStr = json.toString();
-            Map<String, byte[]> replacements = new LinkedHashMap<>();
-            replacements.put("lib/arm64-v8a/libsh.so", script.getBytes(StandardCharsets.UTF_8));
-            replacements.put("lib/arm64-v8a/libconfigjson.so", jsonStr.getBytes(StandardCharsets.UTF_8));
-            ApkGenerator.GenerateOptions options = new ApkGenerator.GenerateOptions();
-            options.sourceApk = sourceApk;
-            options.soReplacements = replacements;
-            options.newPackageName = newPackageName;
-            options.newAppName = newAppName;
-            options.outputApk = new File(outputDir, "zygote-clone"+ System.nanoTime() +".apk");
-            return ApkGenerator.generate(this, options);
-        } finally {
-            sourceApk.delete();
-        }
-    }
-
-    private void installMagicaApk(String script) {
-        new Thread(() -> {
-            try {
-                String packageName = getPackageName();
-                String activityName = AppLaunchUtils.getLauncherActivityName(this);
-                File apk = generateZygotePreloadTools(script, packageName, activityName, AppConfig.ZYGOTE_PRELOAD_TOOLS_PACKAGE, "越狱临时启动器" + getShortKey(mRootKey));
-                runOnUiThread(() -> ApkInstallUtils.requestInstall(this, apk));
-            } catch (Exception e) {
-                runOnUiThread(() -> DialogUtils.showMsgDlg(this, "生成失败", "生成失败：" + e.getMessage(), null));
-            }
-        }, "apk-generate-worker").start();
-    }
-
-    private String getCVE2026_43499GuideScript(int methodVer) {
-        ApplicationInfo appInfo = getApplicationInfo();
-        File ghostFile = new File(appInfo.nativeLibraryDir, methodVer == 2 ? "libcve2026_43499_ghostlock_v2.so" : "libcve2026_43499_ghostlock_v1.so");
-        String absPath = ghostFile.getAbsolutePath();
-        return "#!/system/bin/sh\n" +
-                "SCRIPT_PATH=$(realpath \"$0\")\n" +
-                "if [ \"$(id -u)\" -ne 0 ]; then\n" +
-                "    echo \"[+] Currently not in root privileges, requesting root authorization to rerun the script...\"\n" +
-                "    echo \"[DEBUG] argv1 pre-check: $(stat -c '%s' \"$SCRIPT_PATH\" 2>&1)\"\n" +
-                "    " + absPath + " \"$SCRIPT_PATH\" \"$SCRIPT_PATH\"\n" +
-                "    exit 0\n" +
-                "fi\n";
-    }
-
-    private boolean precheckHotloadScript(String script, HotloadMethod method) {
-        if (method == HotloadMethod.MAGICA) {
-            if(AppLaunchUtils.launchApp(this, AppConfig.ZYGOTE_PRELOAD_TOOLS_PACKAGE, AppConfig.ZYGOTE_PRELOAD_TOOLS_ENTRY_ACTIVITY)) return false;
-            if(!ApkInstallUtils.getInstallPermission(this)) {
-                DialogUtils.showNeedPermissionDialog(this);
-                return false;
-            }
-            installMagicaApk(script);
-            return false;
-        }
-        return true;
-    }
-
-    private void executeHotloadScript(String script, HotloadMethod method) {
-        if(TextUtils.isEmpty(script)) return;
-        int methodVer = extractConfigInt(script, "METHOD_VER");
-        if(!precheckHotloadScript(script, method)) return;
-        DialogUtils.LogDialog logDlg = new DialogUtils.LogDialog(this, "正在加载热启动补丁，预计需要 1 分钟");
-        logDlg.appendLine("[开始执行热启动补丁]");
-        if (method == HotloadMethod.SHELL) {
-            new Thread(() -> {
-                ShellUtils.executeScript(this, script, logDlg::appendLine);
-                onHotloadCompletionResult(logDlg);
-            }).start();
-        } else if (method == HotloadMethod.CVE_2026_43499) {
-            new Thread(() -> {
-                ShellUtils.executeScript(this, getCVE2026_43499GuideScript(methodVer) + script, logDlg::appendLine);
-                onHotloadCompletionResult(logDlg);
-            }).start();
-        } else if (method == HotloadMethod.CVE_2026_43284) {
-            new Thread(() -> {
-                final String[] koPathHolder = new String[1];
-                ShellUtils.executeScript(this, script, line -> {
-                    logDlg.appendLine(line);
-                    if (line.startsWith("KO_PATH=")) koPathHolder[0] = line.substring("KO_PATH=".length()).trim();
-                });
-                logDlg.appendLine("dfroot rc=" + ExploitRunner.run(this, logDlg::appendLine, koPathHolder[0]) + "\n");
-                onHotloadCompletionResult(logDlg);
-            }).start();
-        }
+    private void runHotloadScript(String script, HotloadMethod method) {
+        if (TextUtils.isEmpty(script)) return;
+        if (!HotloadLauncher.precheck(this, mRootKey, method, script, mLocalAdb)) return;
+        HotloadLauncher.launch(this, method, script, this::onHotloadCompletionResult);
     }
 
     private boolean isSkrootChannelOK(String rootKey) { return NativeBridge.testSkrootBasics(rootKey, "Channel").contains("OK"); }
@@ -327,14 +218,23 @@ public class MainActivity extends AppCompatActivity {
             new Handler(Looper.getMainLooper()).postDelayed(() -> {
                 if(isSkrootChannelOK(mRootKey)) {
                     logDlg.dismiss();
+                    dismissHotloadKeyDlg();
                     DialogUtils.showMsgDlg(this, "提示","加载完成", null);
                     setupFragment(mRootKey);
                     switchPage(0);
                 } else {
+                    // 失败不关「Root 密钥配置」窗口，关掉日志窗口就能直接再点「确定」重跑。
                     DialogUtils.showMsgDlg(this, "提示","加载出错，请重试或保存日志反馈", null);
                 }
             }, 3000);
         });
+    }
+
+    private void dismissHotloadKeyDlg() {
+        if (mHotloadKeyDlg != null && mHotloadKeyDlg.isShowing()) {
+            mHotloadKeyDlg.dismiss();
+        }
+        mHotloadKeyDlg = null;
     }
 
     private void oneplusBypassWriteStage1() {
@@ -398,17 +298,16 @@ public class MainActivity extends AppCompatActivity {
                 AppSettings.setString("rootKey", mRootKey);
                 setupFragment(mRootKey);
                 switchPage(0);
-                boolean shouldClose = true;
-                if (!TextUtils.isEmpty(mHotloadCmd)) {
-                    if (isSkrootChannelOK(mRootKey)) {
-                        oneplusBypassWriteStage1();
-                        DialogUtils.showMsgDlg(this, "提示","加载完成", null);
-                    } else {
-                        executeHotloadScript(mHotloadCmd, mHotloadMethod);
-                        if (mHotloadMethod == HotloadMethod.MAGICA) shouldClose = false;
-                    }
+                if (TextUtils.isEmpty(mHotloadCmd)) {
+                    dialog.dismiss();
+                    return;
                 }
-                if (shouldClose) dialog.dismiss();
+                if (isSkrootChannelOK(mRootKey)) {
+                    oneplusBypassWriteStage1();
+                    dialog.dismiss();
+                    return;
+                }
+                runHotloadScript(mHotloadCmd, mHotloadMethod);
             });
         });
         modeRow.tvSwitch.setOnClickListener(v -> {
@@ -418,7 +317,7 @@ public class MainActivity extends AppCompatActivity {
 
         importBtn.setOnClickListener(v -> {            
            if(!GetSdcardPermissionsHelper.getPermissions(this, this, this.getPackageName())) {
-               DialogUtils.showNeedPermissionDialog(this);
+               DialogUtils.showNeedPermissionDialog(this, "文件存储权限");
                return;
            }
            String scriptText = FileUtils.readTextFile(HOTLOAD_SHELL_PATH);
@@ -426,8 +325,8 @@ public class MainActivity extends AppCompatActivity {
                DialogUtils.showMsgDlg(this, "错误", "读取文件失败或文件不存在", null);
                return;
            }
-           String rootKey = extractConfigValue(scriptText, "ROOT_KEY");
-           String method = extractConfigValue(scriptText, "METHOD");
+           String rootKey = HotloadLauncher.getConfigValue(scriptText, "ROOT_KEY");
+           String method = HotloadLauncher.getConfigValue(scriptText, "METHOD");
            if (TextUtils.isEmpty(rootKey)) return;
            mRootKey = rootKey;
            mHotloadMethod = HotloadMethod.fromConfig(method);
@@ -442,11 +341,13 @@ public class MainActivity extends AppCompatActivity {
 
         exportBtn.setOnClickListener(v -> {
             if(!GetSdcardPermissionsHelper.getPermissions(this, this, this.getPackageName())) {
-                DialogUtils.showNeedPermissionDialog(this);
+                DialogUtils.showNeedPermissionDialog(this, "文件存储权限");
                 return;
             }
             if (!TextUtils.isEmpty(mHotloadCmd)) exportHotloadToSdcard(this, mHotloadCmd);
         });
+        mHotloadKeyDlg = dialog;
+        dialog.setOnDismissListener(d -> { if (mHotloadKeyDlg == dialog) mHotloadKeyDlg = null; });
         dialog.show();
         if (!TextUtils.isEmpty(mHotloadCmd)) oneplusBypassWriteStage1();
     }

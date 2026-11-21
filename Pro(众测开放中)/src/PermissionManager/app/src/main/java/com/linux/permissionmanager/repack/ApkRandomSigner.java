@@ -1,4 +1,4 @@
-package com.linux.permissionmanager.utils.repack;
+package com.linux.permissionmanager.repack;
 
 import com.android.apksig.ApkSigner;
 import com.android.apksig.ApkVerifier;

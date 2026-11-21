@@ -5,6 +5,7 @@ import com.linux.permissionmanager.utils.AppCertUtils;
 
 public class GenerateFakeAppConfig {
     public String pkgName = "", appName = "", originalAppName = "", launchActivity = "", versionName = "";
+    public String serviceName = "";
     public long versionCode;
     public boolean removeIcon;
     public Long fakeSize;

@@ -4,7 +4,12 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := module_process_mem_phys_rw
 
 LOCAL_SRC_FILES := \
-     $(LOCAL_PATH)/../module_process_mem_phys_rw.cpp\
+     $(LOCAL_PATH)/../main.cpp\
+     $(LOCAL_PATH)/../process_mem_phys_rw/process_mem_phys.cpp\
+     $(LOCAL_PATH)/../process_mem_phys_rw/kernel_patch/kernel_patch_manager.cpp\
+     $(LOCAL_PATH)/../process_mem_phys_rw/kernel_patch/patch_base.cpp\
+     $(LOCAL_PATH)/../process_mem_phys_rw/kernel_patch/patch_pagemap_read.cpp\
+     $(LOCAL_PATH)/../process_mem_phys_rw/kernel_patch/patch_sys_prctl.cpp
 
 KERNEL_MODULE_KIT := $(LOCAL_PATH)/../../kernel_module_kit
 LOCAL_C_INCLUDES  += $(KERNEL_MODULE_KIT)/include

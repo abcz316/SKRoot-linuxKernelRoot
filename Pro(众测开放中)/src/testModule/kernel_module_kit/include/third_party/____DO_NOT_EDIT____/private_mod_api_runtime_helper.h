@@ -8,9 +8,25 @@
 #include "../../module_base_kernel_func_hook.h"
 #include "../../module_base_kernel_symbol_kaddr.h"
 namespace kernel_module {
-inline KModErr execute_kernel_asm_func(const std::vector<uint8_t>& func_bytes, uint64_t& output_result) {
-    KModErr execute_kernel_asm_func_with_buf(const uint8_t*shellcode, uint32_t shellcode_len, uint64_t& out_kaddr);
-    return execute_kernel_asm_func_with_buf(func_bytes.data(), func_bytes.size(), output_result);
+inline KModErr run_kernel_shellcode(std::function<bool(asmjit::a64::Assembler* a)> emit_fn) {
+    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
+    auto a = asm_ctx.assembler();
+    if (!emit_fn(a)) return KModErr::ERR_MODULE_ASM;
+    std::vector<uint8_t> body = aarch64_asm_to_bytes(a);
+    if (body.empty()) return KModErr::ERR_MODULE_ASM;
+    KModErr run_kernel_shellcode_bytes(const uint8_t* body, size_t body_size);
+    return run_kernel_shellcode_bytes(body.data(), body.size());
+}
+
+inline KModErr run_kernel_shellcode_result_u64(std::function<bool(asmjit::a64::Assembler* a, asmjit::a64::GpX& out_result_reg)> emit_fn, uint64_t& out_result) {
+    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
+    auto a = asm_ctx.assembler();
+    asmjit::a64::GpX out_result_reg = asmjit::a64::x0;
+    if (!emit_fn(a, out_result_reg)) return KModErr::ERR_MODULE_ASM;
+    std::vector<uint8_t> body = aarch64_asm_to_bytes(a);
+    if (body.empty()) return KModErr::ERR_MODULE_ASM;
+    KModErr run_kernel_shellcode_bytes_result_u64(const uint8_t* body, size_t body_size, asmjit::a64::GpX out_result_reg, uint64_t& out_result);
+    return run_kernel_shellcode_bytes_result_u64(body.data(), body.size(), out_result_reg, out_result);
 }
 
 inline KModErr kallsyms_lookup_name(const char * name, uint64_t & out) {

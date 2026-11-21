@@ -20,7 +20,6 @@ X(ERR_MODULE_PID_CYCLE,) \
 X(ERR_MODULE_ZYGOTE64_EMPTY,) \
 X(ERR_MODULE_MUST_UNINSTALL,) \
 X(ERR_MODULE_ASM,) \
-X(ERR_MODULE_FUNC_NOT_STANDARD,) \
 X(ERR_MODULE_ADDR_NOT_ALGIN4,) \
 X(ERR_MODULE_NOT_KADDR,) \
 X(ERR_MODULE_READONLY_KADDR,) \
@@ -62,6 +61,7 @@ X(ERR_MODULE_GET_CAPS,) \
 X(ERR_MODULE_NO_ROOT,) \
 X(ERR_MODULE_CAP_ABILITY,) \
 X(ERR_MODULE_CRED_DANGER,) \
+X(ERR_MODULE_KILL_PROCESS,) \
 X(ERR_MODULE_INO,) \
 X(ERR_MODULE_DLOPEN,) \
 X(ERR_MODULE_DLBLOB,) \
@@ -151,6 +151,28 @@ constexpr bool is_failed(KModErr err) noexcept {
         KModErr _err = (expr);                                            \
         if (is_failed(_err))                                      \
             return _err;                                                  \
+    } while (0)
+
+#define RETURN_FALSE_IF_ERROR(expr)                                       \
+    do {                                                                  \
+        static_assert(                                                   \
+            std::is_same<decltype(expr),KModErr>::value,                  \
+            "RETURN_FALSE_IF_ERROR: expr 必须返回 KModErr"                 \
+        );                                                                \
+        KModErr _err = (expr);                                            \
+        if (is_failed(_err))                                              \
+            return false;                                                 \
+    } while (0)
+
+#define RETURN_HOOK_ABORT_IF_ERROR(expr)                                       \
+    do {                                                                   \
+        static_assert(                                                     \
+            std::is_same<decltype(expr), KModErr>::value,                  \
+            "RETURN_HOOK_ABORT_IF_ERROR: expr 必须返回 KModErr"                 \
+        );                                                                 \
+        KModErr _err = (expr);                                              \
+        if (is_failed(_err))                                                \
+            return kernel_module::HookEndAction::AbortInstall;             \
     } while (0)
 
 #define BREAK_IF_ERROR(expr)                                              \

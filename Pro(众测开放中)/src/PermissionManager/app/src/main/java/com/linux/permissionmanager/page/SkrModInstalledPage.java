@@ -307,7 +307,7 @@ public class SkrModInstalledPage {
 
     private void chooseFile(boolean isDevRunOnceMode) {
         if(!GetSdcardPermissionsHelper.getPermissions(mActivity, mActivity, mActivity.getPackageName())) {
-            DialogUtils.showNeedPermissionDialog(mActivity);
+            DialogUtils.showNeedPermissionDialog(mActivity, "文件存储权限");
             return;
         }
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);

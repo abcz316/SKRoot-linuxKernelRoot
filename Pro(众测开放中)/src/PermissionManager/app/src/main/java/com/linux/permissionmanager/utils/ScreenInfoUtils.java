@@ -2,6 +2,7 @@ package com.linux.permissionmanager.utils;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.pm.ActivityInfo;
 import android.content.res.Resources;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -183,5 +184,22 @@ public class ScreenInfoUtils {
      */
     public static void printScreenInfo(Context context) {
         Log.d(TAG, getScreenInfo(context));
+    }
+
+    /**
+     * 锁定为当前屏幕方向（弹窗/执行任务期间禁止旋转），
+     * 返回锁定前的 requestedOrientation，供 restoreOrientation 恢复。
+     */
+    public static int lockOrientation(Activity activity) {
+        int previous = activity.getRequestedOrientation();
+        activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LOCKED);
+        return previous;
+    }
+
+    /**
+     * 恢复 lockOrientation 之前记录的屏幕方向。
+     */
+    public static void restoreOrientation(Activity activity, int previousOrientation) {
+        activity.setRequestedOrientation(previousOrientation);
     }
 }

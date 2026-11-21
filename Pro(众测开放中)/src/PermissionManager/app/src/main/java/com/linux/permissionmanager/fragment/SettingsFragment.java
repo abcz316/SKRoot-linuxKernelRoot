@@ -7,6 +7,8 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.graphics.Paint;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -160,7 +162,7 @@ public class SettingsFragment extends Fragment {
     }
 
     private void showSelectTestDefaultModuleDlg() {
-        final String[] items = {"1.Root 权限模块 (打印)", "2.Root 权限模块 (执行)", "3.su 重定向模块 (打印)", "4.su 重定向模块 (执行)", "5.系统目录净化模块 (打印)"};
+        final String[] items = {"1.Root 权限模块 (打印)", "2.Root 权限模块 (执行)", "3.su 重定向模块 (打印)", "4.su 重定向模块 (执行)", "5.系统目录净化模块 (打印)", "6.安全防护模块"};
         DialogUtils.showSingleChoiceDialog(mActivity, null, items, -1,
                 (dialog, which) -> {
                     String defName = "";
@@ -169,13 +171,40 @@ public class SettingsFragment extends Fragment {
                     else if(which == 2) defName = "SuRedirectPrint";
                     else if(which == 3) defName = "SuRedirectExec";
                     else if(which == 4) defName = "TombstonesPurgePrint";
+                    else if(which == 5) {
+                        runBypassTest();
+                        return;
+                    }
                     String log = NativeBridge.testSkrootDefaultModule(mRootKey, defName);
                     if(log.contains("ERR_MODULE_MUST_UNINSTALL")) log += "\n请先卸载 SKRoot 环境，再重试。";
                     DialogUtils.showLogDialog(mActivity, log, true);
                 }
         );
+    }
 
+    private void runBypassTest() {
+        DialogUtils.LogDialog logDlg = new DialogUtils.LogDialog(mActivity, "BypassTest 测试");
+        logDlg.setText("全程测试约需要30秒");
+        String[] tests = {"BypassTest1", "BypassTest2", "BypassTest3", "BypassTest4", "BypassTest5", "BypassTest6"};
+        runBypassStep(new Handler(Looper.getMainLooper()), logDlg, tests, 0);
+    }
 
+    private void runBypassStep(Handler handler, DialogUtils.LogDialog logDlg, String[] tests, int index) {
+        if (index >= tests.length) { logDlg.appendLine("已测试完毕，没有发生死机。"); return; }
+        String name = tests[index];
+        logDlg.appendLine("["+ name + "]: 3秒后开始测试...");
+        runCountdown(handler, logDlg, name, 3, () -> {
+            logDlg.appendLine(NativeBridge.testSkrootDefaultModule(mRootKey, name));
+            logDlg.appendLine(name + " 测试成功");
+            logDlg.appendLine("============");
+            handler.postDelayed(() -> runBypassStep(handler, logDlg, tests, index + 1), 2000);
+        });
+    }
+
+    private void runCountdown(Handler handler, DialogUtils.LogDialog logDlg, String name, int seconds, Runnable onFinish) {
+        if (seconds <= 0) { onFinish.run(); return; }
+        logDlg.appendLine("[" + name + "]: " + seconds + "秒");
+        handler.postDelayed(() -> runCountdown(handler, logDlg, name, seconds - 1, onFinish), 1000);
     }
 
     private enum RebootAction {

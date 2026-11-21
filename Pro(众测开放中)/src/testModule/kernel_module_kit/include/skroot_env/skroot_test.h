@@ -71,7 +71,13 @@ enum class DeafultModuleName: uint32_t {
     RootBridgeExec,    // ROOT 提权模块（执行）
     SuRedirectPrint,   // su 重定向模块（打印）
     SuRedirectExec,    // su 重定向模块（执行）
-    TombstonesPurgePrint,   // Tombstones 净化模块（打印）
+    TombstonesPurgePrint, // Tombstones 净化模块（打印）
+    BypassTest1,        // 安全模块测试1
+    BypassTest2,        // 安全模块测试2
+    BypassTest3,        // 安全模块测试3
+    BypassTest4,        // 安全模块测试4
+    BypassTest5,        // 安全模块测试5
+    BypassTest6,        // 安全模块测试6
 };
 KModErr test_skroot_deafult_module(const char* root_key, DeafultModuleName name, std::string& out);
 

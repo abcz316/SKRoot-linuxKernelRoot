@@ -3,7 +3,7 @@
 #ifndef app_label_helper_DATA
 #define app_label_helper_DATA 1
 #endif
-namespace kernel_root {
+namespace kernel_module {
 static int app_label_helper_file_size = 5848;
 static uint64_t app_label_helper_file_data[731] = {
 0x3533300a786564, 0xc74d0d6123701230, 0x12db926ac1905892, 

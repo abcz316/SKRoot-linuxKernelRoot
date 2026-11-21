@@ -38,7 +38,7 @@ KModErr PatchCommitCred::patch_commit_cred(uint32_t target_uid) {
 	{
 		RegProtectGuard g1(a, x0); // 保护 commit_creds 的返回值 X0。
 
-		emit_check_current_euid_to_x10(a, target_uid);
+		emit_match_current_appid_to_x10(a, target_uid);
 		a->cbz(x10, L_end);
 
 		// 命中目标 APP：强制发送 SIGKILL。

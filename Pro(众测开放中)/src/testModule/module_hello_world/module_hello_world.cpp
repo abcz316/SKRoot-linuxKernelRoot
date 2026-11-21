@@ -6,15 +6,12 @@ using namespace asmjit::a64;
 using namespace asmjit::a64::Predicate;
 
 KModErr run_kernel_shellcode(uint64_t & result) {
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-    auto a = asm_ctx.assembler();
-    kernel_module::arm64_module_asm_func_start(a);
-    
-    // TODO: 在此开始输入你的aarch64 asm指令
-    aarch64_asm_mov_x(a, x0, 0x12345);
-    kernel_module::arm64_module_asm_func_end(a, x0);
-	std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
-    RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, result));
+    RETURN_IF_ERROR(kernel_module::run_kernel_shellcode_result_u64([](Assembler* a, GpX& out_result_reg) -> bool {
+        // TODO: 在此开始输入你的aarch64 asm指令
+        aarch64_asm_mov_x(a, x0, 0x12345);
+        out_result_reg = x0;
+        return true;
+    }, result));
     return KModErr::OK;
 }
 

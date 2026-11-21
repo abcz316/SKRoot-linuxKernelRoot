@@ -56,7 +56,8 @@ public class GenerateFakeAppDlg {
 
     private TextView makeFieldLabel(String text, boolean first) {
         TextView label = new TextView(mActivity);
-        label.setText(text); label.setTextColor(TEXT_SECONDARY);
+        label.setText(text);
+        label.setTextColor(TEXT_SECONDARY);
         label.setTextSize(13);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         lp.setMargins(dp(2), first ? 0 : dp(8), 0, dp(4));
@@ -104,6 +105,7 @@ public class GenerateFakeAppDlg {
             if (TextUtils.isEmpty(config.pkgName)) return;
             config.appName = item.getShowName(mActivity);
             config.launchActivity = AppLaunchUtils.getLauncherActivityName(mActivity, config.pkgName);
+            config.serviceName = AppLaunchUtils.getAppServiceName(mActivity, config.pkgName);
             config.iconDrawable = item.getDrawable(mActivity);
             try {
                 PackageInfo info = mActivity.getPackageManager().getPackageInfo(config.pkgName, 0);
@@ -121,7 +123,6 @@ public class GenerateFakeAppDlg {
             } catch (Exception e) {
                 Toast.makeText(mActivity, "获取签名信息失败: " + e.getMessage(), Toast.LENGTH_SHORT).show();
             }
-
             showConfigDialog(config, callback);
         });
     }
@@ -264,6 +265,8 @@ public class GenerateFakeAppDlg {
             result.appName = appNameInput.getText().toString();
             result.originalAppName = config.appName;
             result.launchActivity = launchActivityInput.getText().toString();
+            // 包名可能被用户改过，按最终包名重新取一次，保证伪装 Service 类名与新包名一致
+            result.serviceName = AppLaunchUtils.getAppServiceName(mActivity, result.pkgName);
             result.versionName = versionNameInput.getText().toString();
             result.versionCode = editedVersionCode;
             result.removeIcon = removeIconCheck.isChecked();
@@ -276,9 +279,7 @@ public class GenerateFakeAppDlg {
 
         mCurrentDialog = dialog;
         dialog.setOnDismissListener(d -> {
-            if (mCurrentDialog == dialog) {
-                mCurrentDialog = null;
-            }
+            if (mCurrentDialog == dialog) mCurrentDialog = null;
         });
         dialog.show();
     }

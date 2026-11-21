@@ -1,4 +1,4 @@
-package com.linux.permissionmanager.utils.repack;
+package com.linux.permissionmanager.repack;
 
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
@@ -61,7 +61,7 @@ final class ApkZipRebuilder {
     static Set<String> rebuildApk(File inputApk, File outputApk,
                                           Map<String, byte[]> replacements,
                                           String newPackageName, String newAppName, String newVersionName, Integer newVersionCode,
-                                          boolean removeAppIcon, String oldEntryActivityName, String newEntryActivityName,
+                                          boolean removeAppIcon, Map<String, String> classRenames,
                                           File cacheDir, Set<String> removePermissions) throws IOException {
         Set<String> replaced = new LinkedHashSet<>();
         try (ZipFile zin = new ZipFile(inputApk);
@@ -75,23 +75,22 @@ final class ApkZipRebuilder {
 
                 boolean replace = replacements.containsKey(name);
                 boolean replaceManifest = (newPackageName != null || newAppName != null || newVersionName != null || newVersionCode != null || removeAppIcon
-                        || oldEntryActivityName != null || (removePermissions != null && !removePermissions.isEmpty())) && "AndroidManifest.xml".equals(name);
-                boolean replaceDex = oldEntryActivityName != null && EntryDexRenamer.isDexEntry(name);
+                        || (classRenames != null && !classRenames.isEmpty())
+                        || (removePermissions != null && !removePermissions.isEmpty())) && "AndroidManifest.xml".equals(name);
+                boolean replaceDex = classRenames != null && !classRenames.isEmpty() && DexClassRenamer.isDexEntry(name);
                 byte[] contents = null;
                 if (replace) {
                     contents = replacements.get(name);
                 } else if (replaceManifest) {
                     try (InputStream in = zin.getInputStream(src)) {
                         contents = ApkManifestEditor.patch(readLimited(in, 16 * 1024 * 1024), newPackageName, newAppName,
-                                newVersionName, newVersionCode, removeAppIcon, oldEntryActivityName, newEntryActivityName);
+                                newVersionName, newVersionCode, removeAppIcon, classRenames);
                         if (removePermissions != null && !removePermissions.isEmpty()) contents = ApkManifestEditor.removeUsesPermissions(contents, removePermissions);
                     }
                 } else if (replaceDex) {
                     try (InputStream in = zin.getInputStream(src)) {
-                        // 未包含入口类的 dex 不重新序列化，避免无意义地修改所有 DEX。
-                        contents = EntryDexRenamer.rewriteIfContains(
-                                readLimited(in, 256 * 1024 * 1024), oldEntryActivityName,
-                                newEntryActivityName, cacheDir);
+                        // 未包含待重命名 Class 定义的 DEX 不重新序列化，避免无意义地修改所有 DEX。
+                        contents = DexClassRenamer.rewriteIfContains(readLimited(in, 256 * 1024 * 1024), classRenames, cacheDir);
                     }
                 }
                 boolean stored = replace || src.isDirectory() || src.getMethod() == ZipEntry.STORED;

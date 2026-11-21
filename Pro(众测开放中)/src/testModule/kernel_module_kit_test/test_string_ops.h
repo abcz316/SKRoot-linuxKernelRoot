@@ -7,242 +7,214 @@ using namespace asmjit::a64;
 using namespace asmjit::a64::Predicate;
 
 KModErr Test_kstrlen() {
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-    auto a = asm_ctx.assembler();
-    kernel_module::arm64_module_asm_func_start(a);
-    a->mov(x0, Imm(123));
-    aarch64_asm_set_x_cstr_ptr(a, x1, "123456789");
-    kernel_module::string_ops::kstrlen(a, x1);
-    kernel_module::arm64_module_asm_func_end(a, x0);
-	std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
     uint64_t result = 0;
-    RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, result));
+    RETURN_IF_ERROR(kernel_module::run_kernel_shellcode_result_u64([&](Assembler* a, GpX& out_result_reg) -> bool {
+        a->mov(x0, Imm(123));
+        aarch64_asm_set_x_cstr_ptr(a, x1, "123456789");
+        kernel_module::string_ops::kstrlen(a, x1);
+        out_result_reg = x0;
+        return true;
+    }, result));
     printf("kstrlen result: %s\n", result == 9 ? "ok" : "failed");
     return KModErr::OK;
 }
 
 KModErr Test_kstrnlen1() {
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-    auto a = asm_ctx.assembler();
-    kernel_module::arm64_module_asm_func_start(a);
-
-    a->mov(x0, Imm(123));
-    aarch64_asm_set_x_cstr_ptr(a, x1, "123456789");
-    a->mov(x2, Imm(100));
-    kernel_module::string_ops::kstrnlen(a, x1, x2);
-
-    kernel_module::arm64_module_asm_func_end(a, x0);
-
-    std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
     uint64_t result = 0;
-    RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, result));
+    RETURN_IF_ERROR(kernel_module::run_kernel_shellcode_result_u64([&](Assembler* a, GpX& out_result_reg) -> bool {
+
+        a->mov(x0, Imm(123));
+        aarch64_asm_set_x_cstr_ptr(a, x1, "123456789");
+        a->mov(x2, Imm(100));
+        kernel_module::string_ops::kstrnlen(a, x1, x2);
+
+        out_result_reg = x0;
+        return true;
+
+    }, result));
     printf("kstrnlen1 (maxlen>len) result: %s\n", result == 9 ? "ok" : "failed");
     return KModErr::OK;
 }
 
 KModErr Test_kstrnlen2() {
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-    auto a = asm_ctx.assembler();
-    kernel_module::arm64_module_asm_func_start(a);
-
-    a->mov(x0, Imm(123));
-    aarch64_asm_set_x_cstr_ptr(a, x1, "123456789");
-    a->mov(x2, Imm(9));
-    kernel_module::string_ops::kstrnlen(a, x1, x2);
-
-    kernel_module::arm64_module_asm_func_end(a, x0);
-
-    std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
     uint64_t result = 0;
-    RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, result));
+    RETURN_IF_ERROR(kernel_module::run_kernel_shellcode_result_u64([&](Assembler* a, GpX& out_result_reg) -> bool {
+
+        a->mov(x0, Imm(123));
+        aarch64_asm_set_x_cstr_ptr(a, x1, "123456789");
+        a->mov(x2, Imm(9));
+        kernel_module::string_ops::kstrnlen(a, x1, x2);
+
+        out_result_reg = x0;
+        return true;
+
+    }, result));
     printf("kstrnlen2 (maxlen==len) result: %s\n", result == 9 ? "ok" : "failed");
     return KModErr::OK;
 }
 
 KModErr Test_kstrnlen3() {
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-    auto a = asm_ctx.assembler();
-    kernel_module::arm64_module_asm_func_start(a);
-
-    a->mov(x0, Imm(123));
-    aarch64_asm_set_x_cstr_ptr(a, x1, "123456789");
-    a->mov(x2, Imm(5));
-    kernel_module::string_ops::kstrnlen(a, x1, x2);
-
-    kernel_module::arm64_module_asm_func_end(a, x0);
-
-    std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
     uint64_t result = 0;
-    RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, result));
+    RETURN_IF_ERROR(kernel_module::run_kernel_shellcode_result_u64([&](Assembler* a, GpX& out_result_reg) -> bool {
+
+        a->mov(x0, Imm(123));
+        aarch64_asm_set_x_cstr_ptr(a, x1, "123456789");
+        a->mov(x2, Imm(5));
+        kernel_module::string_ops::kstrnlen(a, x1, x2);
+
+        out_result_reg = x0;
+        return true;
+
+    }, result));
     printf("kstrnlen3 (maxlen<len) result: %s\n", result == 5 ? "ok" : "failed");
     return KModErr::OK;
 }
 
 KModErr Test_kstrcmp1() {
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-    auto a = asm_ctx.assembler();
-    kernel_module::arm64_module_asm_func_start(a);
-    a->mov(x0, Imm(123));
-    aarch64_asm_set_x_cstr_ptr(a, x1, "123456789");
-    aarch64_asm_set_x_cstr_ptr(a, x2, "123456789");
-    kernel_module::string_ops::kstrcmp(a, x1, x2);
-    kernel_module::arm64_module_asm_func_end(a, x0);
-	std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
     uint64_t result = 0;
-    RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, result));
+    RETURN_IF_ERROR(kernel_module::run_kernel_shellcode_result_u64([&](Assembler* a, GpX& out_result_reg) -> bool {
+        a->mov(x0, Imm(123));
+        aarch64_asm_set_x_cstr_ptr(a, x1, "123456789");
+        aarch64_asm_set_x_cstr_ptr(a, x2, "123456789");
+        kernel_module::string_ops::kstrcmp(a, x1, x2);
+        out_result_reg = x0;
+        return true;
+    }, result));
     printf("kstrcmp1 result: %s\n", result == 0 ? "ok" : "failed");
     return KModErr::OK;
 }
 
 KModErr Test_kstrcmp2() {
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-    auto a = asm_ctx.assembler();
-    kernel_module::arm64_module_asm_func_start(a);
-    a->mov(x0, Imm(123));
-    aarch64_asm_set_x_cstr_ptr(a, x1, "123456789");
-    aarch64_asm_set_x_cstr_ptr(a, x2, "987654321");
-    kernel_module::string_ops::kstrcmp(a, x1, x2);
-    kernel_module::arm64_module_asm_func_end(a, x0);
-	std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
     uint64_t result = 0;
-    RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, result));
+    RETURN_IF_ERROR(kernel_module::run_kernel_shellcode_result_u64([&](Assembler* a, GpX& out_result_reg) -> bool {
+        a->mov(x0, Imm(123));
+        aarch64_asm_set_x_cstr_ptr(a, x1, "123456789");
+        aarch64_asm_set_x_cstr_ptr(a, x2, "987654321");
+        kernel_module::string_ops::kstrcmp(a, x1, x2);
+        out_result_reg = x0;
+        return true;
+    }, result));
     printf("kstrcmp2 result: %s\n", result != 0 ? "ok" : "failed");
     return KModErr::OK;
 }
 
 KModErr Test_kstrcmp3() {
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-    auto a = asm_ctx.assembler();
-    kernel_module::arm64_module_asm_func_start(a);
-    a->mov(x0, Imm(123));
-    aarch64_asm_set_x_cstr_ptr(a, x1, "123456789");
-    aarch64_asm_set_x_cstr_ptr(a, x2, "666888");
-    kernel_module::string_ops::kstrcmp(a, x1, x2);
-    kernel_module::arm64_module_asm_func_end(a, x0);
-	std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
     uint64_t result = 0;
-    RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, result));
+    RETURN_IF_ERROR(kernel_module::run_kernel_shellcode_result_u64([&](Assembler* a, GpX& out_result_reg) -> bool {
+        a->mov(x0, Imm(123));
+        aarch64_asm_set_x_cstr_ptr(a, x1, "123456789");
+        aarch64_asm_set_x_cstr_ptr(a, x2, "666888");
+        kernel_module::string_ops::kstrcmp(a, x1, x2);
+        out_result_reg = x0;
+        return true;
+    }, result));
     printf("kstrcmp3 result: %s\n", result != 0 ? "ok" : "failed");
     return KModErr::OK;
 }
 
 KModErr Test_kstrncmp1() {
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-    auto a = asm_ctx.assembler();
-    kernel_module::arm64_module_asm_func_start(a);
-    a->mov(x0, Imm(123));
-    aarch64_asm_set_x_cstr_ptr(a, x1, "123456789");
-    aarch64_asm_set_x_cstr_ptr(a, x2, "123456789");
-    a->mov(x3, Imm(100));
-    kernel_module::string_ops::kstrncmp(a, x1, x2, x3);
-    kernel_module::arm64_module_asm_func_end(a, x0);
-    std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
     uint64_t result = 0;
-    RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, result));
+    RETURN_IF_ERROR(kernel_module::run_kernel_shellcode_result_u64([&](Assembler* a, GpX& out_result_reg) -> bool {
+        a->mov(x0, Imm(123));
+        aarch64_asm_set_x_cstr_ptr(a, x1, "123456789");
+        aarch64_asm_set_x_cstr_ptr(a, x2, "123456789");
+        a->mov(x3, Imm(100));
+        kernel_module::string_ops::kstrncmp(a, x1, x2, x3);
+        out_result_reg = x0;
+        return true;
+    }, result));
     printf("kstrncmp1 result: %s\n", result == 0 ? "ok" : "failed");
     return KModErr::OK;
 }
 
 KModErr Test_kstrncmp2() {
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-    auto a = asm_ctx.assembler();
-    kernel_module::arm64_module_asm_func_start(a);
-    a->mov(x0, Imm(123));
-    aarch64_asm_set_x_cstr_ptr(a, x1, "123456789");
-    aarch64_asm_set_x_cstr_ptr(a, x2, "987654321");
-    a->mov(x3, Imm(100));
-    kernel_module::string_ops::kstrncmp(a, x1, x2, x3);
-    kernel_module::arm64_module_asm_func_end(a, x0);
-    std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
     uint64_t result = 0;
-    RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, result));
+    RETURN_IF_ERROR(kernel_module::run_kernel_shellcode_result_u64([&](Assembler* a, GpX& out_result_reg) -> bool {
+        a->mov(x0, Imm(123));
+        aarch64_asm_set_x_cstr_ptr(a, x1, "123456789");
+        aarch64_asm_set_x_cstr_ptr(a, x2, "987654321");
+        a->mov(x3, Imm(100));
+        kernel_module::string_ops::kstrncmp(a, x1, x2, x3);
+        out_result_reg = x0;
+        return true;
+    }, result));
     printf("kstrncmp2 result: %s\n", result != 0 ? "ok" : "failed");
     return KModErr::OK;
 }
 
 
 KModErr Test_kstrncmp3() {
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-    auto a = asm_ctx.assembler();
-    kernel_module::arm64_module_asm_func_start(a);
-    a->mov(x0, Imm(123));
-    aarch64_asm_set_x_cstr_ptr(a, x1, "123456789");
-    aarch64_asm_set_x_cstr_ptr(a, x2, "666888");
-    a->mov(x3, Imm(100));
-    kernel_module::string_ops::kstrncmp(a, x1, x2, x3);
-    kernel_module::arm64_module_asm_func_end(a, x0);
-    std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
     uint64_t result = 0;
-    RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, result));
+    RETURN_IF_ERROR(kernel_module::run_kernel_shellcode_result_u64([&](Assembler* a, GpX& out_result_reg) -> bool {
+        a->mov(x0, Imm(123));
+        aarch64_asm_set_x_cstr_ptr(a, x1, "123456789");
+        aarch64_asm_set_x_cstr_ptr(a, x2, "666888");
+        a->mov(x3, Imm(100));
+        kernel_module::string_ops::kstrncmp(a, x1, x2, x3);
+        out_result_reg = x0;
+        return true;
+    }, result));
     printf("kstrncmp3 result: %s\n", result != 0 ? "ok" : "failed");
     return KModErr::OK;
 }
 
 KModErr Test_kstrncmp4() {
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-    auto a = asm_ctx.assembler();
-    kernel_module::arm64_module_asm_func_start(a);
-    a->mov(x0, Imm(123));
-    aarch64_asm_set_x_cstr_ptr(a, x1, "123456789");
-    aarch64_asm_set_x_cstr_ptr(a, x2, "1234aaabbbcccddd");
-    a->mov(x3, Imm(4));
-    kernel_module::string_ops::kstrncmp(a, x1, x2, x3);
-    kernel_module::arm64_module_asm_func_end(a, x0);
-    std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
     uint64_t result = 0;
-    RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, result));
+    RETURN_IF_ERROR(kernel_module::run_kernel_shellcode_result_u64([&](Assembler* a, GpX& out_result_reg) -> bool {
+        a->mov(x0, Imm(123));
+        aarch64_asm_set_x_cstr_ptr(a, x1, "123456789");
+        aarch64_asm_set_x_cstr_ptr(a, x2, "1234aaabbbcccddd");
+        a->mov(x3, Imm(4));
+        kernel_module::string_ops::kstrncmp(a, x1, x2, x3);
+        out_result_reg = x0;
+        return true;
+    }, result));
     printf("kstrncmp4 result: %s\n", result == 0 ? "ok" : "failed");
     return KModErr::OK;
 }
 
 KModErr Test_kstrncmp5() {
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-    auto a = asm_ctx.assembler();
-    kernel_module::arm64_module_asm_func_start(a);
-    a->mov(x0, Imm(123));
-    aarch64_asm_set_x_cstr_ptr(a, x1, "123456789");
-    aarch64_asm_set_x_cstr_ptr(a, x2, "123454321");
-    a->mov(x3, Imm(9));
-    kernel_module::string_ops::kstrncmp(a, x1, x2, x3);
-    kernel_module::arm64_module_asm_func_end(a, x0);
-    std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
     uint64_t result = 0;
-    RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, result));
+    RETURN_IF_ERROR(kernel_module::run_kernel_shellcode_result_u64([&](Assembler* a, GpX& out_result_reg) -> bool {
+        a->mov(x0, Imm(123));
+        aarch64_asm_set_x_cstr_ptr(a, x1, "123456789");
+        aarch64_asm_set_x_cstr_ptr(a, x2, "123454321");
+        a->mov(x3, Imm(9));
+        kernel_module::string_ops::kstrncmp(a, x1, x2, x3);
+        out_result_reg = x0;
+        return true;
+    }, result));
     printf("kstrncmp5 result: %s\n", result != 0 ? "ok" : "failed");
     return KModErr::OK;
 }
 
 KModErr Test_kstrncmp6() {
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-    auto a = asm_ctx.assembler();
-    kernel_module::arm64_module_asm_func_start(a);
-    a->mov(x0, Imm(123));
-    aarch64_asm_set_x_cstr_ptr(a, x1, "678456789");
-    aarch64_asm_set_x_cstr_ptr(a, x2, "678888");
-    a->mov(x3, Imm(3));
-    kernel_module::string_ops::kstrncmp(a, x1, x2, x3);
-    kernel_module::arm64_module_asm_func_end(a, x0);
-    std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
     uint64_t result = 0;
-    RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, result));
+    RETURN_IF_ERROR(kernel_module::run_kernel_shellcode_result_u64([&](Assembler* a, GpX& out_result_reg) -> bool {
+        a->mov(x0, Imm(123));
+        aarch64_asm_set_x_cstr_ptr(a, x1, "678456789");
+        aarch64_asm_set_x_cstr_ptr(a, x2, "678888");
+        a->mov(x3, Imm(3));
+        kernel_module::string_ops::kstrncmp(a, x1, x2, x3);
+        out_result_reg = x0;
+        return true;
+    }, result));
     
     printf("kstrncmp6 result: %s\n", result == 0 ? "ok" : "failed");
     return KModErr::OK;
 }
 
 KModErr Test_kstrncmp7() {
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-    auto a = asm_ctx.assembler();
-    kernel_module::arm64_module_asm_func_start(a);
-    a->mov(x0, Imm(123));
-    aarch64_asm_set_x_cstr_ptr(a, x1, "123");
-    aarch64_asm_set_x_cstr_ptr(a, x2, "123888");
-    a->mov(x3, Imm(3));
-    kernel_module::string_ops::kstrncmp(a, x1, x2, x3);
-    kernel_module::arm64_module_asm_func_end(a, x0);
-    std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
     uint64_t result = 0;
-    RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, result));
+    RETURN_IF_ERROR(kernel_module::run_kernel_shellcode_result_u64([&](Assembler* a, GpX& out_result_reg) -> bool {
+        a->mov(x0, Imm(123));
+        aarch64_asm_set_x_cstr_ptr(a, x1, "123");
+        aarch64_asm_set_x_cstr_ptr(a, x2, "123888");
+        a->mov(x3, Imm(3));
+        kernel_module::string_ops::kstrncmp(a, x1, x2, x3);
+        out_result_reg = x0;
+        return true;
+    }, result));
     
     printf("kstrncmp7 result: %s\n", result == 0 ? "ok" : "failed");
     return KModErr::OK;
@@ -255,16 +227,12 @@ KModErr Test_kstrcpy() {
     RETURN_IF_ERROR(kernel_module::alloc_kernel_mem(sizeof(test_data), addr));
     RETURN_IF_ERROR(kernel_module::write_kernel_mem(addr, &test_data, sizeof(test_data)));
 
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-    auto a = asm_ctx.assembler();
-    kernel_module::arm64_module_asm_func_start(a);
-    aarch64_asm_mov_x(a, x0, addr);
-    aarch64_asm_set_x_cstr_ptr(a, x1, "abc");
-    kernel_module::string_ops::kstrcpy(a, x0, x1);
-    kernel_module::arm64_module_asm_func_end(a);
-	std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
-    uint64_t result = 0;
-    RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, result));
+    RETURN_IF_ERROR(kernel_module::run_kernel_shellcode([addr](Assembler* a) -> bool {
+        aarch64_asm_mov_x(a, x0, addr);
+        aarch64_asm_set_x_cstr_ptr(a, x1, "abc");
+        kernel_module::string_ops::kstrcpy(a, x0, x1);
+        return true;
+    }));
 
     std::vector<uint8_t> buf(sizeof(test_data));
     RETURN_IF_ERROR(kernel_module::read_kernel_mem(addr, buf.data(), buf.size()));
@@ -279,18 +247,13 @@ KModErr Test_kstrncpy() {
     RETURN_IF_ERROR(kernel_module::alloc_kernel_mem(init.size(), addr));
     RETURN_IF_ERROR(kernel_module::write_kernel_mem(addr, init.data(), init.size()));
 
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-    auto a = asm_ctx.assembler();
-
-    kernel_module::arm64_module_asm_func_start(a);
-    aarch64_asm_mov_x(a, x0, addr);
-    aarch64_asm_set_x_cstr_ptr(a, x1, "abc");
-    aarch64_asm_mov_x(a, x2, 8);
-    kernel_module::string_ops::kstrncpy(a, x0, x1, x2);
-    kernel_module::arm64_module_asm_func_end(a);
-    std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
-    uint64_t result = 0;
-    RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, result));
+    RETURN_IF_ERROR(kernel_module::run_kernel_shellcode([addr](Assembler* a) -> bool {
+        aarch64_asm_mov_x(a, x0, addr);
+        aarch64_asm_set_x_cstr_ptr(a, x1, "abc");
+        aarch64_asm_mov_x(a, x2, 8);
+        kernel_module::string_ops::kstrncpy(a, x0, x1, x2);
+        return true;
+    }));
 
     // 读回验证
     std::vector<uint8_t> buf(init.size());
@@ -324,17 +287,12 @@ KModErr Test_kstrcat1() {
     RETURN_IF_ERROR(kernel_module::alloc_kernel_mem(init.size(), addr));
     RETURN_IF_ERROR(kernel_module::write_kernel_mem(addr, init.data(), init.size()));
 
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-    auto a = asm_ctx.assembler();
-    kernel_module::arm64_module_asm_func_start(a);
-    aarch64_asm_mov_x(a, x0, addr);
-    aarch64_asm_set_x_cstr_ptr(a, x1, "DEF");
-    kernel_module::string_ops::kstrcat(a, x0, x1);
-    kernel_module::arm64_module_asm_func_end(a);
-
-    std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
-    uint64_t result = 0;
-    RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, result));
+    RETURN_IF_ERROR(kernel_module::run_kernel_shellcode([addr](Assembler* a) -> bool {
+        aarch64_asm_mov_x(a, x0, addr);
+        aarch64_asm_set_x_cstr_ptr(a, x1, "DEF");
+        kernel_module::string_ops::kstrcat(a, x0, x1);
+        return true;
+    }));
 
     std::vector<uint8_t> buf(init.size());
     RETURN_IF_ERROR(kernel_module::read_kernel_mem(addr, buf.data(), buf.size()));
@@ -354,17 +312,12 @@ KModErr Test_kstrcat2() {
     RETURN_IF_ERROR(kernel_module::alloc_kernel_mem(init.size(), addr));
     RETURN_IF_ERROR(kernel_module::write_kernel_mem(addr, init.data(), init.size()));
 
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-    auto a = asm_ctx.assembler();
-    kernel_module::arm64_module_asm_func_start(a);
-    aarch64_asm_mov_x(a, x0, addr);
-    aarch64_asm_set_x_cstr_ptr(a, x1, "XYZ");
-    kernel_module::string_ops::kstrcat(a, x0, x1);
-    kernel_module::arm64_module_asm_func_end(a);
-
-    std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
-    uint64_t result = 0;
-    RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, result));
+    RETURN_IF_ERROR(kernel_module::run_kernel_shellcode([addr](Assembler* a) -> bool {
+        aarch64_asm_mov_x(a, x0, addr);
+        aarch64_asm_set_x_cstr_ptr(a, x1, "XYZ");
+        kernel_module::string_ops::kstrcat(a, x0, x1);
+        return true;
+    }));
 
     std::vector<uint8_t> buf(init.size());
     RETURN_IF_ERROR(kernel_module::read_kernel_mem(addr, buf.data(), buf.size()));
@@ -384,18 +337,16 @@ KModErr Test_kstrcat3() {
     RETURN_IF_ERROR(kernel_module::alloc_kernel_mem(init.size(), addr));
     RETURN_IF_ERROR(kernel_module::write_kernel_mem(addr, init.data(), init.size()));
 
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-    auto a = asm_ctx.assembler();
-
-    kernel_module::arm64_module_asm_func_start(a);
-    aarch64_asm_mov_x(a, x0, addr);          // dst
-    aarch64_asm_set_x_cstr_ptr(a, x1, "");    // src = ""
-    kernel_module::string_ops::kstrcat(a, x0, x1);
-    kernel_module::arm64_module_asm_func_end(a, x0);
-
-    std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
     uint64_t result = 0;
-    RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, result));
+    RETURN_IF_ERROR(kernel_module::run_kernel_shellcode_result_u64([&](Assembler* a, GpX& out_result_reg) -> bool {
+
+        aarch64_asm_mov_x(a, x0, addr);          // dst
+        aarch64_asm_set_x_cstr_ptr(a, x1, "");    // src = ""
+        kernel_module::string_ops::kstrcat(a, x0, x1);
+        out_result_reg = x0;
+        return true;
+
+    }, result));
 
     std::vector<uint8_t> buf(init.size());
     RETURN_IF_ERROR(kernel_module::read_kernel_mem(addr, buf.data(), buf.size()));
@@ -420,18 +371,16 @@ KModErr Test_kstrcat4() {
     RETURN_IF_ERROR(kernel_module::alloc_kernel_mem(init.size(), addr));
     RETURN_IF_ERROR(kernel_module::write_kernel_mem(addr, init.data(), init.size()));
 
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-    auto a = asm_ctx.assembler();
-
-    kernel_module::arm64_module_asm_func_start(a);
-    aarch64_asm_mov_x(a, x0, addr);          // dst
-    aarch64_asm_set_x_cstr_ptr(a, x1, "Z");   // src = "Z"
-    kernel_module::string_ops::kstrcat(a, x0, x1);
-    kernel_module::arm64_module_asm_func_end(a, x0);
-
-    std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
     uint64_t result = 0;
-    RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, result));
+    RETURN_IF_ERROR(kernel_module::run_kernel_shellcode_result_u64([&](Assembler* a, GpX& out_result_reg) -> bool {
+
+        aarch64_asm_mov_x(a, x0, addr);          // dst
+        aarch64_asm_set_x_cstr_ptr(a, x1, "Z");   // src = "Z"
+        kernel_module::string_ops::kstrcat(a, x0, x1);
+        out_result_reg = x0;
+        return true;
+
+    }, result));
 
     std::vector<uint8_t> buf(init.size());
     RETURN_IF_ERROR(kernel_module::read_kernel_mem(addr, buf.data(), buf.size()));
@@ -461,18 +410,16 @@ KModErr Test_kstrncat1() {
     RETURN_IF_ERROR(kernel_module::alloc_kernel_mem(init.size(), addr));
     RETURN_IF_ERROR(kernel_module::write_kernel_mem(addr, init.data(), init.size()));
 
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-    auto a = asm_ctx.assembler();
-    kernel_module::arm64_module_asm_func_start(a);
-    aarch64_asm_mov_x(a, x0, addr);          // dst
-    aarch64_asm_set_x_cstr_ptr(a, x1, "DEF");// src
-    aarch64_asm_mov_x(a, x2, 2);             // n=2
-    kernel_module::string_ops::kstrncat(a, x0, x1, x2);
-    kernel_module::arm64_module_asm_func_end(a, x0);
-
-    std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
     uint64_t result = 0;
-    RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, result));
+    RETURN_IF_ERROR(kernel_module::run_kernel_shellcode_result_u64([&](Assembler* a, GpX& out_result_reg) -> bool {
+        aarch64_asm_mov_x(a, x0, addr);          // dst
+        aarch64_asm_set_x_cstr_ptr(a, x1, "DEF");// src
+        aarch64_asm_mov_x(a, x2, 2);             // n=2
+        kernel_module::string_ops::kstrncat(a, x0, x1, x2);
+        out_result_reg = x0;
+        return true;
+
+    }, result));
 
     std::vector<uint8_t> buf(init.size());
     RETURN_IF_ERROR(kernel_module::read_kernel_mem(addr, buf.data(), buf.size()));
@@ -492,18 +439,16 @@ KModErr Test_kstrncat2() {
     RETURN_IF_ERROR(kernel_module::alloc_kernel_mem(init.size(), addr));
     RETURN_IF_ERROR(kernel_module::write_kernel_mem(addr, init.data(), init.size()));
 
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-    auto a = asm_ctx.assembler();
-    kernel_module::arm64_module_asm_func_start(a);
-    aarch64_asm_mov_x(a, x0, addr);
-    aarch64_asm_set_x_cstr_ptr(a, x1, "DEF");
-    aarch64_asm_mov_x(a, x2, 8);             // n=8
-    kernel_module::string_ops::kstrncat(a, x0, x1, x2);
-    kernel_module::arm64_module_asm_func_end(a, x0);
-
-    std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
     uint64_t result = 0;
-    RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, result));
+    RETURN_IF_ERROR(kernel_module::run_kernel_shellcode_result_u64([&](Assembler* a, GpX& out_result_reg) -> bool {
+        aarch64_asm_mov_x(a, x0, addr);
+        aarch64_asm_set_x_cstr_ptr(a, x1, "DEF");
+        aarch64_asm_mov_x(a, x2, 8);             // n=8
+        kernel_module::string_ops::kstrncat(a, x0, x1, x2);
+        out_result_reg = x0;
+        return true;
+
+    }, result));
 
     std::vector<uint8_t> buf(init.size());
     RETURN_IF_ERROR(kernel_module::read_kernel_mem(addr, buf.data(), buf.size()));
@@ -523,19 +468,16 @@ KModErr Test_kstrncat3() {
     RETURN_IF_ERROR(kernel_module::alloc_kernel_mem(init.size(), addr));
     RETURN_IF_ERROR(kernel_module::write_kernel_mem(addr, init.data(), init.size()));
 
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-    auto a = asm_ctx.assembler();
-    kernel_module::arm64_module_asm_func_start(a);
-    aarch64_asm_mov_x(a, x0, addr);
-    aarch64_asm_set_x_cstr_ptr(a, x1, "DEF");
-    aarch64_asm_mov_x(a, x2, 0);             // n=0
-    kernel_module::string_ops::kstrncat(a, x0, x1, x2);
-    kernel_module::arm64_module_asm_func_end(a, x0);
-
-    std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
-
     uint64_t result = 0;
-    RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, result));
+    RETURN_IF_ERROR(kernel_module::run_kernel_shellcode_result_u64([&](Assembler* a, GpX& out_result_reg) -> bool {
+        aarch64_asm_mov_x(a, x0, addr);
+        aarch64_asm_set_x_cstr_ptr(a, x1, "DEF");
+        aarch64_asm_mov_x(a, x2, 0);             // n=0
+        kernel_module::string_ops::kstrncat(a, x0, x1, x2);
+        out_result_reg = x0;
+        return true;
+
+    }, result));
 
     std::vector<uint8_t> buf(init.size());
     RETURN_IF_ERROR(kernel_module::read_kernel_mem(addr, buf.data(), buf.size()));
@@ -554,18 +496,16 @@ KModErr Test_kstrncat4() {
     RETURN_IF_ERROR(kernel_module::alloc_kernel_mem(init.size(), addr));
     RETURN_IF_ERROR(kernel_module::write_kernel_mem(addr, init.data(), init.size()));
 
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-    auto a = asm_ctx.assembler();
-    kernel_module::arm64_module_asm_func_start(a);
-    aarch64_asm_mov_x(a, x0, addr);
-    aarch64_asm_set_x_cstr_ptr(a, x1, "");   // src=""
-    aarch64_asm_mov_x(a, x2, 5);
-    kernel_module::string_ops::kstrncat(a, x0, x1, x2);
-    kernel_module::arm64_module_asm_func_end(a, x0);
-
-    std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
     uint64_t result = 0;
-    RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, result));
+    RETURN_IF_ERROR(kernel_module::run_kernel_shellcode_result_u64([&](Assembler* a, GpX& out_result_reg) -> bool {
+        aarch64_asm_mov_x(a, x0, addr);
+        aarch64_asm_set_x_cstr_ptr(a, x1, "");   // src=""
+        aarch64_asm_mov_x(a, x2, 5);
+        kernel_module::string_ops::kstrncat(a, x0, x1, x2);
+        out_result_reg = x0;
+        return true;
+
+    }, result));
 
     std::vector<uint8_t> buf(init.size());
     RETURN_IF_ERROR(kernel_module::read_kernel_mem(addr, buf.data(), buf.size()));
@@ -584,18 +524,16 @@ KModErr Test_kstrncat5() {
     RETURN_IF_ERROR(kernel_module::alloc_kernel_mem(init.size(), addr));
     RETURN_IF_ERROR(kernel_module::write_kernel_mem(addr, init.data(), init.size()));
 
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-    auto a = asm_ctx.assembler();
-    kernel_module::arm64_module_asm_func_start(a);
-    aarch64_asm_mov_x(a, x0, addr);
-    aarch64_asm_set_x_cstr_ptr(a, x1, "XYZ123");
-    aarch64_asm_mov_x(a, x2, 3);             // n=3
-    kernel_module::string_ops::kstrncat(a, x0, x1, x2);
-    kernel_module::arm64_module_asm_func_end(a, x0);
-
-    std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
     uint64_t result = 0;
-    RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, result));
+    RETURN_IF_ERROR(kernel_module::run_kernel_shellcode_result_u64([&](Assembler* a, GpX& out_result_reg) -> bool {
+        aarch64_asm_mov_x(a, x0, addr);
+        aarch64_asm_set_x_cstr_ptr(a, x1, "XYZ123");
+        aarch64_asm_mov_x(a, x2, 3);             // n=3
+        kernel_module::string_ops::kstrncat(a, x0, x1, x2);
+        out_result_reg = x0;
+        return true;
+
+    }, result));
 
     std::vector<uint8_t> buf(init.size());
     RETURN_IF_ERROR(kernel_module::read_kernel_mem(addr, buf.data(), buf.size()));
@@ -608,34 +546,30 @@ KModErr Test_kstrncat5() {
 }
 
 KModErr Test_kstrstr1() {
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-    auto a = asm_ctx.assembler();
-    kernel_module::arm64_module_asm_func_start(a);
-    a->mov(x0, Imm(123));
-    aarch64_asm_set_x_cstr_ptr(a, x1, "123456789aaabbbccc");
-    aarch64_asm_set_x_cstr_ptr(a, x2, "vvvccc");
-    kernel_module::string_ops::kstrstr(a, x1, x2);
-    kernel_module::arm64_module_asm_func_end(a, x0);
-	std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
     uint64_t result = 0;
-    RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, result));
+    RETURN_IF_ERROR(kernel_module::run_kernel_shellcode_result_u64([&](Assembler* a, GpX& out_result_reg) -> bool {
+        a->mov(x0, Imm(123));
+        aarch64_asm_set_x_cstr_ptr(a, x1, "123456789aaabbbccc");
+        aarch64_asm_set_x_cstr_ptr(a, x2, "vvvccc");
+        kernel_module::string_ops::kstrstr(a, x1, x2);
+        out_result_reg = x0;
+        return true;
+    }, result));
     
     printf("kstrstr1 result: %s\n", result == 0 ? "ok" : "failed");
     return KModErr::OK;
 }
 
 KModErr Test_kstrstr2() {
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-    auto a = asm_ctx.assembler();
-    kernel_module::arm64_module_asm_func_start(a);
-    a->mov(x0, Imm(123));
-    aarch64_asm_set_x_cstr_ptr(a, x1, "12345");
-    aarch64_asm_set_x_cstr_ptr(a, x2, "aaabbbccc");
-    kernel_module::string_ops::kstrstr(a, x1, x2);
-    kernel_module::arm64_module_asm_func_end(a, x0);
-	std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
     uint64_t result = 0;
-    RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, result));
+    RETURN_IF_ERROR(kernel_module::run_kernel_shellcode_result_u64([&](Assembler* a, GpX& out_result_reg) -> bool {
+        a->mov(x0, Imm(123));
+        aarch64_asm_set_x_cstr_ptr(a, x1, "12345");
+        aarch64_asm_set_x_cstr_ptr(a, x2, "aaabbbccc");
+        kernel_module::string_ops::kstrstr(a, x1, x2);
+        out_result_reg = x0;
+        return true;
+    }, result));
     
     printf("kstrstr2 result: %s\n", result == 0 ? "ok" : "failed");
     return KModErr::OK;
@@ -646,17 +580,15 @@ KModErr Test_kstrstr3() {
     RETURN_IF_ERROR(kernel_module::alloc_kernel_mem(1024, addr));
     RETURN_IF_ERROR(kernel_module::write_kernel_mem(addr, "123456789aaabbbccc", strlen("123456789aaabbbccc") + 1));
 
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-    auto a = asm_ctx.assembler();
-    kernel_module::arm64_module_asm_func_start(a);
-    a->mov(x0, Imm(123));
-    aarch64_asm_mov_x(a, x1, addr);
-    aarch64_asm_set_x_cstr_ptr(a, x2, "789aaa");
-    kernel_module::string_ops::kstrstr(a, x1, x2);
-    kernel_module::arm64_module_asm_func_end(a, x0);
-	std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
     uint64_t result = 0;
-    RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, result));
+    RETURN_IF_ERROR(kernel_module::run_kernel_shellcode_result_u64([&](Assembler* a, GpX& out_result_reg) -> bool {
+        a->mov(x0, Imm(123));
+        aarch64_asm_mov_x(a, x1, addr);
+        aarch64_asm_set_x_cstr_ptr(a, x2, "789aaa");
+        kernel_module::string_ops::kstrstr(a, x1, x2);
+        out_result_reg = x0;
+        return true;
+    }, result));
     
 
     addr = result;
@@ -668,17 +600,15 @@ KModErr Test_kstrstr3() {
 }
 
 KModErr Test_kstrchr1() {
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-    auto a = asm_ctx.assembler();
-    kernel_module::arm64_module_asm_func_start(a);
-    a->mov(x0, Imm(123));
-    aarch64_asm_set_x_cstr_ptr(a, x1, "123456789aaabbbccc");
-    a->mov(w2, Imm('v'));
-    kernel_module::string_ops::kstrchr(a, x1, w2);
-    kernel_module::arm64_module_asm_func_end(a, x0);
-	std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
     uint64_t result = 0;
-    RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, result));
+    RETURN_IF_ERROR(kernel_module::run_kernel_shellcode_result_u64([&](Assembler* a, GpX& out_result_reg) -> bool {
+        a->mov(x0, Imm(123));
+        aarch64_asm_set_x_cstr_ptr(a, x1, "123456789aaabbbccc");
+        a->mov(w2, Imm('v'));
+        kernel_module::string_ops::kstrchr(a, x1, w2);
+        out_result_reg = x0;
+        return true;
+    }, result));
     
     printf("kstrchr1 result: %s\n", result == 0 ? "ok" : "failed");
     return KModErr::OK;
@@ -689,17 +619,15 @@ KModErr Test_kstrchr2() {
     RETURN_IF_ERROR(kernel_module::alloc_kernel_mem(1024, addr));
     RETURN_IF_ERROR(kernel_module::write_kernel_mem(addr, "123456789aaabbbccc", strlen("123456789aaabbbccc") + 1));
 
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-    auto a = asm_ctx.assembler();
-    kernel_module::arm64_module_asm_func_start(a);
-    a->mov(x0, Imm(123));
-    aarch64_asm_mov_x(a, x1, addr);
-    a->mov(w2, Imm('7'));
-    kernel_module::string_ops::kstrchr(a, x1, w2);
-    kernel_module::arm64_module_asm_func_end(a, x0);
-	std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
     uint64_t result = 0;
-    RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, result));
+    RETURN_IF_ERROR(kernel_module::run_kernel_shellcode_result_u64([&](Assembler* a, GpX& out_result_reg) -> bool {
+        a->mov(x0, Imm(123));
+        aarch64_asm_mov_x(a, x1, addr);
+        a->mov(w2, Imm('7'));
+        kernel_module::string_ops::kstrchr(a, x1, w2);
+        out_result_reg = x0;
+        return true;
+    }, result));
     
 
     addr = result;
@@ -711,18 +639,16 @@ KModErr Test_kstrchr2() {
 }
 
 KModErr Test_kstrrchr1() {
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-    auto a = asm_ctx.assembler();
-    kernel_module::arm64_module_asm_func_start(a);
-    a->mov(x0, Imm(123));
-    aarch64_asm_set_x_cstr_ptr(a, x1, "123456789aaabbbccc");
-    a->mov(w2, Imm('v'));
-    kernel_module::string_ops::kstrrchr(a, x1, w2);
-    kernel_module::arm64_module_asm_func_end(a, x0);
-
-    std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
     uint64_t result = 0;
-    RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, result));
+    RETURN_IF_ERROR(kernel_module::run_kernel_shellcode_result_u64([&](Assembler* a, GpX& out_result_reg) -> bool {
+        a->mov(x0, Imm(123));
+        aarch64_asm_set_x_cstr_ptr(a, x1, "123456789aaabbbccc");
+        a->mov(w2, Imm('v'));
+        kernel_module::string_ops::kstrrchr(a, x1, w2);
+        out_result_reg = x0;
+        return true;
+
+    }, result));
 
     printf("kstrrchr1 result: %s\n", result == 0 ? "ok" : "failed");
     return KModErr::OK;
@@ -734,18 +660,16 @@ KModErr Test_kstrrchr2() {
     RETURN_IF_ERROR(kernel_module::alloc_kernel_mem(1024, addr));
     RETURN_IF_ERROR(kernel_module::write_kernel_mem(addr, s, strlen(s) + 1));
 
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-    auto a = asm_ctx.assembler();
-    kernel_module::arm64_module_asm_func_start(a);
-    a->mov(x0, Imm(123));
-    aarch64_asm_mov_x(a, x1, addr);
-    a->mov(w2, Imm('a'));
-    kernel_module::string_ops::kstrrchr(a, x1, w2);
-    kernel_module::arm64_module_asm_func_end(a, x0);
-
-    std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
     uint64_t result = 0;
-    RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, result));
+    RETURN_IF_ERROR(kernel_module::run_kernel_shellcode_result_u64([&](Assembler* a, GpX& out_result_reg) -> bool {
+        a->mov(x0, Imm(123));
+        aarch64_asm_mov_x(a, x1, addr);
+        a->mov(w2, Imm('a'));
+        kernel_module::string_ops::kstrrchr(a, x1, w2);
+        out_result_reg = x0;
+        return true;
+
+    }, result));
 
     if (result == 0) {
         printf("kstrrchr2 result: failed (null)\n");
@@ -766,18 +690,16 @@ KModErr Test_kstrrchr3() {
     RETURN_IF_ERROR(kernel_module::alloc_kernel_mem(1024, addr));
     RETURN_IF_ERROR(kernel_module::write_kernel_mem(addr, s, strlen(s) + 1));
 
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-    auto a = asm_ctx.assembler();
-    kernel_module::arm64_module_asm_func_start(a);
-    a->mov(x0, Imm(123));
-    aarch64_asm_mov_x(a, x1, addr);
-    a->mov(w2, Imm(0));
-    kernel_module::string_ops::kstrrchr(a, x1, w2);
-    kernel_module::arm64_module_asm_func_end(a, x0);
-
-    std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
     uint64_t result = 0;
-    RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, result));
+    RETURN_IF_ERROR(kernel_module::run_kernel_shellcode_result_u64([&](Assembler* a, GpX& out_result_reg) -> bool {
+        a->mov(x0, Imm(123));
+        aarch64_asm_mov_x(a, x1, addr);
+        a->mov(w2, Imm(0));
+        kernel_module::string_ops::kstrrchr(a, x1, w2);
+        out_result_reg = x0;
+        return true;
+
+    }, result));
 
     uint64_t expect = addr + (uint64_t)strlen(s);
     printf("kstrrchr3 result: %s\n", result == expect ? "ok" : "failed");
@@ -789,17 +711,15 @@ KModErr Test_kmemset1() {
     RETURN_IF_ERROR(kernel_module::alloc_kernel_mem(1024, addr));
     RETURN_IF_ERROR(kernel_module::write_kernel_mem(addr, "123456789aaabbbccc", strlen("123456789aaabbbccc") + 1));
 
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-    auto a = asm_ctx.assembler();
-    kernel_module::arm64_module_asm_func_start(a);
-    aarch64_asm_mov_x(a, x0, addr);
-    a->mov(w1, Imm('k'));
-    aarch64_asm_mov_x(a, x2, 5);
-    kernel_module::string_ops::kmemset(a, x0, w1, x2);
-    kernel_module::arm64_module_asm_func_end(a, x0);
-	std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
     uint64_t result = 0;
-    RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, result));
+    RETURN_IF_ERROR(kernel_module::run_kernel_shellcode_result_u64([&](Assembler* a, GpX& out_result_reg) -> bool {
+        aarch64_asm_mov_x(a, x0, addr);
+        a->mov(w1, Imm('k'));
+        aarch64_asm_mov_x(a, x2, 5);
+        kernel_module::string_ops::kmemset(a, x0, w1, x2);
+        out_result_reg = x0;
+        return true;
+    }, result));
     
 
     addr = result;
@@ -815,16 +735,14 @@ KModErr Test_kmemset2() {
     RETURN_IF_ERROR(kernel_module::alloc_kernel_mem(1024, addr));
     RETURN_IF_ERROR(kernel_module::write_kernel_mem(addr, "123456789aaabbbccc", strlen("123456789aaabbbccc") + 1));
 
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-    auto a = asm_ctx.assembler();
-    kernel_module::arm64_module_asm_func_start(a);
-    aarch64_asm_mov_x(a, x0, addr);
-    aarch64_asm_mov_x(a, x1, 5);
-    kernel_module::string_ops::kmemset(a, x0, 'k', x1);
-    kernel_module::arm64_module_asm_func_end(a, x0);
-	std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
     uint64_t result = 0;
-    RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, result));
+    RETURN_IF_ERROR(kernel_module::run_kernel_shellcode_result_u64([&](Assembler* a, GpX& out_result_reg) -> bool {
+        aarch64_asm_mov_x(a, x0, addr);
+        aarch64_asm_mov_x(a, x1, 5);
+        kernel_module::string_ops::kmemset(a, x0, 'k', x1);
+        out_result_reg = x0;
+        return true;
+    }, result));
 
     addr = result;
     std::vector<uint8_t> buf(sizeof("kkkkk6789aaabbbccc"));
@@ -835,54 +753,48 @@ KModErr Test_kmemset2() {
 }
 
 KModErr Test_kmemcmp1() {
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-    auto a = asm_ctx.assembler();
-    kernel_module::arm64_module_asm_func_start(a);
-    a->mov(x0, Imm(123));
-    aarch64_asm_set_x_cstr_ptr(a, x1, "123456789");
-    aarch64_asm_set_x_cstr_ptr(a, x2, "987654321");
-    a->mov(x3, Imm(strlen("123456789")));
-    kernel_module::string_ops::kmemcmp(a, x1, x2, x3);
-    kernel_module::arm64_module_asm_func_end(a, x0);
-	std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
     uint64_t result = 0;
-    RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, result));
+    RETURN_IF_ERROR(kernel_module::run_kernel_shellcode_result_u64([&](Assembler* a, GpX& out_result_reg) -> bool {
+        a->mov(x0, Imm(123));
+        aarch64_asm_set_x_cstr_ptr(a, x1, "123456789");
+        aarch64_asm_set_x_cstr_ptr(a, x2, "987654321");
+        a->mov(x3, Imm(strlen("123456789")));
+        kernel_module::string_ops::kmemcmp(a, x1, x2, x3);
+        out_result_reg = x0;
+        return true;
+    }, result));
     
     printf("kmemcmp1 result: %s\n", result != 0 ? "ok" : "failed");
     return KModErr::OK;
 }
 
 KModErr Test_kmemcmp2() {
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-    auto a = asm_ctx.assembler();
-    kernel_module::arm64_module_asm_func_start(a);
-    a->mov(x0, Imm(123));
-    aarch64_asm_set_x_cstr_ptr(a, x1, "12345");
-    aarch64_asm_set_x_cstr_ptr(a, x2, "123456789");
-    a->mov(x3, Imm(strlen("123456789")));
-    kernel_module::string_ops::kmemcmp(a, x1, x2, x3);
-    kernel_module::arm64_module_asm_func_end(a, x0);
-	std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
     uint64_t result = 0;
-    RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, result));
+    RETURN_IF_ERROR(kernel_module::run_kernel_shellcode_result_u64([&](Assembler* a, GpX& out_result_reg) -> bool {
+        a->mov(x0, Imm(123));
+        aarch64_asm_set_x_cstr_ptr(a, x1, "12345");
+        aarch64_asm_set_x_cstr_ptr(a, x2, "123456789");
+        a->mov(x3, Imm(strlen("123456789")));
+        kernel_module::string_ops::kmemcmp(a, x1, x2, x3);
+        out_result_reg = x0;
+        return true;
+    }, result));
     
     printf("kmemcmp2 result: %s\n", result != 0 ? "ok" : "failed");
     return KModErr::OK;
 }
 
 KModErr Test_kmemcmp3() {
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-    auto a = asm_ctx.assembler();
-    kernel_module::arm64_module_asm_func_start(a);
-    a->mov(x0, Imm(123));
-    aarch64_asm_set_x_cstr_ptr(a, x1, "123456789");
-    aarch64_asm_set_x_cstr_ptr(a, x2, "123456789");
-    a->mov(x3, Imm(strlen("123456789")));
-    kernel_module::string_ops::kmemcmp(a, x1, x2, x3);
-    kernel_module::arm64_module_asm_func_end(a, x0);
-	std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
     uint64_t result = 0;
-    RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, result));
+    RETURN_IF_ERROR(kernel_module::run_kernel_shellcode_result_u64([&](Assembler* a, GpX& out_result_reg) -> bool {
+        a->mov(x0, Imm(123));
+        aarch64_asm_set_x_cstr_ptr(a, x1, "123456789");
+        aarch64_asm_set_x_cstr_ptr(a, x2, "123456789");
+        a->mov(x3, Imm(strlen("123456789")));
+        kernel_module::string_ops::kmemcmp(a, x1, x2, x3);
+        out_result_reg = x0;
+        return true;
+    }, result));
     
     printf("kmemcmp3 result: %s\n", result == 0 ? "ok" : "failed");
     return KModErr::OK;
@@ -895,17 +807,13 @@ KModErr Test_kmemcpy() {
     RETURN_IF_ERROR(kernel_module::alloc_kernel_mem(sizeof(test_data), addr));
     RETURN_IF_ERROR(kernel_module::write_kernel_mem(addr, &test_data, sizeof(test_data)));
 
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-    auto a = asm_ctx.assembler();
-    kernel_module::arm64_module_asm_func_start(a);
-    aarch64_asm_mov_x(a, x0, addr);
-    aarch64_asm_set_x_cstr_ptr(a, x1, "aabbcc");
-    a->mov(x2, Imm(strlen("aabbcc") + 1));
-    kernel_module::string_ops::kmemcpy(a, x0, x1, x2);
-    kernel_module::arm64_module_asm_func_end(a);
-	std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
-    uint64_t result = 0;
-    RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, result));
+    RETURN_IF_ERROR(kernel_module::run_kernel_shellcode([addr](Assembler* a) -> bool {
+        aarch64_asm_mov_x(a, x0, addr);
+        aarch64_asm_set_x_cstr_ptr(a, x1, "aabbcc");
+        a->mov(x2, Imm(strlen("aabbcc") + 1));
+        kernel_module::string_ops::kmemcpy(a, x0, x1, x2);
+        return true;
+    }));
     
 
     std::vector<uint8_t> buf(sizeof(test_data));
@@ -916,20 +824,18 @@ KModErr Test_kmemcpy() {
 }
 
 KModErr Test_kmemmem1() {
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-    auto a = asm_ctx.assembler();
-
-    kernel_module::arm64_module_asm_func_start(a);
-    a->mov(x0, Imm(123));
-    aarch64_asm_set_x_cstr_ptr(a, x1, "123456789aaabbbccc");
-    a->mov(x2, Imm(sizeof("123456789aaabbbccc") - 1));
-    aarch64_asm_set_x_cstr_ptr(a, x3, "vvvccc");
-    a->mov(x4, Imm(sizeof("vvvccc") - 1));
-    kernel_module::string_ops::kmemmem(a, x1, x2, x3, x4);
-    kernel_module::arm64_module_asm_func_end(a, x0);
-    std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
     uint64_t result = 0;
-    RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, result));
+    RETURN_IF_ERROR(kernel_module::run_kernel_shellcode_result_u64([&](Assembler* a, GpX& out_result_reg) -> bool {
+
+        a->mov(x0, Imm(123));
+        aarch64_asm_set_x_cstr_ptr(a, x1, "123456789aaabbbccc");
+        a->mov(x2, Imm(sizeof("123456789aaabbbccc") - 1));
+        aarch64_asm_set_x_cstr_ptr(a, x3, "vvvccc");
+        a->mov(x4, Imm(sizeof("vvvccc") - 1));
+        kernel_module::string_ops::kmemmem(a, x1, x2, x3, x4);
+        out_result_reg = x0;
+        return true;
+    }, result));
     printf("kmemmem1 result: %s\n", result == 0 ? "ok" : "failed");
     return KModErr::OK;
 }
@@ -939,21 +845,19 @@ KModErr Test_kmemmem2() {
     RETURN_IF_ERROR(kernel_module::alloc_kernel_mem(1024, addr));
     RETURN_IF_ERROR(kernel_module::write_kernel_mem(addr, "123456789aaabbbccc", sizeof("123456789aaabbbccc")));
 
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-    auto a = asm_ctx.assembler();
-
-    kernel_module::arm64_module_asm_func_start(a);
-    a->mov(x0, Imm(123));
-    aarch64_asm_mov_x(a, x1, addr);
-    a->mov(x2, Imm(sizeof("123456789aaabbbccc") - 1));
-    aarch64_asm_set_x_cstr_ptr(a, x3, "789aaa");
-    a->mov(x4, Imm(sizeof("789aaa") - 1));
-    kernel_module::string_ops::kmemmem(a, x1, x2, x3, x4);
-    kernel_module::arm64_module_asm_func_end(a, x0);
-
-    std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
     uint64_t result = 0;
-    RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, result));
+    RETURN_IF_ERROR(kernel_module::run_kernel_shellcode_result_u64([&](Assembler* a, GpX& out_result_reg) -> bool {
+
+        a->mov(x0, Imm(123));
+        aarch64_asm_mov_x(a, x1, addr);
+        a->mov(x2, Imm(sizeof("123456789aaabbbccc") - 1));
+        aarch64_asm_set_x_cstr_ptr(a, x3, "789aaa");
+        a->mov(x4, Imm(sizeof("789aaa") - 1));
+        kernel_module::string_ops::kmemmem(a, x1, x2, x3, x4);
+        out_result_reg = x0;
+        return true;
+
+    }, result));
 
     addr = result;
     std::vector<uint8_t> buf(sizeof("789aaabbbccc") - 1);
@@ -970,21 +874,19 @@ KModErr Test_kmemmem3() {
     RETURN_IF_ERROR(kernel_module::alloc_kernel_mem(1024, addr));
     RETURN_IF_ERROR(kernel_module::write_kernel_mem(addr, "hello-world", sizeof("hello-world")));
 
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-    auto a = asm_ctx.assembler();
-
-    kernel_module::arm64_module_asm_func_start(a);
-    a->mov(x0, Imm(123));
-    aarch64_asm_mov_x(a, x1, addr);
-    a->mov(x2, Imm(sizeof("hello-world") - 1));
-    aarch64_asm_set_x_cstr_ptr(a, x3, "hello");
-    a->mov(x4, Imm(sizeof("hello") - 1));
-    kernel_module::string_ops::kmemmem(a, x1, x2, x3, x4);
-    kernel_module::arm64_module_asm_func_end(a, x0);
-
-    std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
     uint64_t result = 0;
-    RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, result));
+    RETURN_IF_ERROR(kernel_module::run_kernel_shellcode_result_u64([&](Assembler* a, GpX& out_result_reg) -> bool {
+
+        a->mov(x0, Imm(123));
+        aarch64_asm_mov_x(a, x1, addr);
+        a->mov(x2, Imm(sizeof("hello-world") - 1));
+        aarch64_asm_set_x_cstr_ptr(a, x3, "hello");
+        a->mov(x4, Imm(sizeof("hello") - 1));
+        kernel_module::string_ops::kmemmem(a, x1, x2, x3, x4);
+        out_result_reg = x0;
+        return true;
+
+    }, result));
     
 
     addr = result;
@@ -1002,22 +904,19 @@ KModErr Test_kmemmem4() {
     RETURN_IF_ERROR(kernel_module::alloc_kernel_mem(1024, addr));
     RETURN_IF_ERROR(kernel_module::write_kernel_mem(addr, "123456789aaabbbccc", sizeof("123456789aaabbbccc")));
 
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-    auto a = asm_ctx.assembler();
-
-    kernel_module::arm64_module_asm_func_start(a);
-    a->mov(x0, Imm(123));
-    aarch64_asm_mov_x(a, x1, addr);
-    a->mov(x2, Imm(sizeof("123456789aaabbbccc") - 1));
-    aarch64_asm_set_x_cstr_ptr(a, x3, "");
-    a->mov(x4, Imm(0));
-    kernel_module::string_ops::kmemmem(a, x1, x2, x3, x4);
-    kernel_module::arm64_module_asm_func_end(a, x0);
-
-    std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
-
     uint64_t result = 0;
-    RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, result));
+    RETURN_IF_ERROR(kernel_module::run_kernel_shellcode_result_u64([&](Assembler* a, GpX& out_result_reg) -> bool {
+
+        a->mov(x0, Imm(123));
+        aarch64_asm_mov_x(a, x1, addr);
+        a->mov(x2, Imm(sizeof("123456789aaabbbccc") - 1));
+        aarch64_asm_set_x_cstr_ptr(a, x3, "");
+        a->mov(x4, Imm(0));
+        kernel_module::string_ops::kmemmem(a, x1, x2, x3, x4);
+        out_result_reg = x0;
+        return true;
+
+    }, result));
     
     addr = result;
     std::vector<uint8_t> buf(sizeof("123456789aaabbbccc") - 1);
@@ -1037,22 +936,20 @@ KModErr Test_kmemmem5() {
     RETURN_IF_ERROR(kernel_module::alloc_kernel_mem(1024, addr));
     RETURN_IF_ERROR(kernel_module::write_kernel_mem(addr, datas, sizeof(datas)));
 
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-    auto a = asm_ctx.assembler();
-
-    kernel_module::arm64_module_asm_func_start(a);
-    a->mov(x0, Imm(123));
-    aarch64_asm_mov_x(a, x1, addr);
-    a->mov(x2, Imm(sizeof(datas)));
-    std::vector<uint8_t> double_zero(2);
-    aarch64_asm_set_x_data_ptr(a, x3, double_zero);
-    a->mov(x4, Imm(2));
-    kernel_module::string_ops::kmemmem(a, x1, x2, x3, x4);
-    kernel_module::arm64_module_asm_func_end(a, x0);
-
-    std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
     uint64_t result = 0;
-    RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, result));
+    RETURN_IF_ERROR(kernel_module::run_kernel_shellcode_result_u64([&](Assembler* a, GpX& out_result_reg) -> bool {
+
+        a->mov(x0, Imm(123));
+        aarch64_asm_mov_x(a, x1, addr);
+        a->mov(x2, Imm(sizeof(datas)));
+        std::vector<uint8_t> double_zero(2);
+        aarch64_asm_set_x_data_ptr(a, x3, double_zero);
+        a->mov(x4, Imm(2));
+        kernel_module::string_ops::kmemmem(a, x1, x2, x3, x4);
+        out_result_reg = x0;
+        return true;
+
+    }, result));
     
     uint64_t kaddr = result;
     printf("kmemmem5 result: %s\n", kaddr == 0 ? "ok" : "failed");
@@ -1067,22 +964,20 @@ KModErr Test_kmemmem6() {
     RETURN_IF_ERROR(kernel_module::alloc_kernel_mem(1024, addr));
     RETURN_IF_ERROR(kernel_module::write_kernel_mem(addr, datas, sizeof(datas)));
 
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-    auto a = asm_ctx.assembler();
-
-    kernel_module::arm64_module_asm_func_start(a);
-    a->mov(x0, Imm(123));
-    aarch64_asm_mov_x(a, x1, addr);
-    a->mov(x2, Imm(sizeof(datas)));
-    std::vector<uint8_t> double_zero(2);
-    aarch64_asm_set_x_data_ptr(a, x3, double_zero);
-    a->mov(x4, Imm(2));
-    kernel_module::string_ops::kmemmem(a, x1, x2, x3, x4);
-    kernel_module::arm64_module_asm_func_end(a, x0);
-
-    std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
     uint64_t result = 0;
-    RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, result));
+    RETURN_IF_ERROR(kernel_module::run_kernel_shellcode_result_u64([&](Assembler* a, GpX& out_result_reg) -> bool {
+
+        a->mov(x0, Imm(123));
+        aarch64_asm_mov_x(a, x1, addr);
+        a->mov(x2, Imm(sizeof(datas)));
+        std::vector<uint8_t> double_zero(2);
+        aarch64_asm_set_x_data_ptr(a, x3, double_zero);
+        a->mov(x4, Imm(2));
+        kernel_module::string_ops::kmemmem(a, x1, x2, x3, x4);
+        out_result_reg = x0;
+        return true;
+
+    }, result));
     
     uint64_t correct_addr = addr + sizeof(datas) - 2;
     uint64_t kaddr = result;
@@ -1098,22 +993,20 @@ KModErr Test_kmemmem7() {
     RETURN_IF_ERROR(kernel_module::alloc_kernel_mem(1024, addr));
     RETURN_IF_ERROR(kernel_module::write_kernel_mem(addr, datas, sizeof(datas)));
 
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-    auto a = asm_ctx.assembler();
-
-    kernel_module::arm64_module_asm_func_start(a);
-    a->mov(x0, Imm(123));
-    aarch64_asm_mov_x(a, x1, addr);
-    a->mov(x2, Imm(sizeof(datas)));
-    std::vector<uint8_t> double_zero(2);
-    aarch64_asm_set_x_data_ptr(a, x3, double_zero);
-    a->mov(x4, Imm(2));
-    kernel_module::string_ops::kmemmem(a, x1, x2, x3, x4);
-    kernel_module::arm64_module_asm_func_end(a, x0);
-
-    std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
     uint64_t result = 0;
-    RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, result));
+    RETURN_IF_ERROR(kernel_module::run_kernel_shellcode_result_u64([&](Assembler* a, GpX& out_result_reg) -> bool {
+
+        a->mov(x0, Imm(123));
+        aarch64_asm_mov_x(a, x1, addr);
+        a->mov(x2, Imm(sizeof(datas)));
+        std::vector<uint8_t> double_zero(2);
+        aarch64_asm_set_x_data_ptr(a, x3, double_zero);
+        a->mov(x4, Imm(2));
+        kernel_module::string_ops::kmemmem(a, x1, x2, x3, x4);
+        out_result_reg = x0;
+        return true;
+
+    }, result));
     
 	uint64_t correct_addr = addr + 14;
     uint64_t kaddr = result;
@@ -1122,18 +1015,16 @@ KModErr Test_kmemmem7() {
 }
 
 KModErr Test_kmemchr1() {
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-    auto a = asm_ctx.assembler();
-    kernel_module::arm64_module_asm_func_start(a);
-    a->mov(x0, Imm(123));
-    aarch64_asm_set_x_cstr_ptr(a, x1, "123456789aaabbbccc");
-    a->mov(w2, Imm('v'));
-    a->mov(x3, Imm(sizeof("123456789aaabbbccc")));
-    kernel_module::string_ops::kmemchr(a, x1, w2, x3);
-    kernel_module::arm64_module_asm_func_end(a, x0);
-	std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
     uint64_t result = 0;
-    RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, result));
+    RETURN_IF_ERROR(kernel_module::run_kernel_shellcode_result_u64([&](Assembler* a, GpX& out_result_reg) -> bool {
+        a->mov(x0, Imm(123));
+        aarch64_asm_set_x_cstr_ptr(a, x1, "123456789aaabbbccc");
+        a->mov(w2, Imm('v'));
+        a->mov(x3, Imm(sizeof("123456789aaabbbccc")));
+        kernel_module::string_ops::kmemchr(a, x1, w2, x3);
+        out_result_reg = x0;
+        return true;
+    }, result));
     
     printf("kmemchr1 result: %s\n", result == 0 ? "ok" : "failed");
     return KModErr::OK;
@@ -1144,18 +1035,16 @@ KModErr Test_kmemchr2() {
     RETURN_IF_ERROR(kernel_module::alloc_kernel_mem(1024, addr));
     RETURN_IF_ERROR(kernel_module::write_kernel_mem(addr, "123456789aaabbbccc", strlen("123456789aaabbbccc") + 1));
 
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-    auto a = asm_ctx.assembler();
-    kernel_module::arm64_module_asm_func_start(a);
-    a->mov(x0, Imm(123));
-    aarch64_asm_mov_x(a, x1, addr);
-    a->mov(w2, Imm('7'));
-	a->mov(x3, Imm(sizeof("123456789aaabbbccc")));
-    kernel_module::string_ops::kmemchr(a, x1, w2, x3);
-    kernel_module::arm64_module_asm_func_end(a, x0);
-	std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
     uint64_t result = 0;
-    RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, result));
+    RETURN_IF_ERROR(kernel_module::run_kernel_shellcode_result_u64([&](Assembler* a, GpX& out_result_reg) -> bool {
+        a->mov(x0, Imm(123));
+        aarch64_asm_mov_x(a, x1, addr);
+        a->mov(w2, Imm('7'));
+        a->mov(x3, Imm(sizeof("123456789aaabbbccc")));
+        kernel_module::string_ops::kmemchr(a, x1, w2, x3);
+        out_result_reg = x0;
+        return true;
+    }, result));
     
 
     addr = result;
@@ -1167,36 +1056,32 @@ KModErr Test_kmemchr2() {
 }
 
 KModErr Test_kmemchr3() {
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-    auto a = asm_ctx.assembler();
-    kernel_module::arm64_module_asm_func_start(a);
-    a->mov(x0, Imm(123));
-    aarch64_asm_set_x_cstr_ptr(a, x1, "123456789aaabbbccc");
-    a->mov(w2, Imm('9'));
-    a->mov(x3, Imm(8));
-    kernel_module::string_ops::kmemchr(a, x1, w2, x3);
-    kernel_module::arm64_module_asm_func_end(a, x0);
-	std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
     uint64_t result = 0;
-    RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, result));
+    RETURN_IF_ERROR(kernel_module::run_kernel_shellcode_result_u64([&](Assembler* a, GpX& out_result_reg) -> bool {
+        a->mov(x0, Imm(123));
+        aarch64_asm_set_x_cstr_ptr(a, x1, "123456789aaabbbccc");
+        a->mov(w2, Imm('9'));
+        a->mov(x3, Imm(8));
+        kernel_module::string_ops::kmemchr(a, x1, w2, x3);
+        out_result_reg = x0;
+        return true;
+    }, result));
     
     printf("kmemchr3 result: %s\n", result == 0 ? "ok" : "failed");
     return KModErr::OK;
 }
 
 KModErr Test_kmemrchr1() {
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-    auto a = asm_ctx.assembler();
-    kernel_module::arm64_module_asm_func_start(a);
-    a->mov(x0, Imm(123));
-    aarch64_asm_set_x_cstr_ptr(a, x1, "123456789aaabbbccc");
-    a->mov(w2, Imm('v'));
-    a->mov(x3, Imm(sizeof("123456789aaabbbccc")));
-    kernel_module::string_ops::kmemrchr(a, x1, w2, x3);
-    kernel_module::arm64_module_asm_func_end(a, x0);
-	std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
     uint64_t result = 0;
-    RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, result));
+    RETURN_IF_ERROR(kernel_module::run_kernel_shellcode_result_u64([&](Assembler* a, GpX& out_result_reg) -> bool {
+        a->mov(x0, Imm(123));
+        aarch64_asm_set_x_cstr_ptr(a, x1, "123456789aaabbbccc");
+        a->mov(w2, Imm('v'));
+        a->mov(x3, Imm(sizeof("123456789aaabbbccc")));
+        kernel_module::string_ops::kmemrchr(a, x1, w2, x3);
+        out_result_reg = x0;
+        return true;
+    }, result));
     
     printf("kmemrchr1 result: %s\n", result == 0 ? "ok" : "failed");
     return KModErr::OK;
@@ -1207,18 +1092,16 @@ KModErr Test_kmemrchr2() {
     RETURN_IF_ERROR(kernel_module::alloc_kernel_mem(1024, addr));
     RETURN_IF_ERROR(kernel_module::write_kernel_mem(addr, "123456789aaabbbccc", strlen("123456789aaabbbccc") + 1));
 
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-    auto a = asm_ctx.assembler();
-    kernel_module::arm64_module_asm_func_start(a);
-    a->mov(x0, Imm(123));
-    aarch64_asm_mov_x(a, x1, addr);
-    a->mov(w2, Imm('b'));
-	a->mov(x3, Imm(sizeof("123456789aaabbbccc")));
-    kernel_module::string_ops::kmemrchr(a, x1, w2, x3);
-    kernel_module::arm64_module_asm_func_end(a, x0);
-	std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
     uint64_t result = 0;
-    RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, result));
+    RETURN_IF_ERROR(kernel_module::run_kernel_shellcode_result_u64([&](Assembler* a, GpX& out_result_reg) -> bool {
+        a->mov(x0, Imm(123));
+        aarch64_asm_mov_x(a, x1, addr);
+        a->mov(w2, Imm('b'));
+        a->mov(x3, Imm(sizeof("123456789aaabbbccc")));
+        kernel_module::string_ops::kmemrchr(a, x1, w2, x3);
+        out_result_reg = x0;
+        return true;
+    }, result));
     
 
     addr = result;
@@ -1230,18 +1113,16 @@ KModErr Test_kmemrchr2() {
 }
 
 KModErr Test_kmemrchr3() {
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-    auto a = asm_ctx.assembler();
-    kernel_module::arm64_module_asm_func_start(a);
-    a->mov(x0, Imm(123));
-    aarch64_asm_set_x_cstr_ptr(a, x1, "123456789aaabbbccc");
-    a->mov(w2, Imm('9'));
-    a->mov(x3, Imm(8));
-    kernel_module::string_ops::kmemrchr(a, x1, w2, x3);
-    kernel_module::arm64_module_asm_func_end(a, x0);
-	std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
     uint64_t result = 0;
-    RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, result));
+    RETURN_IF_ERROR(kernel_module::run_kernel_shellcode_result_u64([&](Assembler* a, GpX& out_result_reg) -> bool {
+        a->mov(x0, Imm(123));
+        aarch64_asm_set_x_cstr_ptr(a, x1, "123456789aaabbbccc");
+        a->mov(w2, Imm('9'));
+        a->mov(x3, Imm(8));
+        kernel_module::string_ops::kmemrchr(a, x1, w2, x3);
+        out_result_reg = x0;
+        return true;
+    }, result));
     
     printf("kmemrchr3 result: %s\n", result == 0 ? "ok" : "failed");
     return KModErr::OK;
@@ -1249,68 +1130,60 @@ KModErr Test_kmemrchr3() {
 
 
 KModErr Test_kstartswith1() {
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-    auto a = asm_ctx.assembler();
-    kernel_module::arm64_module_asm_func_start(a);
-    a->mov(x0, Imm(123));
-    aarch64_asm_set_x_cstr_ptr(a, x1, "123456789");
-    aarch64_asm_set_x_cstr_ptr(a, x2, "123");
-    kernel_module::string_ops::kstartswith(a, x1, x2);
-    kernel_module::arm64_module_asm_func_end(a, x0);
-    std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
     uint64_t result = 0;
-    RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, result));
+    RETURN_IF_ERROR(kernel_module::run_kernel_shellcode_result_u64([&](Assembler* a, GpX& out_result_reg) -> bool {
+        a->mov(x0, Imm(123));
+        aarch64_asm_set_x_cstr_ptr(a, x1, "123456789");
+        aarch64_asm_set_x_cstr_ptr(a, x2, "123");
+        kernel_module::string_ops::kstartswith(a, x1, x2);
+        out_result_reg = x0;
+        return true;
+    }, result));
     
     printf("kstartswith1 result: %s\n", result == 1 ? "ok" : "failed");
     return KModErr::OK;
 }
 
 KModErr Test_kstartswith2() {
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-    auto a = asm_ctx.assembler();
-    kernel_module::arm64_module_asm_func_start(a);
-    a->mov(x0, Imm(123));
-    aarch64_asm_set_x_cstr_ptr(a, x1, "912345678");
-    aarch64_asm_set_x_cstr_ptr(a, x2, "123");
-    kernel_module::string_ops::kstartswith(a, x1, x2);
-    kernel_module::arm64_module_asm_func_end(a, x0);
-    std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
     uint64_t result = 0;
-    RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, result));
+    RETURN_IF_ERROR(kernel_module::run_kernel_shellcode_result_u64([&](Assembler* a, GpX& out_result_reg) -> bool {
+        a->mov(x0, Imm(123));
+        aarch64_asm_set_x_cstr_ptr(a, x1, "912345678");
+        aarch64_asm_set_x_cstr_ptr(a, x2, "123");
+        kernel_module::string_ops::kstartswith(a, x1, x2);
+        out_result_reg = x0;
+        return true;
+    }, result));
     
     printf("kstartswith2 result: %s\n", result == 0 ? "ok" : "failed");
     return KModErr::OK;
 }
 
 KModErr Test_kendswith1() {
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-    auto a = asm_ctx.assembler();
-    kernel_module::arm64_module_asm_func_start(a);
-    a->mov(x0, Imm(123));
-    aarch64_asm_set_x_cstr_ptr(a, x1, "123456789"); // str
-    aarch64_asm_set_x_cstr_ptr(a, x2, "789");       // suffix (应当匹配)
-    kernel_module::string_ops::kendswith(a, x1, x2);
-    kernel_module::arm64_module_asm_func_end(a, x0);
-    std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
     uint64_t result = 0;
-    RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, result));
+    RETURN_IF_ERROR(kernel_module::run_kernel_shellcode_result_u64([&](Assembler* a, GpX& out_result_reg) -> bool {
+        a->mov(x0, Imm(123));
+        aarch64_asm_set_x_cstr_ptr(a, x1, "123456789"); // str
+        aarch64_asm_set_x_cstr_ptr(a, x2, "789");       // suffix (应当匹配)
+        kernel_module::string_ops::kendswith(a, x1, x2);
+        out_result_reg = x0;
+        return true;
+    }, result));
     
     printf("kendswith1 result: %s\n", result == 1 ? "ok" : "failed");
     return KModErr::OK;
 }
 
 KModErr Test_kendswith2() {
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-    auto a = asm_ctx.assembler();
-    kernel_module::arm64_module_asm_func_start(a);
-    a->mov(x0, Imm(123));
-    aarch64_asm_set_x_cstr_ptr(a, x1, "123456789");
-    aarch64_asm_set_x_cstr_ptr(a, x2, "6789x");
-    kernel_module::string_ops::kendswith(a, x1, x2);
-    kernel_module::arm64_module_asm_func_end(a, x0);
-    std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
     uint64_t result = 0;
-    RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, result));
+    RETURN_IF_ERROR(kernel_module::run_kernel_shellcode_result_u64([&](Assembler* a, GpX& out_result_reg) -> bool {
+        a->mov(x0, Imm(123));
+        aarch64_asm_set_x_cstr_ptr(a, x1, "123456789");
+        aarch64_asm_set_x_cstr_ptr(a, x2, "6789x");
+        kernel_module::string_ops::kendswith(a, x1, x2);
+        out_result_reg = x0;
+        return true;
+    }, result));
     
     printf("kendswith2 result: %s\n", result == 0 ? "ok" : "failed");
     return KModErr::OK;

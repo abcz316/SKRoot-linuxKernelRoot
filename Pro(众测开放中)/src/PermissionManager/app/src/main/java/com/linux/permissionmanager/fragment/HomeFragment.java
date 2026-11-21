@@ -30,12 +30,13 @@ import com.linux.permissionmanager.AppSettings;
 import com.linux.permissionmanager.R;
 import com.linux.permissionmanager.bridge.NativeBridge;
 import com.linux.permissionmanager.helper.GenerateFakeAppDlg;
+import com.linux.permissionmanager.localadb.LocalAdbHelper;
 import com.linux.permissionmanager.model.GenerateFakeAppConfig;
 import com.linux.permissionmanager.model.HotloadMethod;
+import com.linux.permissionmanager.repack.ApkGenerator;
 import com.linux.permissionmanager.utils.AppInstallUtils;
 import com.linux.permissionmanager.utils.AppLaunchUtils;
 import com.linux.permissionmanager.utils.IconResourceUtils;
-import com.linux.permissionmanager.utils.repack.ApkGenerator;
 import com.linux.permissionmanager.utils.ApkInstallUtils;
 import com.linux.permissionmanager.utils.ClipboardUtils;
 import com.linux.permissionmanager.utils.DialogUtils;
@@ -46,6 +47,7 @@ import org.json.JSONObject;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -95,7 +97,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
         Button clean_info_btn = view.findViewById(R.id.clean_info_btn);
         tvSelinuxStatus = view.findViewById(R.id.tv_selinux_status);
         tvSeccompStatus = view.findViewById(R.id.tv_seccomp_status);
-        tvAdbStatus =view. findViewById(R.id.tv_adb_status);
+        tvAdbStatus = view.findViewById(R.id.tv_adb_status);
         tvOneplusBypassStatus =view. findViewById(R.id.tv_oneplus_bypass_status);
         mConsoleEdit = view.findViewById(R.id.console_edit);
 
@@ -231,7 +233,8 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
             NativeBridge.runRootCmd(mRootKey, "rm -f " + HOTLOAD_SHELL_PATH);
             NativeBridge.runRootCmd(mRootKey, "pm uninstall " + AppConfig.ZYGOTE_PRELOAD_TOOLS_PACKAGE);
         }
-        if(mHotloadMethod == HotloadMethod.CVE_2026_43499 || mHotloadMethod == HotloadMethod.CVE_2026_43284) {
+        if(mHotloadMethod == HotloadMethod.CVE_2026_43499 || mHotloadMethod == HotloadMethod.CVE_2026_43284  || mHotloadMethod == HotloadMethod.CVE_2026_98260) {
+            LocalAdbHelper.stopPairing(mActivity);
             DialogUtils.showCustomDialog(mActivity, "确认", "请问要软重启吗？\n\n提示：当前环境已安装完成！模块也已激活。一般不需要软重启，当使用特殊模块（如改机型）才需要进行软重启。",null,
             "不需要", (dialog, which) -> {
                     dialog.dismiss();
@@ -247,7 +250,6 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
             );
         }
     }
-
 
    private void onClickUninstallSkrootEnvBtn() {
        DialogUtils.showCustomDialog(mActivity,"确认","确定要卸载SKRoot环境吗？这会同时清空 su 授权列表和删除已安装的模块",null,
@@ -287,8 +289,15 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
         options.sourceApk = sourceApk;
         options.newPackageName = config.pkgName;
         options.newAppName = config.appName;
-        options.oldEntryActivityName = AppLaunchUtils.getLauncherActivityName(mActivity);
-        options.newEntryActivityName = config.launchActivity;
+        // DEX 中的类定义与 Manifest 中的 android:name 会同步修改
+        options.classRenames = Arrays.asList(
+                new ApkGenerator.ClassRename(AppLaunchUtils.getLauncherActivityName(mActivity), config.launchActivity),
+                new ApkGenerator.ClassRename(AppConfig.ENTRY_ADB_PAIRING_SERVICE_NAME, config.serviceName));
+        JSONObject json = new JSONObject();
+        json.put("entryAdbPairingServiceName", config.serviceName);
+        Map<String, byte[]> replacements = new LinkedHashMap<>();
+        replacements.put("lib/arm64-v8a/libconfigjson.so", json.toString().getBytes(StandardCharsets.UTF_8));
+        options.soReplacements = replacements;
         Resources res = mActivity.getResources();
         options.removeAppIcon = config.removeIcon;
         if(!config.removeIcon) {

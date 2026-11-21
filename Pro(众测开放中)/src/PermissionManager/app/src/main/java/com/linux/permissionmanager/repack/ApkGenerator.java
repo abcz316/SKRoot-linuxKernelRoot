@@ -1,4 +1,4 @@
-package com.linux.permissionmanager.utils.repack;
+package com.linux.permissionmanager.repack;
 
 import android.content.Context;
 import android.graphics.drawable.Drawable;
@@ -6,9 +6,11 @@ import com.linux.permissionmanager.utils.AppCertUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.Set;
@@ -26,8 +28,7 @@ public final class ApkGenerator {
         public File sourceApk;               // 必传：原 APK，可以是自身 base.apk
         public File outputApk;               // 必传：输出的新 APK
         public String newPackageName;        // null 时不修改安装包名
-        public String oldEntryActivityName; // 可选：原入口 Activity 完整类名；需和 newEntryActivityName 同时设置
-        public String newEntryActivityName; // 可选：新入口 Activity 完整类名；会同步改 Manifest + classes*.dex
+        public List<ClassRename> classRenames = new ArrayList<>(); // 可选：批量重命名 Class，并同步修改 Manifest 中的类名
         public String newAppName;            // null 时不修改应用显示名称
         public String newVersionName;        // null 时不修改 versionName
         public Integer newVersionCode;       // null 时不修改 versionCode，正整数
@@ -54,6 +55,18 @@ public final class ApkGenerator {
     }
 
 
+
+    /** 一条完整类名重命名规则；DEX 定义与 AndroidManifest.xml 中对应的组件类名同步修改。 */
+    public static final class ClassRename {
+        public String oldClassName;
+        public String newClassName;
+
+        public ClassRename(String oldClassName, String newClassName) {
+            this.oldClassName = oldClassName;
+            this.newClassName = newClassName;
+        }
+    }
+
     /**
      * 动态图标模板在【编译后的 APK ZIP】中的路径，不是源码 res/ 的文件路径。
      * 调用方用 unzip -l 或 ZipFile.entries() 获取实际条目名。
@@ -78,29 +91,19 @@ public final class ApkGenerator {
             throw new IllegalArgumentException("sourceApk/outputApk 必须指定");
         }
         Set<String> safePermissions = validateRemovePermissions(options.removePermissions);
+        Map<String, String> safeClassRenames = validateClassRenames(options.classRenames);
         if (options.removeAppIcon && options.customIcon != null) {
             throw new IllegalArgumentException("removeAppIcon 与 customIcon 不能同时启用");
         }
         if (options.newPackageName == null && options.newAppName == null && options.newVersionName == null && options.newVersionCode == null && options.targetApkSize == null
                 && !options.removeAppIcon && options.customIcon == null
-                && options.oldEntryActivityName == null && options.newEntryActivityName == null
+                && safeClassRenames.isEmpty()
                 && (options.soReplacements == null || options.soReplacements.isEmpty()) && safePermissions.isEmpty()) {
             throw new IllegalArgumentException("未指定任何 APK 修改操作");
         }
 
-        // 两个类名必须同时设置；禁止只改 Manifest 或只改 DEX。
-        if ((options.oldEntryActivityName == null) != (options.newEntryActivityName == null)) {
-            throw new IllegalArgumentException("oldEntryActivityName/newEntryActivityName 必须同时提供");
-        }
         if (options.newVersionCode != null && options.newVersionCode <= 0) throw new IllegalArgumentException("newVersionCode 必须大于 0");
         if (options.targetApkSize != null && options.targetApkSize <= 0) throw new IllegalArgumentException("targetApkSize 必须大于 0");
-        if (options.oldEntryActivityName != null) {
-            EntryDexRenamer.validateClassName(options.oldEntryActivityName);
-            EntryDexRenamer.validateClassName(options.newEntryActivityName);
-            if (options.oldEntryActivityName.equals(options.newEntryActivityName)) {
-                throw new IllegalArgumentException("新旧入口 Activity 类名不能相同");
-            }
-        }
 
         File source = options.sourceApk.getCanonicalFile();
         File output = options.outputApk.getCanonicalFile();
@@ -123,12 +126,12 @@ public final class ApkGenerator {
         File staging = File.createTempFile("apk-signed-", ".apk", outputDir);
         try {
             ApkZipRebuilder.assertRealApk(source);
-            if (options.oldEntryActivityName != null) {
-                EntryDexRenamer.validateDexClasses(source, options.oldEntryActivityName, options.newEntryActivityName);
+            if (!safeClassRenames.isEmpty()) {
+                DexClassRenamer.validateDexClasses(source, safeClassRenames);
             }
             Set<String> replaced = ApkZipRebuilder.rebuildApk(source, unsigned, safeReplacements,
                     options.newPackageName, options.newAppName, options.newVersionName, options.newVersionCode,
-                    options.removeAppIcon, options.oldEntryActivityName, options.newEntryActivityName, context.getCacheDir(), safePermissions);
+                    options.removeAppIcon, safeClassRenames, context.getCacheDir(), safePermissions);
             Set<String> missing = new LinkedHashSet<>(safeReplacements.keySet());
             missing.removeAll(replaced);
             if (!missing.isEmpty()) throw new IOException("APK 缺少以下待替换文件（请核对编译后的 ZIP 路径）: " + missing);
@@ -152,6 +155,29 @@ public final class ApkGenerator {
             unsigned.delete();
             staging.delete();
         }
+    }
+
+    private static Map<String, String> validateClassRenames(List<ClassRename> classRenames) {
+        if (classRenames == null || classRenames.isEmpty()) return Collections.emptyMap();
+
+        Map<String, String> result = new LinkedHashMap<>();
+        Set<String> newNames = new LinkedHashSet<>();
+        for (ClassRename rename : classRenames) {
+            if (rename == null) throw new IllegalArgumentException("classRenames 不能包含 null 规则");
+            DexClassRenamer.validateClassName(rename.oldClassName);
+            DexClassRenamer.validateClassName(rename.newClassName);
+            if (rename.oldClassName.equals(rename.newClassName)) {
+                throw new IllegalArgumentException("新旧 Class 类名不能相同: " + rename.oldClassName);
+            }
+            if (result.containsKey(rename.oldClassName)) {
+                throw new IllegalArgumentException("classRenames 中存在重复的旧类名: " + rename.oldClassName);
+            }
+            if (!newNames.add(rename.newClassName)) {
+                throw new IllegalArgumentException("classRenames 中存在重复的新类名: " + rename.newClassName);
+            }
+            result.put(rename.oldClassName, rename.newClassName);
+        }
+        return result;
     }
 
     private static Set<String> validateRemovePermissions(Set<String> permissions) {

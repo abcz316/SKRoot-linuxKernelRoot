@@ -13,10 +13,13 @@ import android.graphics.drawable.GradientDrawable;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.text.TextUtils;
+import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
@@ -53,8 +56,9 @@ public class DialogUtils {
         builder.show();
     }
 
-    public static void showNeedPermissionDialog(Context context) {
-        DialogUtils.showMsgDlg(context, "权限申请", "请授予权限后重新操作", null);
+    public static void showNeedPermissionDialog(Context context, String permissionName) {
+        String msg = TextUtils.isEmpty(permissionName) ? "请授予「所需权限」后重新操作" : "请授予「" + permissionName + "」后重新操作";
+        DialogUtils.showMsgDlg(context, "权限申请", msg, null);
     }
 
     /**
@@ -118,17 +122,41 @@ public class DialogUtils {
     }
 
     public static AlertDialog showSingleChoiceDialog(Context context, String title, String[] items, int checkedItem, DialogInterface.OnClickListener listener) {
-        AlertDialog dialog = new AlertDialog.Builder(context)
+        return showSingleChoiceDialog(context, title, items, checkedItem, null, listener);
+    }
+
+    public static AlertDialog showSingleChoiceDialog(Context context, String title, String[] items, int checkedItem, CharSequence footNote, DialogInterface.OnClickListener listener) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(context)
                 .setTitle(title != null ? title : "请选择一个选项")
                 .setSingleChoiceItems(items, checkedItem, (d, which) -> {
                     d.dismiss();
                     if (listener != null) new Handler(Looper.getMainLooper()).post(() -> listener.onClick(d, which));
                 })
                 .setCancelable(false)
-                .setNegativeButton("取消", (d, which) -> d.dismiss())
-                .create();
+                .setNegativeButton("取消", (d, which) -> d.dismiss());
+        // AlertDialog 的 customPanel 位于列表之后、按钮栏之前，借它放置列表下方的脚注
+        if (!TextUtils.isEmpty(footNote)) builder.setView(createFootNoteView(context, footNote));
+        AlertDialog dialog = builder.create();
         dialog.show();
         return dialog;
+    }
+
+    private static View createFootNoteView(Context context, CharSequence text) {
+        LinearLayout container = new LinearLayout(context);
+        container.setOrientation(LinearLayout.VERTICAL);
+        View divider = new View(context);
+        divider.setBackgroundColor(0xFFEEEEEE);
+        LinearLayout.LayoutParams dividerLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, Math.max(1, dp(context, 1)));
+        dividerLp.setMargins(dp(context, 24), 0, dp(context, 24), 0);
+        container.addView(divider, dividerLp);
+        TextView tv = new TextView(context);
+        tv.setText(text);
+        tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
+        tv.setTextColor(0xFF666666);
+        tv.setLineSpacing(0f, 1.25f);
+        tv.setPadding(dp(context, 24), dp(context, 10), dp(context, 24), dp(context, 12));
+        container.addView(tv);
+        return container;
     }
 
     private static void saveLogsToSdcard(Activity activity, String logs) {
@@ -141,7 +169,7 @@ public class DialogUtils {
 
     private static void showLogSaveSelectMenu(Activity activity, View anchor, String logs) {
         if(!GetSdcardPermissionsHelper.getPermissions(activity, activity, activity.getPackageName())) {
-            DialogUtils.showNeedPermissionDialog(activity);
+            DialogUtils.showNeedPermissionDialog(activity, "文件存储权限");
             return;
         }
         final String[] items = { "1.复制文本", "2.导出到文件", };
@@ -168,44 +196,53 @@ public class DialogUtils {
         if (dialog != null && dialog.isShowing()) dialog.dismiss();
     }
 
-    public static Dialog showLoadingDialog(Context context, String message) {
-        Dialog dialog = new Dialog(context);
+    public static Dialog showLoadingDialog(Activity activity, String message) {
+        Dialog dialog = new Dialog(activity);
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         dialog.setCancelable(false);
         dialog.setCanceledOnTouchOutside(false);
 
         // 最外层容器：透明背景下居中
-        FrameLayout outer = new FrameLayout(context);
-        outer.setPadding(dp(context, 24), dp(context, 24), dp(context, 24), dp(context, 24));
+        FrameLayout outer = new FrameLayout(activity);
+        outer.setPadding(dp(activity, 24), dp(activity, 24), dp(activity, 24), dp(activity, 24));
 
         // 白色圆角卡片
-        LinearLayout card = new LinearLayout(context);
+        LinearLayout card = new LinearLayout(activity);
         card.setOrientation(LinearLayout.VERTICAL);
         card.setGravity(Gravity.CENTER_HORIZONTAL);
-        card.setPadding(dp(context, 28), dp(context, 24), dp(context, 28), dp(context, 24));
+        card.setPadding(dp(activity, 28), dp(activity, 24), dp(activity, 28), dp(activity, 24));
 
         GradientDrawable bg = new GradientDrawable();
         bg.setColor(Color.WHITE);
-        bg.setCornerRadius(dp(context, 16));
+        bg.setCornerRadius(dp(activity, 16));
         card.setBackground(bg);
 
-        FrameLayout.LayoutParams cardLp = new FrameLayout.LayoutParams(dp(context, 260), ViewGroup.LayoutParams.WRAP_CONTENT);
+        FrameLayout.LayoutParams cardLp = new FrameLayout.LayoutParams(
+                dp(activity, 260),
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        );
         cardLp.gravity = Gravity.CENTER;
         card.setLayoutParams(cardLp);
 
-        ProgressBar progressBar = new ProgressBar(context);
-        LinearLayout.LayoutParams progressLp = new LinearLayout.LayoutParams(dp(context, 36), dp(context, 36));
-        progressLp.bottomMargin = dp(context, 16);
+        ProgressBar progressBar = new ProgressBar(activity);
+        LinearLayout.LayoutParams progressLp = new LinearLayout.LayoutParams(
+                dp(activity, 36),
+                dp(activity, 36)
+        );
+        progressLp.bottomMargin = dp(activity, 16);
         progressBar.setLayoutParams(progressLp);
 
-        TextView textView = new TextView(context);
+        TextView textView = new TextView(activity);
         textView.setText(message);
         textView.setTextSize(15);
         textView.setTextColor(Color.parseColor("#222222"));
         textView.setGravity(Gravity.CENTER);
         textView.setLineSpacing(0f, 1.2f);
 
-        LinearLayout.LayoutParams textLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        LinearLayout.LayoutParams textLp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        );
         textView.setLayoutParams(textLp);
 
         card.addView(progressBar);
@@ -219,7 +256,13 @@ public class DialogUtils {
             window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
             window.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             window.setGravity(Gravity.CENTER);
+            // 加载期间保持屏幕常亮，避免中途锁屏。
+            window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         }
+
+        // 弹出期间锁定屏幕方向，关闭后恢复。
+        final int previousOrientation = ScreenInfoUtils.lockOrientation(activity);
+        dialog.setOnDismissListener(d -> ScreenInfoUtils.restoreOrientation(activity, previousOrientation));
 
         dialog.show();
         return dialog;
@@ -234,6 +277,7 @@ public class DialogUtils {
         private final TextView logView;
         private final ScrollView scrollView;
         private final Handler handler = new Handler(Looper.getMainLooper());
+        private final int previousOrientation;
         private volatile boolean closed = false;
         public LogDialog(Activity activity, String title) { this(activity, title, "正在执行，请稍候…", true); }
         private LogDialog(Activity activity, String title, String initialText, boolean scrollToBottom) {
@@ -287,7 +331,12 @@ public class DialogUtils {
             if (window != null) {
                 window.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
                 window.setGravity(Gravity.CENTER);
+                // 执行脚本期间保持屏幕常亮，避免中途锁屏导致看不到进度/结果。
+                window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
             }
+            // 弹出期间锁定屏幕方向，关闭后恢复。
+            previousOrientation = ScreenInfoUtils.lockOrientation(activity);
+            dialog.setOnDismissListener(d -> ScreenInfoUtils.restoreOrientation(activity, previousOrientation));
             dialog.show();
             if (scrollToBottom) scrollToBottom();
         }

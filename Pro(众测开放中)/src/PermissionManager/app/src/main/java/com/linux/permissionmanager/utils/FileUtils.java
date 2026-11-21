@@ -6,6 +6,7 @@ import android.content.pm.ApplicationInfo;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.OpenableColumns;
+import android.util.Base64;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -146,6 +147,28 @@ public class FileUtils {
             }
             return bos.toString(StandardCharsets.UTF_8.name());
         }
+    }
+
+    public static byte[] readFileBytes(File file) throws Exception {
+        try (FileInputStream fis = new FileInputStream(file);
+             ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
+            byte[] buf = new byte[8192];
+            int len;
+            while ((len = fis.read(buf)) != -1) {
+                bos.write(buf, 0, len);
+            }
+            return bos.toByteArray();
+        }
+    }
+
+    // 编码成 base64 文本，每行 lineLength 个字符，便于直接塞进 shell 的 heredoc
+    public static String toBase64Lines(byte[] data, int lineLength) {
+        String base64 = Base64.encodeToString(data, Base64.NO_WRAP);
+        StringBuilder sb = new StringBuilder(base64.length() + base64.length() / lineLength + 2);
+        for (int i = 0; i < base64.length(); i += lineLength) {
+            sb.append(base64, i, Math.min(i + lineLength, base64.length())).append('\n');
+        }
+        return sb.toString();
     }
 
     public static String readTextFile(String path) {

@@ -92,21 +92,6 @@ inline KModErr get_su_auth_list(const char* root_key, std::vector<su_auth_item>&
     return err;
 }
 
-inline KModErr get_su_probe_records(const char* root_key, std::vector<su_probe_item>& out_records) {
-    thread_local std::vector<su_probe_item>* tls_out = nullptr;
-    auto cb = [](const su_probe_item* record) {
-        if (!tls_out || !record) return;
-        su_probe_item r;
-        std::memcpy(&r, record, sizeof(r));
-        tls_out->push_back(std::move(r));
-    };
-    tls_out = &out_records;
-    KModErr get_su_probe_records_cb(const char* root_key, void (*cb)(const su_probe_item* record));
-    KModErr err = get_su_probe_records_cb(root_key, cb);
-    tls_out = nullptr; 
-    return err;
-}
-
 inline KModErr test_skroot_basics(const char* root_key, BasicItem item, std::string& out) {
     thread_local std::string* tls_out = nullptr;
     auto cb = [](const char* text) {

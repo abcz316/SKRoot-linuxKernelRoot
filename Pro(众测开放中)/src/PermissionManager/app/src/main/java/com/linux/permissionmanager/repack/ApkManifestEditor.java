@@ -1,4 +1,4 @@
-package com.linux.permissionmanager.utils.repack;
+package com.linux.permissionmanager.repack;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-/** 二进制 AndroidManifest.xml 包名、Activity、应用名称、版本号和图标属性编辑。 */
+/** 二进制 AndroidManifest.xml 包名、组件类名、应用名称、版本号和图标属性编辑。 */
 final class ApkManifestEditor {
     private ApkManifestEditor() {}
     private static final int RES_XML_TYPE = 0x0003;
@@ -27,7 +27,7 @@ final class ApkManifestEditor {
     private static final String ANDROID_URI = "http://schemas.android.com/apk/res/android";
 
     static byte[] patch(byte[] xml, String newPackageName, String newAppName, String newVersionName,
-                        Integer newVersionCode, boolean removeAppIcon, String oldEntryActivityName, String newEntryActivityName) throws IOException {
+                        Integer newVersionCode, boolean removeAppIcon, Map<String, String> classRenames) throws IOException {
         if (newPackageName != null && (newPackageName.length() > 255 || !PACKAGE_NAME.matcher(newPackageName).matches())) {
             throw new IllegalArgumentException("无效的新包名: " + newPackageName);
         }
@@ -54,7 +54,6 @@ final class ApkManifestEditor {
         int versionCodeOffset = -1;
         int originalAppLabelType = -1, originalAppLabelData = 0;
         String oldPackageName = null;
-        int entryActivityCount = 0;
         List<AttributePatch> patches = new ArrayList<>();
         int cursor = u16(xml, 2);
         while (cursor < xml.length) {
@@ -91,7 +90,20 @@ final class ApkManifestEditor {
                     String namespace = pool.get(u32(xml, at));
                     String attribute = pool.get(u32(xml, at + 4));
                     if (u16(xml, at + 12) < 8) throw new IOException("损坏的 AXML TypedValue");
-                    if (depth == 1 && namespace == null && "package".equals(attribute)) {
+                    boolean classRenameApplied = false;
+                    if (classRenames != null && !classRenames.isEmpty() && ANDROID_URI.equals(namespace) && isActualClassAttribute(element, attribute)) {
+                        // 按完整类名精确匹配；只替换类名属性值，不改动该组件的其他 XML 属性。
+                        String oldClassName = readStringAttribute(xml, pool, at);
+                        String newClassName = classRenames.get(oldClassName);
+                        if (newClassName != null && !newClassName.equals(oldClassName)) {
+                            patches.add(new AttributePatch(at, newClassName, false));
+                            classRenameApplied = true;
+                        }
+                    }
+
+                    if (classRenameApplied) {
+                        // 该属性已按 classRenames 修改，不再进入包名等其他属性处理分支。
+                    } else if (depth == 1 && namespace == null && "package".equals(attribute)) {
                         if (oldPackageName != null) throw new IOException("重复的 manifest package 属性");
                         oldPackageName = readStringAttribute(xml, pool, at);
                         if (newPackageName != null && !oldPackageName.equals(newPackageName)) {
@@ -103,23 +115,6 @@ final class ApkManifestEditor {
                     } else if (depth == 1 && ANDROID_URI.equals(namespace) && "versionCode".equals(attribute)) {
                         versionCodeCount++;
                         if (newVersionCode != null) versionCodeOffset = at;
-                    } else if (oldEntryActivityName != null
-                            && ANDROID_URI.equals(namespace)
-                            && ("name".equals(attribute) && "activity".equals(element)
-                                || "targetActivity".equals(attribute) && "activity-alias".equals(element)
-                                || "parentActivityName".equals(attribute)
-                                    && ("activity".equals(element) || "activity-alias".equals(element)))) {
-                        String literal = readStringAttribute(xml, pool, at);
-                        String resolved = literal.startsWith(".") ? oldPackageName + literal
-                                : literal.indexOf('.') < 0 ? oldPackageName + "." + literal : literal;
-                        if (oldEntryActivityName.equals(resolved)) {
-                            if ("activity".equals(element) && "name".equals(attribute)) entryActivityCount++;
-                            patches.add(new AttributePatch(at, newEntryActivityName, false));
-                        } else if (newPackageName != null && !oldPackageName.equals(newPackageName)
-                                && isComponentClassAttribute(element, attribute)
-                                && (literal.startsWith(".") || literal.indexOf('.') < 0)) {
-                            patches.add(new AttributePatch(at, resolved, false));
-                        }
                     } else if (newAppName != null && depth == 2 && "application".equals(element)
                             && ANDROID_URI.equals(namespace) && "label".equals(attribute)) {
                         appLabelCount++;
@@ -157,10 +152,6 @@ final class ApkManifestEditor {
         }
         if (cursor != xml.length || depth != 0 || roots != 1 || oldPackageName == null) {
             throw new IOException("Manifest 结构损坏或缺少 package");
-        }
-        if (oldEntryActivityName != null && entryActivityCount != 1) {
-            throw new IOException("Manifest 必须恰好注册一个原入口 Activity: "
-                    + oldEntryActivityName + "，找到 " + entryActivityCount + " 个");
         }
         if (newVersionName != null && versionNameCount != 1) throw new IOException("Manifest 必须恰好有一个 android:versionName，实际找到 " + versionNameCount + " 个");
         if (newVersionCode != null && versionCodeCount != 1) throw new IOException("Manifest 必须恰好有一个 android:versionCode，实际找到 " + versionCodeCount + " 个");
@@ -366,6 +357,23 @@ final class ApkManifestEditor {
     private static String readStringAttribute(byte[] xml, StringPool pool, int offset) throws IOException {
         if ((xml[offset + 15] & 0xff) != TYPE_STRING) throw new IOException("Manifest 字符串属性类型不正确");
         return pool.get(u32(xml, offset + 16));
+    }
+
+    /** 判断该 Manifest 属性是否真正指向 Java Class；activity-alias 的 android:name 是别名标识，不是目标类。 */
+    private static boolean isActualClassAttribute(String element, String attribute) {
+        if ("application".equals(element)) {
+            return "name".equals(attribute) || "backupAgent".equals(attribute)
+                    || "appComponentFactory".equals(attribute) || "manageSpaceActivity".equals(attribute)
+                    || "zygotePreloadName".equals(attribute);
+        }
+        if ("activity".equals(element)) {
+            return "name".equals(attribute) || "parentActivityName".equals(attribute);
+        }
+        if ("activity-alias".equals(element)) {
+            return "targetActivity".equals(attribute) || "parentActivityName".equals(attribute);
+        }
+        return "name".equals(attribute) && ("service".equals(element) || "receiver".equals(element)
+                || "provider".equals(element) || "instrumentation".equals(element));
     }
 
     private static boolean isComponentClassAttribute(String element, String attribute) {

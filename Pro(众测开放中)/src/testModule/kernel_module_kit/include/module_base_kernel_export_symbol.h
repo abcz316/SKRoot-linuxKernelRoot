@@ -68,6 +68,11 @@ void kallsyms_lookup_name(Assembler* a, KModErr& out_err, GpX name);
 void kallsyms_lookup_size_offset(Assembler* a, KModErr& out_err, GpX addr, GpX symbolsize, GpX offset);
 void kallsyms_lookup_size_offset(Assembler* a, KModErr& out_err, uint64_t addr, GpX symbolsize, GpX offset);
 
+// 原型：struct module *find_module(const char *name); 返回值为 X0 寄存器
+void find_module(Assembler* a, KModErr& out_err, GpX name);
+// find_module (外部封装版本)：按模块名查找内核模块，结果写入 out_struct_module（未找到为 0），返回值为 OK 代表执行成功
+KModErr find_module(const char* name, uint64_t& out_struct_module);
+
 //TODO：有问题会死机待修复，请先使用kallsyms_lookup_name
 // 原型：int fn(void *data, const char *name, struct module *mod, unsigned long addr)，设置末尾 X0 返回值非0代表终止遍历。
 // typedef void (*SymbolCb)(
@@ -246,9 +251,14 @@ void d_path(Assembler* a, KModErr & out_err, GpX path, GpX buf, uint32_t buflen)
 
 // 原型: struct pid *find_get_pid(pid_t nr); 返回值为 X0 寄存器
 void find_get_pid(Assembler* a, KModErr & out_err, GpW nr);
+// find_get_pid (外部封装版本)：结果写入 out_struct_pid（未找到为 0），返回值为 OK 代表执行成功
+// 注意：若 out_struct_pid 非 0，则使用完毕后必须调用 put_pid() 释放引用。
+KModErr find_get_pid(uint32_t nr, uint64_t& out_struct_pid);
 
 // 原型: void put_pid(struct pid *pid)，无返回值
 void put_pid(Assembler* a, KModErr & out_err, GpX pid);
+// put_pid (外部封装版本)：返回值为 OK 代表执行成功
+KModErr put_pid(uint64_t struct_pid_ptr);
 
 // 原型：struct pid *find_vpid(int nr); 返回值为 X0 寄存器
 void find_vpid(Assembler* a, KModErr& out_err, GpW nr);
@@ -265,9 +275,6 @@ void force_sig(Assembler* a, KModErr& out_err, GpW sig, GpX task);
 void force_sig(Assembler* a, KModErr& out_err, uint32_t sig, GpX task);
 }
 
-void force_sig_current(Assembler* a, KModErr& out_err, GpW sig);
-void force_sig_current(Assembler* a, KModErr& out_err, uint32_t sig);
-
 void kill_pid(Assembler* a, KModErr& out_err, GpX pid, GpW sig, GpW priv);
 void kill_pid(Assembler* a, KModErr& out_err, GpX pid, uint32_t sig, uint32_t priv);
 
@@ -282,6 +289,8 @@ enum class PidType : uint32_t {
 // 原型: struct task_struct *pid_task(struct pid *pid, enum pid_type type); 返回值为 X0 寄存器
 void pid_task(Assembler* a, KModErr& out_err, GpX pid, GpW type);
 void pid_task(Assembler* a, KModErr& out_err, GpX pid, PidType type);
+// pid_task (外部封装版本)：结果写入 out_struct_task（未找到为 0），返回值为 OK 代表执行成功
+KModErr pid_task(uint64_t struct_pid_ptr, PidType type, uint64_t& out_struct_task);
 }
 namespace linux_older {
 enum class PidType : uint32_t {
@@ -293,6 +302,8 @@ enum class PidType : uint32_t {
 // 原型: struct task_struct *pid_task(struct pid *pid, enum pid_type type); 返回值为 X0 寄存器
 void pid_task(Assembler* a, KModErr& out_err, GpX pid, GpW type);
 void pid_task(Assembler* a, KModErr& out_err, GpX pid, PidType type);
+// pid_task (外部封装版本, 内核 < 4.19.0)：结果写入 out_struct_task（未找到为 0），返回值为 OK 代表执行成功
+KModErr pid_task(uint64_t struct_pid_ptr, PidType type, uint64_t& out_struct_task);
 }
 
 // 原型：struct proc_dir_entry *proc_mkdir(const char *name, struct proc_dir_entry *parent); 返回值为 X0 寄存器
@@ -344,6 +355,11 @@ void igrab(Assembler* a, KModErr& out_err, GpX inode);
 
 // 原型：void iput(struct inode *inode); 无返回值
 void iput(Assembler* a, KModErr& out_err, GpX inode);
+
+// 原型：void __mark_inode_dirty(struct inode *inode, int flags); 无返回值
+void __mark_inode_dirty(Assembler* a, KModErr& out_err, GpX inode, GpW flags);
+void __mark_inode_dirty(Assembler* a, KModErr& out_err, GpX inode, uint32_t flags);
+void __mark_inode_dirty(Assembler* a, KModErr& out_err, uint64_t inode_kaddr, uint32_t flags);
 
 // 原型：void local_irq_save(uint64_t & out_flags); 无返回值
 // 原型：void local_irq_restore(uint64_t flags); 无返回值
@@ -418,6 +434,8 @@ void security_secctx_to_secid(Assembler* a, KModErr& out_err, GpX secdata, uint3
 
 // 原型：struct cred *prepare_kernel_cred(struct task_struct *daemon); 返回值为 X0 寄存器
 void prepare_kernel_cred(Assembler* a, KModErr& out_err, GpX daemon);
+// prepare_kernel_cred (外部封装版本)：结果写入 out_struct_cred（失败为 0），返回值为 OK 代表执行成功
+KModErr prepare_kernel_cred(uint64_t daemon_task, uint64_t& out_struct_cred);
 
 // 原型：int commit_creds(struct cred *new); 返回值为 W0 寄存器
 void commit_creds(Assembler* a, KModErr& out_err, GpX _new);

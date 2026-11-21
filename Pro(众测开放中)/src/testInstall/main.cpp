@@ -93,17 +93,6 @@ void test_clear_su_list() {
 	printf("clear_su_auth_list err: %s\n", to_string(err).c_str());
 }
 
-void test_show_su_probe_records() {
-	std::vector<skroot_env::su_probe_item> items;
-    KModErr err = skroot_env::get_su_probe_records(ROOT_KEY, items);
-    printf("get_su_probe_records err: %s, cnt:%zd\n", to_string(err).c_str(), items.size());
-    for (auto & item : items) {
-        printf("su probe: package=%s, count=%d, last_time_s=%llu\n",
-               item.app_package_name, item.probe_count,
-               (unsigned long long)item.last_probe_time_s);
-    }
-}
-
 void test_add_module(const char* zip_file_path) {
 	std::string reason;
 	KModErr err = skroot_env::install_module(ROOT_KEY, zip_file_path, reason);
@@ -218,7 +207,6 @@ int main(int argc, char* argv[]) {
 	printf("%-29s %s\n", "su-list remove <package>", "将 APP 移出 SU 授权列表");
 	printf("%-29s %s\n", "su-list show", "显示 SU 授权列表");
 	printf("%-29s %s\n", "su-list clear", "清空 SU 授权列表");
-	printf("%-29s %s\n\n", "su-probe show", "显示 SU 嗅探记录");
 
 	printf("---------------------- 模块管理 ----------------------\n");
 	printf("%-29s %s\n", "module add <zip_file_path>", "添加 SKRoot 模块");
@@ -252,10 +240,6 @@ int main(int argc, char* argv[]) {
 			else if(sub == "remove") test_remove_su_list(argv[2]);
 			else if(sub == "show") test_show_su_list();
 			else if(sub == "clear") test_clear_su_list();
-		}},
-		{"su-probe", [argv]() {
-			const std::string sub = argv[1];
-			if(sub == "show") test_show_su_probe_records();
 		}},
 		{"module", [argv]() {
 			const std::string sub = argv[1];

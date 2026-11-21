@@ -223,6 +223,23 @@ inline void kallsyms_lookup_size_offset(Assembler* a, KModErr& out_err, uint64_t
 	out_err = CallHelper::callNameAuto(a, "kallsyms_lookup_size_offset", NeedReturnX0::Yes, addr, symbolsize, offset);
 }
 
+inline void find_module(Assembler* a, KModErr& out_err, GpX name) {
+	out_err = CallHelper::callNameAuto(a, "find_module", NeedReturnX0::Yes, name);
+}
+
+inline KModErr find_module(const char* name, uint64_t& out_struct_module) {
+	out_struct_module = 0;
+	if (!name) return KModErr::ERR_MODULE_PARAM;
+	return kernel_module::run_kernel_shellcode_result_u64([name](Assembler* a, GpX& out_result_reg) -> bool {
+		aarch64_asm_set_x_cstr_ptr(a, x11, name);
+		KModErr out_err = KModErr::OK;
+		find_module(a, out_err, x11);
+		RETURN_FALSE_IF_ERROR(out_err);
+		out_result_reg = x0;
+		return true;
+	}, out_struct_module);
+}
+
 //TODO: 有问题会死机，待修复
 // inline void kallsyms_on_each_symbol(Assembler* a, KModErr & out_err, SymbolCb fn, GpX data) {
 // 	out_err = KModErr::ERR_MODULE_ASM;
@@ -341,19 +358,15 @@ inline void kmalloc(Assembler* a, KModErr & out_err, uint64_t size, KmallocFlags
 
 inline KModErr kmalloc(uint64_t size, KmallocFlags flags, uint64_t& out_objp) {
     out_objp = 0;
-	KModErr out_err = KModErr::OK;
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-	auto a = asm_ctx.assembler();
-	Label label_cycle = a->newLabel();
-	arm64_module_asm_func_start(a);
-    aarch64_asm_mov_x(a, x11, size);
-    aarch64_asm_mov_w(a, w12, (uint32_t)flags);
-	kmalloc(a, out_err, x11, w12);
-	RETURN_IF_ERROR(out_err);
-	arm64_module_asm_func_end(a, x0);
-	std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
-	RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, out_objp));
-	return KModErr::OK;
+	return kernel_module::run_kernel_shellcode_result_u64([size, flags](Assembler* a, GpX& out_result_reg) -> bool {
+		KModErr out_err = KModErr::OK;
+		aarch64_asm_mov_x(a, x11, size);
+		aarch64_asm_mov_w(a, w12, (uint32_t)flags);
+		kmalloc(a, out_err, x11, w12);
+		RETURN_FALSE_IF_ERROR(out_err);
+		out_result_reg = x0;
+		return true;
+	}, out_objp);
 }
 
 inline void kfree(Assembler* a, KModErr & out_err, GpX objp) {
@@ -361,18 +374,13 @@ inline void kfree(Assembler* a, KModErr & out_err, GpX objp) {
 }
 
 inline KModErr kfree(uint64_t objp) {
-	KModErr out_err = KModErr::OK;
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-	auto a = asm_ctx.assembler();
-	Label label_cycle = a->newLabel();
-	arm64_module_asm_func_start(a);
-    aarch64_asm_mov_x(a, x11, objp);
-	kfree(a, out_err, x11);
-	RETURN_IF_ERROR(out_err);
-	arm64_module_asm_func_end(a);
-	std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
-    uint64_t return_value = 0;
-	return kernel_module::execute_kernel_asm_func(bytes, return_value);
+	return kernel_module::run_kernel_shellcode([objp](Assembler* a) -> bool {
+		KModErr out_err = KModErr::OK;
+		aarch64_asm_mov_x(a, x11, objp);
+		kfree(a, out_err, x11);
+		RETURN_FALSE_IF_ERROR(out_err);
+		return true;
+	});
 }
 
 namespace linux_above_6_12_0 {
@@ -388,19 +396,15 @@ inline void execmem_alloc(Assembler* a, KModErr& out_err, ExecmemTypes type, uin
 
 inline KModErr execmem_alloc(ExecmemTypes type, uint64_t size, uint64_t& out_ptr) {
 	out_ptr = 0;
-	KModErr out_err = KModErr::OK;
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-	auto a = asm_ctx.assembler();
-	Label label_cycle = a->newLabel();
-	arm64_module_asm_func_start(a);
-    aarch64_asm_mov_w(a, w11, (uint32_t)type);
-    aarch64_asm_mov_x(a, x12, size);
-	execmem_alloc(a, out_err, w11, x12);
-	RETURN_IF_ERROR(out_err);
-	arm64_module_asm_func_end(a, x0);
-	std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
-	RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, out_ptr));
-	return KModErr::OK;
+	return kernel_module::run_kernel_shellcode_result_u64([type, size](Assembler* a, GpX& out_result_reg) -> bool {
+		KModErr out_err = KModErr::OK;
+		aarch64_asm_mov_w(a, w11, (uint32_t)type);
+		aarch64_asm_mov_x(a, x12, size);
+		execmem_alloc(a, out_err, w11, x12);
+		RETURN_FALSE_IF_ERROR(out_err);
+		out_result_reg = x0;
+		return true;
+	}, out_ptr);
 }
 
 inline void execmem_free(Assembler* a, KModErr& out_err, GpX ptr) {
@@ -409,18 +413,13 @@ inline void execmem_free(Assembler* a, KModErr& out_err, GpX ptr) {
 }
 
 inline KModErr execmem_free(uint64_t ptr) {
-	KModErr out_err = KModErr::OK;
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-	auto a = asm_ctx.assembler();
-	Label label_cycle = a->newLabel();
-	arm64_module_asm_func_start(a);
-    aarch64_asm_mov_x(a, x11, ptr);
-	export_symbol::linux_older::module_memfree(a, out_err, x11);
-	RETURN_IF_ERROR(out_err);
-	arm64_module_asm_func_end(a);
-	std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
-    uint64_t return_value = 0;
-	return kernel_module::execute_kernel_asm_func(bytes, return_value);
+	return kernel_module::run_kernel_shellcode([ptr](Assembler* a) -> bool {
+		KModErr out_err = KModErr::OK;
+		aarch64_asm_mov_x(a, x11, ptr);
+		export_symbol::linux_older::module_memfree(a, out_err, x11);
+		RETURN_FALSE_IF_ERROR(out_err);
+		return true;
+	});
 }
 }
 
@@ -437,18 +436,14 @@ inline void module_alloc(Assembler* a, KModErr & out_err, uint64_t size) {
 
 inline KModErr module_alloc(uint64_t size, uint64_t& out_module_region) {
     out_module_region = 0;
-	KModErr out_err = KModErr::OK;
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-	auto a = asm_ctx.assembler();
-	Label label_cycle = a->newLabel();
-	arm64_module_asm_func_start(a);
-    aarch64_asm_mov_x(a, x11, size);
-	module_alloc(a, out_err, x11);
-	RETURN_IF_ERROR(out_err);
-	arm64_module_asm_func_end(a, x0);
-	std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
-	RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, out_module_region));
-	return KModErr::OK;
+	return kernel_module::run_kernel_shellcode_result_u64([size](Assembler* a, GpX& out_result_reg) -> bool {
+		KModErr out_err = KModErr::OK;
+		aarch64_asm_mov_x(a, x11, size);
+		module_alloc(a, out_err, x11);
+		RETURN_FALSE_IF_ERROR(out_err);
+		out_result_reg = x0;
+		return true;
+	}, out_module_region);
 }
 
 inline void module_memfree(Assembler* a, KModErr & out_err, GpX module_region) {
@@ -457,18 +452,13 @@ inline void module_memfree(Assembler* a, KModErr & out_err, GpX module_region) {
 }
 
 inline KModErr module_memfree(uint64_t module_region) {
-	KModErr out_err = KModErr::OK;
-    aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-	auto a = asm_ctx.assembler();
-	Label label_cycle = a->newLabel();
-	arm64_module_asm_func_start(a);
-    aarch64_asm_mov_x(a, x11, module_region);
-	module_memfree(a, out_err, x11);
-	RETURN_IF_ERROR(out_err);
-	arm64_module_asm_func_end(a);
-	std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
-    uint64_t return_value = 0;
-	return kernel_module::execute_kernel_asm_func(bytes, return_value);
+	return kernel_module::run_kernel_shellcode([module_region](Assembler* a) -> bool {
+		KModErr out_err = KModErr::OK;
+		aarch64_asm_mov_x(a, x11, module_region);
+		module_memfree(a, out_err, x11);
+		RETURN_FALSE_IF_ERROR(out_err);
+		return true;
+	});
 }
 }
 
@@ -612,8 +602,31 @@ inline void find_get_pid(Assembler* a, KModErr & out_err, GpW nr) {
     out_err = CallHelper::callNameAuto(a, "find_get_pid", NeedReturnX0::Yes, nr);
 }
 
+inline KModErr find_get_pid(uint32_t nr, uint64_t& out_struct_pid) {
+	out_struct_pid = 0;
+	return kernel_module::run_kernel_shellcode_result_u64([nr](Assembler* a, GpX& out_result_reg) -> bool {
+		KModErr out_err = KModErr::OK;
+		aarch64_asm_mov_w(a, w11, nr);
+		find_get_pid(a, out_err, w11);
+		RETURN_FALSE_IF_ERROR(out_err);
+		out_result_reg = x0;
+		return true;
+	}, out_struct_pid);
+}
+
 inline void put_pid(Assembler* a, KModErr & out_err, GpX pid) {
     out_err = CallHelper::callNameAuto(a, "put_pid", NeedReturnX0::No, pid);
+}
+
+inline KModErr put_pid(uint64_t struct_pid_ptr) {
+	if (!struct_pid_ptr) return KModErr::ERR_MODULE_PARAM;
+	return kernel_module::run_kernel_shellcode([struct_pid_ptr](Assembler* a) -> bool {
+		KModErr out_err = KModErr::OK;
+		aarch64_asm_mov_x(a, x11, struct_pid_ptr);
+		put_pid(a, out_err, x11);
+		RETURN_FALSE_IF_ERROR(out_err);
+		return true;
+	});
 }
 
 inline void find_vpid(Assembler* a, KModErr& out_err, GpW nr) {
@@ -648,7 +661,6 @@ inline void force_sig(Assembler* a, KModErr& out_err, uint32_t sig, GpX task) {
 }
 }
 
-
 inline void kill_pid(Assembler* a, KModErr& out_err, GpX pid, GpW sig, GpW priv) {
 	out_err = CallHelper::callNameAuto(a, "kill_pid", NeedReturnX0::Yes, pid, sig, priv);
 }
@@ -666,6 +678,19 @@ inline void pid_task(Assembler* a, KModErr& out_err, GpX pid, PidType type) {
 	RETURN_ERR_IF_KERNEL_VERSION_LESS("4.19.0");
 	out_err = CallHelper::callNameAuto(a, "pid_task", NeedReturnX0::Yes, pid, (uint32_t)type);
 }
+inline KModErr pid_task(uint64_t struct_pid_ptr, PidType type, uint64_t& out_struct_task) {
+	out_struct_task = 0;
+	if (kernel_module::is_kernel_version_less("4.19.0")) return KModErr::ERR_MODULE_SYMBOL_NOT_MATCH_LINUX_VER;
+	return kernel_module::run_kernel_shellcode_result_u64([struct_pid_ptr, type](Assembler* a, GpX& out_result_reg) -> bool {
+		KModErr out_err = KModErr::OK;
+		aarch64_asm_mov_x(a, x11, struct_pid_ptr);
+		aarch64_asm_mov_w(a, w12, (uint32_t)type);
+		pid_task(a, out_err, x11, w12);
+		RETURN_FALSE_IF_ERROR(out_err);
+		out_result_reg = x0;
+		return true;
+	}, out_struct_task);
+}
 }
 
 namespace linux_older {
@@ -676,6 +701,19 @@ inline void pid_task(Assembler* a, KModErr& out_err, GpX pid, GpW type) {
 inline void pid_task(Assembler* a, KModErr& out_err, GpX pid, PidType type) {
 	RETURN_ERR_IF_KERNEL_VERSION_AT_LEAST("4.19.0");
 	out_err = CallHelper::callNameAuto(a, "pid_task", NeedReturnX0::Yes, pid, (uint32_t)type);
+}
+inline KModErr pid_task(uint64_t struct_pid_ptr, PidType type, uint64_t& out_struct_task) {
+	out_struct_task = 0;
+	if (!kernel_module::is_kernel_version_less("4.19.0")) return KModErr::ERR_MODULE_SYMBOL_NOT_MATCH_LINUX_VER;
+	return kernel_module::run_kernel_shellcode_result_u64([struct_pid_ptr, type](Assembler* a, GpX& out_result_reg) -> bool {
+		KModErr out_err = KModErr::OK;
+		aarch64_asm_mov_x(a, x11, struct_pid_ptr);
+		aarch64_asm_mov_w(a, w12, (uint32_t)type);
+		pid_task(a, out_err, x11, w12);
+		RETURN_FALSE_IF_ERROR(out_err);
+		out_result_reg = x0;
+		return true;
+	}, out_struct_task);
 }
 }
 
@@ -755,6 +793,17 @@ inline void iput(Assembler* a, KModErr& out_err, GpX inode) {
 	out_err = CallHelper::callNameAuto(a, "iput", NeedReturnX0::No, inode);
 }
 
+inline void __mark_inode_dirty(Assembler* a, KModErr& out_err, GpX inode, GpW flags) {
+	out_err = CallHelper::callNameAuto(a, "__mark_inode_dirty", NeedReturnX0::No, inode, flags);
+}
+
+inline void __mark_inode_dirty(Assembler* a, KModErr& out_err, GpX inode, uint32_t flags) {
+	out_err = CallHelper::callNameAuto(a, "__mark_inode_dirty", NeedReturnX0::No, inode, flags);
+}
+
+inline void __mark_inode_dirty(Assembler* a, KModErr& out_err, uint64_t inode_kaddr, uint32_t flags) {
+	out_err = CallHelper::callNameAuto(a, "__mark_inode_dirty", NeedReturnX0::No, inode_kaddr, flags);
+}
 
 inline void local_irq_save(Assembler* a, GpX out_store_flags_reg) {
 	aarch64_asm_mrs_daif(a, out_store_flags_reg);
@@ -1020,6 +1069,18 @@ inline void security_secctx_to_secid(Assembler* a, KModErr& out_err, GpX secdata
 
 inline void prepare_kernel_cred(Assembler* a, KModErr& out_err, GpX daemon) {
 	out_err = CallHelper::callNameAuto(a, "prepare_kernel_cred", NeedReturnX0::Yes, daemon);
+}
+
+inline KModErr prepare_kernel_cred(uint64_t daemon_task, uint64_t& out_struct_cred) {
+	out_struct_cred = 0;
+	return kernel_module::run_kernel_shellcode_result_u64([daemon_task](Assembler* a, GpX& out_result_reg) -> bool {
+		KModErr out_err = KModErr::OK;
+		aarch64_asm_mov_x(a, x11, daemon_task);
+		prepare_kernel_cred(a, out_err, x11);
+		RETURN_FALSE_IF_ERROR(out_err);
+		out_result_reg = x0;
+		return true;
+	}, out_struct_cred);
 }
 
 inline void commit_creds(Assembler* a, KModErr& out_err, GpX _new) {

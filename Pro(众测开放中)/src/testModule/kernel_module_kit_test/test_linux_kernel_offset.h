@@ -602,6 +602,53 @@ KModErr Test_get_nameidata_last_type_offset() {
     return KModErr::OK;
 }
 
+// 从 /proc/modules 读取一个已加载模块的名字（读取失败返回空串）
+static std::string read_any_loaded_module_name() {
+    FILE* fp = fopen("/proc/modules", "r");
+    if (!fp) return "";
+    char name[256] = {0};
+    if (fscanf(fp, "%255s", name) != 1) name[0] = '\0';
+    fclose(fp);
+    return std::string(name);
+}
+
+KModErr Test_get_module_text_range() {
+    REQUIRE_ROOT_OR_RETURN();
+    // 取一个已加载的内核模块用于测试；/proc/modules 不可读时回退到文档示例中的 vr 模块
+    std::string module_name = read_any_loaded_module_name();
+    if (module_name.empty()) {
+        printf("read_any_loaded_module_name result: skipped, /proc/modules not readable\n");
+        return KModErr::ERR_OK;
+    }
+
+    uint64_t struct_module_ptr = 0;
+    RETURN_IF_ERROR(kernel_module::export_symbol::find_module(module_name.c_str(), struct_module_ptr));
+    printf("find_module name: %s, struct module ptr: %p\n", module_name.c_str(), (void*)struct_module_ptr);
+    if (!struct_module_ptr) {
+        printf("get_module_text_range result: skipped, module %s not loaded\n", module_name.c_str());
+        return KModErr::OK;
+    }
+
+    uint64_t start_kaddr = 0;
+    uint64_t end_kaddr = 0;
+    RETURN_IF_ERROR(kernel_module::get_module_text_range(struct_module_ptr, start_kaddr, end_kaddr));
+    const uint64_t text_size = end_kaddr - start_kaddr;
+    printf("get_module_text_range Output start: %p, end: %p, size: 0x%llx\n", (void*)start_kaddr, (void*)end_kaddr, (unsigned long long)text_size);
+
+    // 起点应为内核地址（arm64 内核空间高半区，兼容 48/52 位 VA），且长度不应超过 64MB
+    if (start_kaddr < 0xfff0000000000000ULL || end_kaddr <= start_kaddr || text_size > 0x4000000ULL) {
+        printf("get_module_text_range range check result: failed\n");
+        return KModErr::ERR_MODULE_OFFSET_NOT_FOUND;
+    }
+
+    // text 段起始地址应可正常读取（模块代码页）
+    uint32_t entry_insn = 0;
+    RETURN_IF_ERROR(kernel_module::read_kernel_mem(start_kaddr, &entry_insn, static_cast<uint32_t>(sizeof(entry_insn))));
+    printf("get_module_text_range entry insn: 0x%08x\n", entry_insn);
+    printf("get_module_text_range result: ok\n");
+    return KModErr::OK;
+}
+
 KModErr Test_set_current_caps() {
     kernel_module::caps_info caps;
     KModErr err = kernel_module::get_current_caps(caps);

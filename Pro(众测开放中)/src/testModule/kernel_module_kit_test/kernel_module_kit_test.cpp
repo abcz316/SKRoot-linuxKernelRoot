@@ -3,16 +3,14 @@
 #include "test_linux_kernel_offset.h"
 #include "test_string_ops.h"
 
-KModErr Test_execute_kernel_asm_func() {
-	aarch64_asm_ctx asm_ctx = init_aarch64_asm();
-	auto a = asm_ctx.assembler();
-	kernel_module::arm64_module_asm_func_start(a);
- 	// nothing to do
-	aarch64_asm_mov_x(a, x0, 0x12345);
-	kernel_module::arm64_module_asm_func_end(a, x0);
-	std::vector<uint8_t> bytes = aarch64_asm_to_bytes(a);
+KModErr Test_run_kernel_shellcode_result_u64() {
 	uint64_t result = 0;
-	RETURN_IF_ERROR(kernel_module::execute_kernel_asm_func(bytes, result));
+	RETURN_IF_ERROR(kernel_module::run_kernel_shellcode_result_u64([](Assembler* a, GpX& out_result_reg) -> bool {
+		// nothing to do
+		aarch64_asm_mov_x(a, x0, 0x12345);
+		out_result_reg = x0;
+		return true;
+	}, result));
 	printf("Shellcode output result: %s, value: %p\n", result == 0x12345 ? "ok" : "failed", (void*)result);
 	return KModErr::OK;
 }
@@ -199,7 +197,7 @@ int main(int argc, char *argv[]) {
 
  	// 单元测试：内核模块基础能力
 	int idx = 1;
-	TEST(idx++, Test_execute_kernel_asm_func);				// 执行shellcode并获取返回值ruct.cred）
+	TEST(idx++, Test_run_kernel_shellcode_result_u64);				// 执行shellcode并获取返回值ruct.cred）
 	TEST(idx++, Test_get_kernel_base_vaddr);				// 获取内核虚拟基址
  	TEST(idx++, Test_alloc_kernel_mem);						// 申请内核内存
  	TEST(idx++, Test_free_kernel_mem);						// 释放内核内存
@@ -305,6 +303,7 @@ int main(int argc, char *argv[]) {
 	TEST(idx++, Test_get_tracepoint_funcs_offset);			// 获取 tracepoint 结构体中 funcs 字段的偏移量
 	TEST(idx++, Test_get_nameidata_last_offset);			// 获取 nameidata 结构体中 last 字段的偏移量
 	TEST(idx++, Test_get_nameidata_last_type_offset);		// 获取 nameidata 结构体中 last_type 字段的偏移量
+	TEST(idx++, Test_get_module_text_range);				// 获取内核模块 text 段的内存范围
 	TEST(idx++, Test_set_current_caps);						// 设置进程能力集
  	TEST(idx++, Test_set_current_process_name);				// 设置进程名
 
